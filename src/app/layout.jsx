@@ -16,11 +16,16 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+import { createClient } from "@/utils/supabase/server";
+
+export default async function RootLayout({ children }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <AppNavbar />
+        <AppNavbar user={user} />
         <main>{children}</main>
         <Footer />
       </body>
