@@ -2,8 +2,8 @@ import { getPlayers } from "@/lib/queries";
 import PlayerCard from "../components/PlayerCard";
 
 export const metadata = {
-    title: "Player Rankings | KhelPediA",
-    description: "Top esports players globally.",
+    title: "Pro Player Rankings | KhelPediA",
+    description: "Top professional esports players globally.",
 };
 
 export default async function PlayersPage() {
@@ -12,9 +12,9 @@ export default async function PlayersPage() {
     return (
         <div className="page-container">
             <div className="page-header">
-                <h1 className="page-title">Player Rankings</h1>
+                <h1 className="page-title">Pro Player Rankings</h1>
                 <p className="page-description">
-                    The best in the business. Ranked by earnings.
+                    The best professional athletes in the business. Ranked by career earnings.
                 </p>
             </div>
 

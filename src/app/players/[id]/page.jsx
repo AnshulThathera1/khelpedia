@@ -74,7 +74,7 @@ export default async function PlayerDetailPage({ params }) {
             </div>
 
             {/* Performance Stats */}
-            <h2 className="section-title" style={{ marginBottom: "1.5rem" }}>Performance Stats</h2>
+            <h2 className="section-title" style={{ marginBottom: "1.5rem" }}>Pro Career Stats</h2>
             <div className="grid-auto">
                 {stats.length > 0 ? stats.map(stat => (
                     <div key={stat.id} className="card">
