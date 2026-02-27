@@ -1,0 +1,371 @@
+[
+  {
+    "winner_id": null,
+    "tournament": {
+      "id": 20133,
+      "name": "Group Stage",
+      "type": "online",
+      "country": null,
+      "begin_at": "2026-02-11T22:00:00Z",
+      "detailed_stats": true,
+      "end_at": "2026-03-26T01:00:00Z",
+      "winner_id": null,
+      "winner_type": "Team",
+      "slug": "valorant-vct-2021-north-america-stage-1-challengers-1-game-changers-latin-america-south-stage-1-2026-group-stage",
+      "serie_id": 10214,
+      "modified_at": "2026-02-25T23:01:56Z",
+      "league_id": 4531,
+      "prizepool": null,
+      "tier": "d",
+      "has_bracket": false,
+      "region": "SA",
+      "live_supported": false
+    },
+    "tournament_id": 20133,
+    "serie_id": 10214,
+    "begin_at": "2026-02-27T22:00:00Z",
+    "league_id": 4531,
+    "streams_list": [
+      {
+        "main": true,
+        "language": "es",
+        "embed_url": "https://player.twitch.tv/?channel=valorant_la",
+        "official": true,
+        "raw_url": "https://www.twitch.tv/valorant_la"
+      }
+    ],
+    "number_of_games": 3,
+    "original_scheduled_at": "2026-02-27T22:00:00Z",
+    "results": [
+      {
+        "team_id": 138007,
+        "score": 0
+      },
+      {
+        "team_id": 137069,
+        "score": 0
+      }
+    ],
+    "game_advantage": null,
+    "detailed_stats": true,
+    "winner_type": "Team",
+    "status": "not_started",
+    "draw": false,
+    "rescheduled": false,
+    "winner": null,
+    "serie": {
+      "id": 10214,
+      "name": "Game Changers Latin America South",
+      "year": 2026,
+      "begin_at": "2026-02-11T22:00:00Z",
+      "end_at": "2026-04-07T00:00:00Z",
+      "winner_id": null,
+      "winner_type": "Team",
+      "slug": "valorant-vct-2021-north-america-stage-1-challengers-1-game-changers-latin-america-south-stage-1-2026",
+      "modified_at": "2026-02-11T09:58:59Z",
+      "league_id": 4531,
+      "season": "Stage 1",
+      "full_name": "Game Changers Latin America South Stage 1 2026"
+    },
+    "slug": "olimpo-gold-vs-polar-squad-esports-gc-2026-02-27",
+    "scheduled_at": "2026-02-27T22:00:00Z",
+    "videogame_version": null,
+    "forfeit": false,
+    "match_type": "best_of",
+    "live": {
+      "supported": false,
+      "url": null,
+      "opens_at": null
+    },
+    "end_at": null,
+    "id": 1356806,
+    "name": "OG vs PSE.GC",
+    "videogame": {
+      "id": 26,
+      "name": "Valorant",
+      "slug": "valorant"
+    },
+    "videogame_title": null,
+    "opponents": [
+      {
+        "type": "Team",
+        "opponent": {
+          "id": 138007,
+          "name": "Olimpo Gold",
+          "location": "",
+          "slug": "olimpo-gold",
+          "modified_at": "2026-02-11T09:53:45Z",
+          "acronym": "OG",
+          "image_url": "https://cdn-api.pandascore.co/images/team/image/138007/olimpo_gold_allmode.png",
+          "dark_mode_image_url": null
+        }
+      },
+      {
+        "type": "Team",
+        "opponent": {
+          "id": 137069,
+          "name": "Polar Squad Esports GC",
+          "location": "",
+          "slug": "polar-squad-esports-gc",
+          "modified_at": "2026-02-12T22:57:33Z",
+          "acronym": "PSE.GC",
+          "image_url": "https://cdn-api.pandascore.co/images/team/image/137069/190px_polar_squad_esports_full_lightmode.png",
+          "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/137069/676px_polar_squad_esports_full_darkmode.png"
+        }
+      }
+    ],
+    "modified_at": "2026-02-27T10:26:27Z",
+    "games": [
+      {
+        "complete": false,
+        "id": 45944,
+        "position": 1,
+        "status": "not_started",
+        "length": null,
+        "finished": false,
+        "match_id": 1356806,
+        "begin_at": null,
+        "detailed_stats": true,
+        "end_at": null,
+        "forfeit": false,
+        "winner_type": "Team",
+        "winner": {
+          "id": null,
+          "type": "Team"
+        }
+      },
+      {
+        "complete": false,
+        "id": 45945,
+        "position": 2,
+        "status": "not_started",
+        "length": null,
+        "finished": false,
+        "match_id": 1356806,
+        "begin_at": null,
+        "detailed_stats": true,
+        "end_at": null,
+        "forfeit": false,
+        "winner_type": "Team",
+        "winner": {
+          "id": null,
+          "type": "Team"
+        }
+      },
+      {
+        "complete": false,
+        "id": 45946,
+        "position": 3,
+        "status": "not_started",
+        "length": null,
+        "finished": false,
+        "match_id": 1356806,
+        "begin_at": null,
+        "detailed_stats": true,
+        "end_at": null,
+        "forfeit": false,
+        "winner_type": "Team",
+        "winner": {
+          "id": null,
+          "type": "Team"
+        }
+      }
+    ],
+    "league": {
+      "id": 4531,
+      "name": "VCT",
+      "url": null,
+      "slug": "valorant-vct-2021-north-america-stage-1-challengers-1",
+      "modified_at": "2023-02-13T19:07:55Z",
+      "image_url": "https://cdn-api.pandascore.co/images/league/image/4531/800px-vct_2023_logo_lightmode-png"
+    }
+  },
+  {
+    "winner_id": null,
+    "tournament": {
+      "id": 20128,
+      "name": "Playoffs",
+      "type": "online",
+      "country": null,
+      "begin_at": "2026-02-20T22:00:00Z",
+      "detailed_stats": true,
+      "end_at": "2026-03-02T03:00:00Z",
+      "winner_id": null,
+      "winner_type": "Team",
+      "slug": "valorant-vct-2021-north-america-stage-1-challengers-1-game-changers-north-america-kickoff-2026-playoffs",
+      "serie_id": 10212,
+      "modified_at": "2026-02-21T02:26:39Z",
+      "league_id": 4531,
+      "prizepool": "10000 United States Dollar",
+      "tier": "d",
+      "has_bracket": true,
+      "region": "NA",
+      "live_supported": false
+    },
+    "tournament_id": 20128,
+    "serie_id": 10212,
+    "begin_at": "2026-02-27T22:00:00Z",
+    "league_id": 4531,
+    "streams_list": [
+      {
+        "main": true,
+        "language": "en",
+        "embed_url": "https://player.twitch.tv/?channel=valorant_americas",
+        "official": true,
+        "raw_url": "https://www.twitch.tv/valorant_americas"
+      },
+      {
+        "main": false,
+        "language": "en",
+        "embed_url": "https://player.twitch.tv/?channel=RaidiantGG",
+        "official": false,
+        "raw_url": "https://www.twitch.tv/RaidiantGG"
+      }
+    ],
+    "number_of_games": 3,
+    "original_scheduled_at": "2026-02-27T22:00:00Z",
+    "results": [
+      {
+        "team_id": 136796,
+        "score": 0
+      },
+      {
+        "team_id": 133737,
+        "score": 0
+      }
+    ],
+    "game_advantage": null,
+    "detailed_stats": true,
+    "winner_type": "Team",
+    "status": "not_started",
+    "draw": false,
+    "rescheduled": false,
+    "winner": null,
+    "serie": {
+      "id": 10212,
+      "name": "Game Changers North America Kickoff",
+      "year": 2026,
+      "begin_at": "2026-02-20T22:00:00Z",
+      "end_at": "2026-03-02T03:00:00Z",
+      "winner_id": null,
+      "winner_type": "Team",
+      "slug": "valorant-vct-2021-north-america-stage-1-challengers-1-game-changers-north-america-kickoff-2026",
+      "modified_at": "2026-02-19T13:31:54Z",
+      "league_id": 4531,
+      "season": null,
+      "full_name": "Game Changers North America Kickoff 2026"
+    },
+    "slug": "wadadaa-vs-flyquest-red-2026-02-27",
+    "scheduled_at": "2026-02-27T22:00:00Z",
+    "videogame_version": null,
+    "forfeit": false,
+    "match_type": "best_of",
+    "live": {
+      "supported": false,
+      "url": null,
+      "opens_at": null
+    },
+    "end_at": null,
+    "id": 1356638,
+    "name": "Upper bracket final: WAD vs FLY.R",
+    "videogame": {
+      "id": 26,
+      "name": "Valorant",
+      "slug": "valorant"
+    },
+    "videogame_title": null,
+    "opponents": [
+      {
+        "type": "Team",
+        "opponent": {
+          "id": 136796,
+          "name": "Wadadaa",
+          "location": "US",
+          "slug": "wadadaa",
+          "modified_at": "2026-02-20T22:56:05Z",
+          "acronym": "WAD",
+          "image_url": "https://cdn-api.pandascore.co/images/team/image/136796/278px_wadadaa_allmode.png",
+          "dark_mode_image_url": null
+        }
+      },
+      {
+        "type": "Team",
+        "opponent": {
+          "id": 133737,
+          "name": "FlyQuest RED",
+          "location": "US",
+          "slug": "flyquest-red-valorant",
+          "modified_at": "2026-02-19T13:14:49Z",
+          "acronym": "FLY.R",
+          "image_url": "https://cdn-api.pandascore.co/images/team/image/133737/600px_fly_quest_red_2023_allmode.png",
+          "dark_mode_image_url": null
+        }
+      }
+    ],
+    "modified_at": "2026-02-27T10:26:18Z",
+    "games": [
+      {
+        "complete": false,
+        "id": 45847,
+        "position": 1,
+        "status": "not_started",
+        "length": null,
+        "finished": false,
+        "match_id": 1356638,
+        "begin_at": null,
+        "detailed_stats": true,
+        "end_at": null,
+        "forfeit": false,
+        "winner_type": "Team",
+        "winner": {
+          "id": null,
+          "type": "Team"
+        }
+      },
+      {
+        "complete": false,
+        "id": 45848,
+        "position": 2,
+        "status": "not_started",
+        "length": null,
+        "finished": false,
+        "match_id": 1356638,
+        "begin_at": null,
+        "detailed_stats": true,
+        "end_at": null,
+        "forfeit": false,
+        "winner_type": "Team",
+        "winner": {
+          "id": null,
+          "type": "Team"
+        }
+      },
+      {
+        "complete": false,
+        "id": 45849,
+        "position": 3,
+        "status": "not_started",
+        "length": null,
+        "finished": false,
+        "match_id": 1356638,
+        "begin_at": null,
+        "detailed_stats": true,
+        "end_at": null,
+        "forfeit": false,
+        "winner_type": "Team",
+        "winner": {
+          "id": null,
+          "type": "Team"
+        }
+      }
+    ],
+    "league": {
+      "id": 4531,
+      "name": "VCT",
+      "url": null,
+      "slug": "valorant-vct-2021-north-america-stage-1-challengers-1",
+      "modified_at": "2023-02-13T19:07:55Z",
+      "image_url": "https://cdn-api.pandascore.co/images/league/image/4531/800px-vct_2023_logo_lightmode-png"
+    }
+  }
+]

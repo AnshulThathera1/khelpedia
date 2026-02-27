@@ -31,8 +31,9 @@ jobs:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       run: python scraper-engine/vlr_scraper.py
 
-    - name: Run Steam Scraper (Dota 2 & CS2)
+    - name: Run PandaScore Engine (Official API Sync)
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      run: python scraper-engine/steam_scraper.py
+        PANDASCORE_API_KEY: ${{ secrets.PANDASCORE_API_KEY }}
+      run: python scraper-engine/pandascore_engine.py
