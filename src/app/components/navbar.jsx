@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -9,11 +9,161 @@ const navLinks = [
   { href: "/tournaments", label: "Tournaments" },
   { href: "/players", label: "Pro Players" },
   { href: "/teams", label: "Teams" },
+  { href: "/blogs", label: "News" }
 ];
 
 export default function AppNavbar({ user }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState({ players: [], teams: [], blogs: [] });
+  const [showResults, setShowResults] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const searchRef = useRef(null);
+
+  // Debounced Search Logic
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchQuery.length >= 2) {
+        setIsLoading(true);
+        try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+          const data = await res.json();
+          setResults(data.results);
+          setShowResults(true);
+        } catch (error) {
+          console.error("Search error:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setResults({ players: [], teams: [], blogs: [] });
+        setShowResults(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Close results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleResultClick = (href) => {
+    setSearchQuery("");
+    setShowResults(false);
+    router.push(href);
+  };
+
+  const renderResults = () => {
+    const hasResults = results.players.length > 0 || results.teams.length > 0 || results.blogs.length > 0;
+
+    if (!showResults) return null;
+
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: "100%",
+          left: 0,
+          right: 0,
+          background: "rgba(15, 23, 42, 0.95)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(148, 163, 184, 0.1)",
+          borderRadius: "12px",
+          marginTop: "10px",
+          maxHeight: "400px",
+          overflowY: "auto",
+          zIndex: 1000,
+          boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+          padding: "1rem"
+        }}
+      >
+        {!hasResults && !isLoading && (
+          <div style={{ padding: "1rem", color: "var(--text-muted)", textAlign: "center" }}>
+            No results found for "{searchQuery}"
+          </div>
+        )}
+
+        {isLoading && (
+          <div style={{ padding: "1rem", color: "var(--accent-cyan)", textAlign: "center" }}>
+            Searching...
+          </div>
+        )}
+
+        {/* Players Section */}
+        {results.players.length > 0 && (
+          <div style={{ marginBottom: "1rem" }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-cyan)", textTransform: "uppercase", marginBottom: "0.5rem", letterSpacing: "0.05em" }}>Players</div>
+            {results.players.map(player => (
+              <div
+                key={player.id}
+                onClick={() => handleResultClick(`/players/${player.slug || player.id}`)}
+                style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem", borderRadius: "8px", cursor: "pointer", transition: "background 0.2s" }}
+                className="search-result-item"
+              >
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--bg-secondary)", overflow: "hidden" }}>
+                  {player.image_url ? <img src={player.image_url} alt={player.ign} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ background: "var(--gradient-primary)", width: "100%", height: "100%" }} />}
+                </div>
+                <div>
+                  <div style={{ color: "var(--text-primary)", fontWeight: 600, fontSize: "0.9rem" }}>{player.ign}</div>
+                  <div style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>{player.name}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Teams Section */}
+        {results.teams.length > 0 && (
+          <div style={{ marginBottom: "1rem" }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-purple)", textTransform: "uppercase", marginBottom: "0.5rem", letterSpacing: "0.05em" }}>Teams</div>
+            {results.teams.map(team => (
+              <div
+                key={team.id}
+                onClick={() => handleResultClick(`/teams/${team.id}`)}
+                style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem", borderRadius: "8px", cursor: "pointer", transition: "background 0.2s" }}
+                className="search-result-item"
+              >
+                <div style={{ width: 32, height: 32, borderRadius: "4px", background: "var(--bg-secondary)", overflow: "hidden" }}>
+                  {team.logo_url ? <img src={team.logo_url} alt={team.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <div style={{ background: "var(--bg-secondary)", width: "100%", height: "100%" }} />}
+                </div>
+                <div style={{ color: "var(--text-primary)", fontWeight: 600, fontSize: "0.9rem" }}>{team.name}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Blogs Section */}
+        {results.blogs.length > 0 && (
+          <div>
+            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#10b981", textTransform: "uppercase", marginBottom: "0.5rem", letterSpacing: "0.05em" }}>News</div>
+            {results.blogs.map(blog => (
+              <div
+                key={blog.id}
+                onClick={() => handleResultClick(`/blogs/${blog.slug}`)}
+                style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem", borderRadius: "8px", cursor: "pointer", transition: "background 0.2s" }}
+                className="search-result-item"
+              >
+                <div style={{ width: 32, height: 32, borderRadius: "4px", background: "var(--bg-secondary)", overflow: "hidden" }}>
+                  {blog.cover_image_url ? <img src={blog.cover_image_url} alt={blog.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ background: "var(--bg-secondary)", width: "100%", height: "100%" }} />}
+                </div>
+                <div style={{ color: "var(--text-primary)", fontWeight: 500, fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{blog.title}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <nav
@@ -82,7 +232,9 @@ export default function AppNavbar({ user }) {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "2rem",
+            gap: "1.5rem",
+            flex: 1,
+            justifyContent: "flex-end"
           }}
           className="desktop-nav"
         >
@@ -100,15 +252,42 @@ export default function AppNavbar({ user }) {
                   fontWeight: isActive ? 600 : 500,
                   transition: "color 0.2s",
                   position: "relative",
-                  paddingBottom: 4,
-                  borderBottom: isActive ? "2px solid #06d6a0" : "2px solid transparent",
+                  whiteSpace: "nowrap"
                 }}
               >
                 {link.label}
               </Link>
             );
           })}
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginLeft: "1rem" }}>
+
+          {/* Search Bar Desktop */}
+          <div style={{ position: "relative", width: "220px", marginLeft: "0.5rem" }} ref={searchRef}>
+            <div style={{ position: "relative" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }}><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
+                style={{
+                  width: "100%",
+                  padding: "0.5rem 1rem 0.5rem 2.2rem",
+                  borderRadius: "20px",
+                  background: "rgba(148, 163, 184, 0.05)",
+                  border: "1px solid rgba(148, 163, 184, 0.1)",
+                  color: "white",
+                  fontSize: "0.85rem",
+                  outline: "none",
+                  transition: "all 0.2s"
+                }}
+                className="search-input"
+              />
+            </div>
+            {renderResults()}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
             {user ? (
               <Link href="/dashboard" style={{ textDecoration: "none" }}>
                 <div style={{
@@ -169,6 +348,30 @@ export default function AppNavbar({ user }) {
             padding: "1rem 1.5rem",
           }}
         >
+          {/* Mobile Search */}
+          <div style={{ marginBottom: "1.5rem", position: "relative" }}>
+            <div style={{ position: "relative" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }}><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+              <input
+                type="text"
+                placeholder="Search players, teams..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem 1rem 0.75rem 2.5rem",
+                  borderRadius: "12px",
+                  background: "rgba(148, 163, 184, 0.05)",
+                  border: "1px solid rgba(148, 163, 184, 0.1)",
+                  color: "white",
+                  fontSize: "0.95rem",
+                  outline: "none"
+                }}
+              />
+            </div>
+            {renderResults()}
+          </div>
           {navLinks.map((link) => {
             const isActive =
               link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
@@ -235,6 +438,14 @@ export default function AppNavbar({ user }) {
           .mobile-toggle {
             display: block !important;
           }
+        }
+        .search-result-item:hover {
+          background: rgba(148, 163, 184, 0.1) !important;
+        }
+        .search-input:focus {
+          border-color: var(--accent-cyan) !important;
+          background: rgba(148, 163, 184, 0.08) !important;
+          width: 260px !important;
         }
       `}</style>
     </nav>
