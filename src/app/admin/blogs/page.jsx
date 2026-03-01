@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import AdminDeleteButton from "../../components/AdminDeleteButton";
 
 export const metadata = {
     title: "Manage Articles | KhelPediA Admin",
@@ -102,15 +103,11 @@ export default async function AdminBlogsPage() {
                                             Edit
                                         </Link>
 
-                                        {/* Delete Form */}
-                                        <form action={deleteBlog} onSubmit={(e) => {
-                                            if (!confirm('Are you sure you want to delete this article?')) e.preventDefault();
-                                        }}>
-                                            <input type="hidden" name="id" value={blog.id} />
-                                            <button type="submit" className="btn btn-secondary" style={{ padding: "0.4rem 0.8rem", fontSize: "0.85rem", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.3)" }}>
-                                                Delete
-                                            </button>
-                                        </form>
+                                        <AdminDeleteButton
+                                            action={deleteBlog}
+                                            id={blog.id}
+                                            confirmMessage="Are you sure you want to delete this article?"
+                                        />
                                     </td>
                                 </tr>
                             ))

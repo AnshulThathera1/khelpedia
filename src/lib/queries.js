@@ -22,17 +22,30 @@ export async function getGameBySlug(slug) {
 
 // ======================== TOURNAMENTS ========================
 export async function getTournaments(filters = {}) {
+  const { page = 1, limit = 20, status, gameId, region, tier, paginate = false } = filters;
+  
   let query = supabase
     .from("tournaments")
-    .select("*, games(name, slug, icon_url)")
+    .select("*, games(name, slug, icon_url)", { count: "exact" })
     .order("start_date", { ascending: false });
 
-  if (filters.status) query = query.eq("status", filters.status);
-  if (filters.gameId) query = query.eq("game_id", filters.gameId);
-  if (filters.region) query = query.eq("region", filters.region);
+  if (status) query = query.eq("status", status);
+  if (gameId) query = query.eq("game_id", gameId);
+  if (region) query = query.eq("region", region);
+  if (tier) query = query.eq("tier", tier);
 
-  const { data, error } = await query;
+  if (paginate) {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
+  }
+
+  const { data, count, error } = await query;
   if (error) console.error("Error fetching tournaments:", error);
+  
+  if (paginate) {
+    return { tournaments: data || [], count: count || 0 };
+  }
   return data || [];
 }
 

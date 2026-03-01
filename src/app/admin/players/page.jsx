@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import AdminDeleteButton from "../../components/AdminDeleteButton";
 
 export const metadata = {
     title: "Manage Custom Players | KhelPediA Admin",
@@ -130,14 +131,12 @@ export default async function AdminPlayersPage() {
 
                                         {/* Delete Custom Player */}
                                         {player.is_custom && (
-                                            <form action={deletePlayer} onSubmit={(e) => {
-                                                if (!confirm('Are you sure you want to delete this custom player?')) e.preventDefault();
-                                            }}>
-                                                <input type="hidden" name="id" value={player.id} />
-                                                <button type="submit" className="btn btn-secondary" style={{ padding: "0.4rem 0.8rem", fontSize: "0.85rem", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.3)" }}>
-                                                    Delete
-                                                </button>
-                                            </form>
+                                            <AdminDeleteButton
+                                                action={deletePlayer}
+                                                id={player.id}
+                                                label="Delete"
+                                                confirmMessage="Are you sure you want to delete this custom player?"
+                                            />
                                         )}
                                     </td>
                                 </tr>

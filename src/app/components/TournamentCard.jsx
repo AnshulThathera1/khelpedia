@@ -46,23 +46,30 @@ export default function TournamentCard({ tournament }) {
                             marginBottom: "1.25rem",
                         }}
                     >
-                        <div style={{ flex: 1, paddingRight: "10px" }}>
-                            <div style={{ color: "var(--accent-cyan)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
-                                {tournament.games?.icon_url && (
-                                    <img src={tournament.games.icon_url} alt="" style={{ width: 14, height: 14, objectFit: "contain" }} />
-                                )}
-                                {tournament.games?.name || "Global Event"}
+                        <div style={{ flex: 1, paddingRight: "10px", display: "flex", gap: "1rem", alignItems: "center" }}>
+                            {tournament.logo_url && (
+                                <div style={{ width: 44, height: 44, borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-color)", overflow: "hidden", flexShrink: 0 }}>
+                                    <img src={tournament.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: "4px" }} />
+                                </div>
+                            )}
+                            <div>
+                                <div style={{ color: "var(--accent-cyan)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                    {tournament.games?.icon_url && (
+                                        <img src={tournament.games.icon_url} alt="" style={{ width: 14, height: 14, objectFit: "contain" }} />
+                                    )}
+                                    {tournament.games?.name || "Global Event"}
+                                </div>
+                                <h3
+                                    style={{
+                                        fontSize: "1.1rem",
+                                        fontWeight: 700,
+                                        color: "var(--text-primary)",
+                                        lineHeight: 1.3,
+                                    }}
+                                >
+                                    {tournament.name}
+                                </h3>
                             </div>
-                            <h3
-                                style={{
-                                    fontSize: "1.1rem",
-                                    fontWeight: 700,
-                                    color: "var(--text-primary)",
-                                    lineHeight: 1.3,
-                                }}
-                            >
-                                {tournament.name}
-                            </h3>
                         </div>
                         <span
                             className="badge"

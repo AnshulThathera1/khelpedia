@@ -87,6 +87,20 @@ export default async function AdminDashboardPage() {
                     </Link>
                 </div>
 
+                {/* Manage Tournaments Tile */}
+                <div className="glass-card" style={{ padding: "2rem", display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 12 16 2l-4 9 9 4-13 1z" /><path d="M14.5 17.5 12 21h-7l1.5-4.5" /></svg>
+                        </div>
+                    </div>
+                    <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Manage Tournaments</h3>
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", flex: 1, marginBottom: "1.5rem" }}>Edit synced tournaments, adjust prize pools, or flag events as verified to prevent scraper overrides.</p>
+                    <Link href="/admin/tournaments" className="btn btn-secondary" style={{ width: "100%", textAlign: "center", padding: "0.8rem", textDecoration: "none" }}>
+                        Manage Tournaments
+                    </Link>
+                </div>
+
             </div>
         </div>
     );
