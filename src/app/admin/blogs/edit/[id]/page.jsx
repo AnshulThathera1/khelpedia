@@ -1,42 +1,57 @@
 import { createClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { revalidatePath } from "next/cache";
 
 export const metadata = {
-    title: "Draft New Article | KhelPediA Admin",
+    title: "Edit Article | KhelPediA Admin",
 };
 
-export default async function NewBlogPage() {
+export default async function EditBlogPage({ params }) {
+    const { id } = await params;
+    const supabase = await createClient();
 
-    async function createBlog(formData) {
+    const { data: blog, error } = await supabase
+        .from("blogs")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if (error || !blog) {
+        notFound();
+    }
+
+    async function updateBlog(formData) {
         "use server";
         const title = formData.get("title");
         const slug = formData.get("slug").toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
         const excerpt = formData.get("excerpt");
         const content = formData.get("content");
         const coverImageUrl = formData.get("cover_image_url");
+        const isPublished = formData.get("is_published") === "on";
 
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const supabaseServer = await createClient();
+        const { error: updateError } = await supabaseServer
+            .from("blogs")
+            .update({
+                title,
+                slug,
+                excerpt,
+                content,
+                cover_image_url: coverImageUrl,
+                is_published: isPublished,
+                updated_at: new Date().toISOString(),
+            })
+            .eq("id", id);
 
-        if (!user) redirect("/login");
-
-        const { error } = await supabase.from("blogs").insert([{
-            title,
-            slug,
-            excerpt,
-            content,
-            cover_image_url: coverImageUrl,
-            author_id: user.id,
-            is_published: false,
-        }]);
-
-        if (error) {
-            console.error("Failed to create blog:", error);
-            // In a real app, return error state. For now, redirect back to blogs with error pattern
-            redirect("/admin/blogs?error=creation_failed");
+        if (updateError) {
+            console.error("Failed to update blog:", updateError);
+            redirect(`/admin/blogs/edit/${id}?error=update_failed`);
         }
 
+        revalidatePath("/admin/blogs");
+        revalidatePath("/blogs");
+        revalidatePath(`/blogs/${slug}`);
         redirect("/admin/blogs");
     }
 
@@ -46,14 +61,14 @@ export default async function NewBlogPage() {
                 <Link href="/admin/blogs" style={{ color: "var(--accent-cyan)", textDecoration: "none", fontSize: "0.9rem", display: "inline-flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
                     &larr; Back to Articles
                 </Link>
-                <h1 className="page-title">Draft New Article</h1>
+                <h1 className="page-title">Edit Article</h1>
                 <p className="page-description">
-                    Write your esports news. The article will be saved as a draft by default.
+                    Update your content or change the publishing status.
                 </p>
             </div>
 
             <div className="glass-card" style={{ padding: "2.5rem" }}>
-                <form action={createBlog} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                <form action={updateBlog} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
                     {/* Title */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -62,32 +77,47 @@ export default async function NewBlogPage() {
                             type="text"
                             id="title"
                             name="title"
+                            defaultValue={blog.title}
                             required
-                            placeholder="e.g. Sentinels Secure VCT Masters Victory"
                             style={{ padding: "0.8rem", borderRadius: "8px", background: "rgba(10, 14, 23, 0.5)", border: "1px solid var(--border-color)", color: "white", width: "100%", fontSize: "1rem" }}
                         />
                     </div>
 
                     {/* Slug */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                        <label htmlFor="slug" style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>URL Slug <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(e.g. sentinels-win-masters)</span></label>
+                        <label htmlFor="slug" style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>URL Slug</label>
                         <input
                             type="text"
                             id="slug"
                             name="slug"
+                            defaultValue={blog.slug}
                             required
-                            placeholder="sentinels-win-masters"
                             style={{ padding: "0.8rem", borderRadius: "8px", background: "rgba(10, 14, 23, 0.5)", border: "1px solid var(--border-color)", color: "white", width: "100%", fontFamily: "monospace" }}
                         />
                     </div>
 
+                    {/* Published Toggle */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
+                        <input
+                            type="checkbox"
+                            id="is_published"
+                            name="is_published"
+                            defaultChecked={blog.is_published}
+                            style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                        />
+                        <label htmlFor="is_published" style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.95rem", cursor: "pointer" }}>
+                            Published (Visible to everyone)
+                        </label>
+                    </div>
+
                     {/* Cover Image */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                        <label htmlFor="cover_image_url" style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Cover Image URL (Optional)</label>
+                        <label htmlFor="cover_image_url" style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Cover Image URL</label>
                         <input
                             type="url"
                             id="cover_image_url"
                             name="cover_image_url"
+                            defaultValue={blog.cover_image_url}
                             placeholder="https://example.com/image.jpg"
                             style={{ padding: "0.8rem", borderRadius: "8px", background: "rgba(10, 14, 23, 0.5)", border: "1px solid var(--border-color)", color: "white", width: "100%" }}
                         />
@@ -95,26 +125,26 @@ export default async function NewBlogPage() {
 
                     {/* Excerpt */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                        <label htmlFor="excerpt" style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Short Excerpt <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(Appears on the homepage feed)</span></label>
+                        <label htmlFor="excerpt" style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Short Excerpt</label>
                         <textarea
                             id="excerpt"
                             name="excerpt"
+                            defaultValue={blog.excerpt}
                             required
                             rows={3}
-                            placeholder="A brief summary of the article..."
                             style={{ padding: "0.8rem", borderRadius: "8px", background: "rgba(10, 14, 23, 0.5)", border: "1px solid var(--border-color)", color: "white", width: "100%", resize: "vertical" }}
                         />
                     </div>
 
                     {/* Main Content */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                        <label htmlFor="content" style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Article Body <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(Supports HTML / Markdown)</span></label>
+                        <label htmlFor="content" style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Article Body (HTML/Markdown)</label>
                         <textarea
                             id="content"
                             name="content"
+                            defaultValue={blog.content}
                             required
                             rows={15}
-                            placeholder="<h2>The Grand Finals</h2><p>It was a massive game...</p>"
                             style={{ padding: "0.8rem", borderRadius: "8px", background: "rgba(10, 14, 23, 0.5)", border: "1px solid var(--border-color)", color: "white", width: "100%", resize: "vertical", fontFamily: "monospace", fontSize: "0.9rem" }}
                         />
                     </div>
@@ -124,7 +154,7 @@ export default async function NewBlogPage() {
                             Cancel
                         </Link>
                         <button type="submit" className="btn btn-primary" style={{ padding: "0.8rem 2rem", flex: 2, fontSize: "1rem", fontWeight: 700 }}>
-                            Save Draft
+                            Save Changes
                         </button>
                     </div>
 

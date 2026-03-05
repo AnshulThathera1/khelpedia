@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "Esports News & Updates | KhelPediA",
     description: "The latest news, patch notes, and tournament coverage in the esports world.",
@@ -9,15 +11,38 @@ export const metadata = {
 export default async function BlogsIndexPage() {
     const supabase = await createClient();
 
-    // Only fetch blogs where is_published is true
-    const { data: blogs, error } = await supabase
+    // Fetch blogs without profile join to prevent schema error
+    const { data: blogsData, error } = await supabase
         .from("blogs")
         .select(`
-            id, title, slug, excerpt, cover_image_url, published_at, created_at,
-            profiles ( display_name, avatar_url )
+            id, title, slug, excerpt, cover_image_url, created_at, author_id
         `)
         .eq("is_published", true)
         .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("Error fetching blogs:", error);
+    }
+
+    let blogs = blogsData || [];
+
+    if (blogs.length > 0) {
+        const authorIds = [...new Set(blogs.map(b => b.author_id))];
+        const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, display_name, avatar_url")
+            .in("id", authorIds);
+
+        const profileMap = (profiles || []).reduce((acc, p) => {
+            acc[p.id] = p;
+            return acc;
+        }, {});
+
+        blogs = blogs.map(blog => ({
+            ...blog,
+            profiles: profileMap[blog.author_id] || null
+        }));
+    }
 
     return (
         <div className="page-container">
@@ -31,11 +56,8 @@ export default async function BlogsIndexPage() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "2rem" }}>
                 {blogs && blogs.length > 0 ? (
                     blogs.map(blog => (
-                        <Link href={`/blogs/${blog.slug}`} key={blog.id} style={{ textDecoration: "none" }}>
-                            <div className="glass-card" style={{ padding: 0, overflow: "hidden", height: "100%", display: "flex", flexDirection: "column", transition: "transform 0.2s, box-shadow 0.2s" }}
-                                onMouseOver={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 10px 30px rgba(14, 165, 233, 0.2)"; }}
-                                onMouseOut={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
-                            >
+                        <Link href={`/blogs/${blog.slug}`} key={blog.id} className="blog-card-link" style={{ textDecoration: "none" }}>
+                            <div className="glass-card blog-card" style={{ padding: 0, overflow: "hidden", height: "100%", display: "flex", flexDirection: "column", transition: "transform 0.2s, box-shadow 0.2s" }}>
                                 {/* Blog Cover Image */}
                                 <div style={{ height: "200px", width: "100%", background: "var(--bg-secondary)", position: "relative" }}>
                                     {blog.cover_image_url ? (
@@ -85,6 +107,13 @@ export default async function BlogsIndexPage() {
                     </div>
                 )}
             </div>
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .blog-card:hover {
+                    transform: translateY(-4px) !important;
+                    box-shadow: 0 10px 30px rgba(14, 165, 233, 0.2) !important;
+                }
+            `}} />
         </div>
     );
 }

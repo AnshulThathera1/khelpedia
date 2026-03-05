@@ -2,6 +2,8 @@ import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata({ params }) {
     const supabase = await createClient();
     const resolvedParams = await params;
@@ -25,19 +27,26 @@ export default async function BlogPostPage({ params }) {
     const supabase = await createClient();
     const resolvedParams = await params;
 
-    // Fetch the single article and join the author's profile data
+    // Fetch the single article without profile join
     const { data: blog, error } = await supabase
         .from("blogs")
-        .select(`
-            *,
-            profiles ( display_name, avatar_url )
-        `)
+        .select(`*`)
         .eq("slug", resolvedParams.slug)
         .eq("is_published", true)
         .single();
 
     if (error || !blog) {
         notFound();
+    }
+
+    // Fetch profile separately
+    if (blog.author_id) {
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("display_name, avatar_url")
+            .eq("id", blog.author_id)
+            .single();
+        blog.profiles = profile || null;
     }
 
     return (
