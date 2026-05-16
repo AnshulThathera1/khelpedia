@@ -43,7 +43,9 @@ export default function MarketingAdmin() {
                 className="glass-card"
                 style={{ padding: "3rem" }}
             >
-                <h1 className="page-title" style={{ marginBottom: "2rem" }}>Marketing Campaign Manager</h1>
+                <div className="page-header" style={{ textAlign: "center", marginBottom: "4rem" }}>
+                    <h1 className="page-title" style={{ fontSize: "3rem", fontWeight: 900, fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase", letterSpacing: "0.05em" }}>Marketing Campaign Manager</h1>
+                </div>
 
                 <form onSubmit={handleSend} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                     <div>

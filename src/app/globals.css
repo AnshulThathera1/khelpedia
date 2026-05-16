@@ -6,36 +6,34 @@
    ============================================ */
 
 :root {
-  --bg-primary: #0a0e17;
-  --bg-secondary: #0f172a;
-  --bg-card: #1e293b;
-  --bg-card-hover: #273449;
-  --bg-glass: rgba(15, 23, 42, 0.7);
+  --bg-primary: #0f1923; /* Riot Deep Dark */
+  --bg-secondary: #17232d; /* Surface Dark */
+  --bg-card: #1f2326; /* Secondary Dark */
+  --bg-card-hover: #232a32;
+  --bg-glass: rgba(15, 25, 35, 0.85);
 
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #64748b;
+  --text-primary: #ece8e1; /* Riot Off-White */
+  --text-secondary: #aab0b3; /* Slate Gray */
+  --text-muted: #7e7e7e;
 
-  --accent-cyan: #0ea5e9;
-  /* Ice Blue */
-  --accent-purple: #6366f1;
-  /* Deep Violet */
-  --accent-red: #f43f5e;
-  --accent-orange: #f59e0b;
+  --accent-red: #ff4655; /* Riot Red */
+  --accent-cyan: #00bda5; /* Accent Teal */
+  --accent-purple: #7b46ff;
+  --accent-orange: #ffb400;
 
-  --gradient-primary: linear-gradient(135deg, #0ea5e9, #6366f1);
-  --gradient-hero: linear-gradient(180deg, #0a0e17 0%, #0f172a 100%);
-  --gradient-card: linear-gradient(180deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.4));
+  --gradient-primary: linear-gradient(135deg, #ff4655, #c8323c);
+  --gradient-hero: linear-gradient(180deg, #0f1923 0%, #17232d 100%);
+  --gradient-card: linear-gradient(180deg, rgba(31, 35, 38, 0.8), rgba(23, 35, 45, 0.9));
 
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-glow: rgba(14, 165, 233, 0.3);
+  --border-color: rgba(236, 232, 225, 0.1);
+  --border-glow: rgba(255, 70, 85, 0.4);
 
-  --shadow-glow-cyan: 0 4px 20px rgba(14, 165, 233, 0.1);
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.2);
+  --shadow-glow-red: 0 4px 20px rgba(255, 70, 85, 0.15);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 2px; /* Sharp corners */
+  --radius-md: 4px;
+  --radius-lg: 0px; /* Zero radius for big panels */
 }
 
 @theme inline {
@@ -59,6 +57,10 @@ body {
   font-family: "Outfit", sans-serif;
   line-height: 1.6;
   overflow-x: hidden;
+}
+
+main {
+  padding-top: 100px;
 }
 
 ::-webkit-scrollbar {
@@ -87,36 +89,48 @@ body {
 
 .glass-card {
   background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
+  position: relative;
+}
+
+.glass-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 20px;
+  background: var(--accent-red);
 }
 
 .card {
-  background: var(--gradient-card);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   padding: 1.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow-card);
   position: relative;
   overflow: hidden;
 }
 
+.card:hover {
+  border-color: var(--accent-red);
+  transform: translateY(-2px);
+  background: var(--bg-card-hover);
+}
+
 .card::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(225deg, rgba(14, 165, 233, 0.03) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.card:hover {
-  border-color: rgba(14, 165, 233, 0.4);
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(14, 165, 233, 0.1);
-  transform: translateY(-4px) scale(1.01);
-  background: linear-gradient(180deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.6));
+  bottom: 0;
+  right: 0;
+  width: 15px;
+  height: 15px;
+  background: linear-gradient(135deg, transparent 50%, var(--border-color) 50%);
 }
 
 /* ============================================
@@ -174,46 +188,68 @@ body {
    ============================================ */
 
 .btn-primary {
-  background: var(--gradient-primary);
+  background: var(--accent-red);
   color: white;
-  font-family: "Outfit", sans-serif;
-  font-weight: 500;
-  padding: 10px 24px;
+  font-family: "Rajdhani", sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 12px 32px;
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
+}
+
+.btn-primary:hover::after {
+  left: 100%;
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.25);
+  background: #ff5d6a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(255, 70, 85, 0.3);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.03);
+  background: transparent;
   color: var(--text-primary);
-  font-family: "Outfit", sans-serif;
-  font-weight: 500;
-  padding: 10px 24px;
+  font-family: "Rajdhani", sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 11px 31px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(236, 232, 225, 0.05);
+  border-color: var(--text-primary);
 }
 
 /* ============================================
@@ -438,14 +474,16 @@ body {
    PAGE CONTAINER
    ============================================ */
 
-.page-container {
-  max-width: 1200px;
+.container, .page-container {
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem;
+  padding: 0 1.5rem;
+  width: 100%;
 }
 
 .page-header {
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
+  text-align: center; /* Centering the text inside headers as well */
 }
 
 .page-title {

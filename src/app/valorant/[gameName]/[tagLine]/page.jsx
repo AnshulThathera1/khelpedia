@@ -166,6 +166,19 @@ export default async function ValorantProfilePage({ params }) {
         </div>
       </main>
 
+      {/* Compliance Footer */}
+      <footer className="max-w-6xl mx-auto px-4 py-12 border-t border-zinc-800/50">
+        <div className="bg-zinc-900/30 border border-zinc-800/50 p-6 rounded-xl">
+          <h4 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-3">Compliance & Privacy Notice</h4>
+          <p className="text-xs text-zinc-500 leading-relaxed max-w-4xl">
+            KhelPediA operates in accordance with Riot Games' official API policies. Statistics and match history are 
+            displayed only for players who have explicitly **opted-in** to our platform via Riot Sign On (RSO). 
+            If this is your profile and you wish to hide or manage your data, please log in to your dashboard. 
+            Detailed data for non-opted-in players is restricted to comply with privacy regulations.
+          </p>
+        </div>
+      </footer>
+
     </div>
   );
 }

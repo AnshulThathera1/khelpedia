@@ -16,19 +16,36 @@ export default async function AdminDashboardPage() {
 
     return (
         <div className="page-container">
-            <div className="page-header" style={{ marginBottom: "2.5rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
-                    <div style={{ padding: "0.4rem 1rem", background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", borderRadius: "20px", fontSize: "0.85rem", fontWeight: 700, border: "1px solid rgba(239, 68, 68, 0.2)" }}>
+            <div className="page-header" style={{ textAlign: "center", marginBottom: "5rem", paddingTop: "2rem" }}>
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "1rem", marginBottom: "2rem" }}>
+                    <div style={{ 
+                        padding: "0.5rem 1.25rem", 
+                        background: "rgba(255, 70, 85, 0.1)", 
+                        color: "var(--accent-red)", 
+                        borderRadius: "0px", 
+                        fontSize: "0.75rem", 
+                        fontWeight: 900, 
+                        border: "1px solid var(--accent-red)",
+                        letterSpacing: "0.2em",
+                        fontFamily: '"Orbitron", sans-serif'
+                    }}>
                         RESTRICTED ACCESS
                     </div>
                 </div>
-                <h1 className="page-title">Content Management System</h1>
-                <p className="page-description">
+                <h1 className="page-title" style={{ fontSize: "3.5rem", fontWeight: 900, fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Content Management System</h1>
+                <p className="page-description" style={{ fontSize: "1.1rem", color: "var(--text-secondary)", maxWidth: "800px", margin: "0 auto" }}>
                     Create news articles, manage custom verified players, and moderate the KhelPediA platform.
                 </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
+            <div style={{ 
+                display: "grid", 
+                gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", 
+                gap: "2rem", 
+                justifyContent: "center",
+                maxWidth: "1100px",
+                margin: "0 auto"
+            }}>
 
                 {/* Manage Blogs Tile */}
                 <div className="glass-card" style={{ padding: "2rem", display: "flex", flexDirection: "column" }}>

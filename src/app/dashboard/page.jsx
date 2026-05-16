@@ -8,6 +8,7 @@ export default function DashboardPage() {
     const supabase = createClient();
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
+    const [riotAccount, setRiotAccount] = useState(null);
     const [loading, setLoading] = useState(true);
     const [pushStatus, setPushStatus] = useState("idle"); // idle, registering, success, error
     const router = useRouter();
@@ -23,16 +24,20 @@ export default function DashboardPage() {
                 }
                 setUser(user);
 
-                const { data: profile, error: profileError } = await supabase
-                    .from("profiles")
-                    .select("*")
-                    .eq("id", user.id)
-                    .single();
+                // Fetch Profile and Riot Account in parallel
+                const [profileRes, riotRes] = await Promise.all([
+                    supabase.from("profiles").select("*").eq("id", user.id).single(),
+                    supabase.from("valorant_accounts").select("*").eq("user_id", user.id).single()
+                ]);
 
-                if (profileError) {
-                    console.error("Dashboard: Profile fetch error", profileError);
+                if (profileRes.error && profileRes.error.code !== "PGRST116") {
+                    console.error("Dashboard: Profile fetch error", profileRes.error);
                 }
-                setProfile(profile);
+                setProfile(profileRes.data);
+
+                if (riotRes.data) {
+                    setRiotAccount(riotRes.data);
+                }
             } catch (err) {
                 console.error("Dashboard: Unexpected error", err);
             } finally {
@@ -69,9 +74,9 @@ export default function DashboardPage() {
 
     return (
         <div className="page-container">
-            <div className="page-header" style={{ marginBottom: "2rem" }}>
-                <h1 className="page-title">Commander Dashboard</h1>
-                <p className="page-description">
+            <div className="page-header" style={{ textAlign: "center", marginBottom: "4rem" }}>
+                <h1 className="page-title" style={{ fontSize: "3.5rem", fontWeight: 900, fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Commander Dashboard</h1>
+                <p className="page-description" style={{ fontSize: "1.1rem", color: "var(--text-secondary)", maxWidth: "800px", margin: "0 auto" }}>
                     Welcome back. Your central command for connected accounts and personal stats.
                 </p>
             </div>
@@ -177,14 +182,62 @@ export default function DashboardPage() {
                     </h3>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem", background: "rgba(10, 14, 23, 0.5)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 10px #4ade80" }} />
-                                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>Riot Games (Mock)</span>
+                        {/* Riot Games Connection */}
+                        <div style={{ 
+                            padding: "1.25rem", 
+                            background: "rgba(255, 70, 85, 0.05)", 
+                            borderRadius: "var(--radius-md)", 
+                            border: "1px solid rgba(255, 70, 85, 0.2)",
+                            position: "relative",
+                            overflow: "hidden"
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff4655" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 2L2 12L12 22L22 12L12 2Z" />
+                                    </svg>
+                                    <span style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>Riot Games</span>
+                                </div>
+                                {riotAccount ? (
+                                    <span style={{ fontSize: "0.7rem", fontWeight: 800, color: "#4ade80", textTransform: "uppercase", letterSpacing: "0.05em", background: "rgba(74, 222, 128, 0.1)", padding: "4px 10px", borderRadius: "20px", border: "1px solid rgba(74, 222, 128, 0.2)" }}>
+                                        Verified
+                                    </span>
+                                ) : (
+                                    <span style={{ fontSize: "0.7rem", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                        Not Linked
+                                    </span>
+                                )}
                             </div>
-                            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", background: "var(--bg-secondary)", padding: "2px 8px", borderRadius: "12px" }}>Active</span>
+                            
+                            {riotAccount ? (
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                    <p style={{ margin: 0, fontSize: "1rem", fontWeight: 600, color: "#fff" }}>
+                                        {riotAccount.game_name}<span style={{ opacity: 0.5 }}>#{riotAccount.tag_line}</span>
+                                    </p>
+                                </div>
+                            ) : (
+                                <div style={{ marginTop: "1rem" }}>
+                                    <p style={{ margin: "0 0 1rem 0", fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.4 }}>
+                                        Verify your identity via Riot Sign On to enable detailed stat tracking and opt-in to public rankings.
+                                    </p>
+                                    <button 
+                                        onClick={() => alert("Verification will be enabled once Riot approves the RSO Client (Application ID: 806922).")}
+                                        className="btn btn-primary" 
+                                        style={{ 
+                                            width: "100%", 
+                                            background: "#ff4655", 
+                                            borderColor: "#ff4655",
+                                            fontSize: "0.85rem",
+                                            padding: "0.6rem"
+                                        }}
+                                    >
+                                        Verify with Riot
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
+                        {/* Other placeholders */}
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem", background: "rgba(10, 14, 23, 0.5)", borderRadius: "var(--radius-md)", border: "1px dashed var(--border-color)", opacity: 0.6 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--text-muted)" }} />

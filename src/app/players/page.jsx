@@ -38,11 +38,13 @@ export default function PlayersPage() {
             variants={containerVariants}
             className="page-container"
         >
-            <motion.div variants={itemVariants} className="page-header">
-                <h1 className="page-title">Pro Player Rankings</h1>
-                <p className="page-description">
-                    The best professional athletes in the business. Ranked by career earnings.
-                </p>
+            <motion.div variants={itemVariants}>
+                <div className="page-header" style={{ textAlign: "center", marginBottom: "4rem" }}>
+                    <h1 className="page-title" style={{ fontSize: "3.5rem", fontWeight: 900, fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Pro Player Rankings</h1>
+                    <p className="page-description" style={{ fontSize: "1.1rem", color: "var(--text-secondary)", maxWidth: "800px", margin: "0 auto" }}>
+                        The best professional athletes in the business. Ranked by career earnings.
+                    </p>
+                </div>
             </motion.div>
 
             <motion.div variants={itemVariants} className="glass-card" style={{ padding: "1.5rem" }}>

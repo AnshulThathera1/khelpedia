@@ -23,6 +23,11 @@ export default function LoginPage() {
         }
     };
 
+    const handleRiotLogin = () => {
+        // This will be enabled once Riot approves the RSO Client
+        alert("Riot Sign On is currently being verified by Riot Games. It will be enabled shortly! (App ID: 806922)");
+    };
+
     const handleEmailLogin = async (e) => {
         e.preventDefault();
         if (!email) return;
@@ -62,9 +67,9 @@ export default function LoginPage() {
                 left: "20%",
                 width: "400px",
                 height: "400px",
-                background: "var(--accent-purple)",
-                filter: "blur(150px)",
-                opacity: 0.15,
+                background: "var(--accent-red)",
+                filter: "blur(180px)",
+                opacity: 0.1,
                 borderRadius: "50%",
                 zIndex: -1
             }} />
@@ -74,9 +79,9 @@ export default function LoginPage() {
                 right: "20%",
                 width: "500px",
                 height: "500px",
-                background: "var(--accent-cyan)",
+                background: "#000",
                 filter: "blur(150px)",
-                opacity: 0.1,
+                opacity: 0.3,
                 borderRadius: "50%",
                 zIndex: -1
             }} />
@@ -95,20 +100,20 @@ export default function LoginPage() {
                     <div style={{
                         width: "60px",
                         height: "60px",
-                        background: "var(--gradient-primary)",
-                        borderRadius: "16px",
+                        background: "var(--accent-red)",
+                        borderRadius: "2px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         transform: "rotate(45deg)",
-                        boxShadow: "0 10px 30px rgba(14, 165, 233, 0.4)",
+                        boxShadow: "0 0 30px rgba(255, 70, 85, 0.4)",
                         margin: "0 auto 1.5rem"
                     }}>
                         <span style={{
                             color: "#fff",
                             fontFamily: '"Orbitron", sans-serif',
-                            fontWeight: 800,
-                            fontSize: "28px",
+                            fontWeight: 900,
+                            fontSize: "32px",
                             transform: "rotate(-45deg)",
                             textShadow: "0 2px 10px rgba(0,0,0,0.5)"
                         }}>K</span>
@@ -164,6 +169,30 @@ export default function LoginPage() {
                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                         </svg>
                         Continue with Google
+                    </button>
+
+                    {/* Riot Button */}
+                    <button
+                        className="btn btn-secondary"
+                        onClick={handleRiotLogin}
+                        disabled={isLoading}
+                        style={{
+                            width: "100%",
+                            padding: "0.8rem",
+                            fontSize: "1rem",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "0.75rem",
+                            background: "rgba(255, 70, 85, 0.05)",
+                            color: "#ff4655",
+                            borderColor: "rgba(255, 70, 85, 0.2)"
+                        }}
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff4655" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 12L12 22L22 12L12 2Z" />
+                        </svg>
+                        Continue with Riot Games
                     </button>
 
                     <button

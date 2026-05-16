@@ -63,13 +63,14 @@ export default function HomePage() {
             style={{
               fontFamily: '"Rajdhani", sans-serif',
               fontSize: "clamp(3rem, 7vw, 6rem)",
-              fontWeight: 800,
+              fontWeight: 900,
               lineHeight: 1,
               marginBottom: "1.5rem",
-              letterSpacing: "-0.03em"
+              letterSpacing: "0.05em",
+              textTransform: "uppercase"
             }}
           >
-            THE <span className="text-gradient">EPICENTER</span> OF <br />
+            THE <span style={{ color: "var(--accent-red)" }}>EPICENTER</span> OF <br />
             GLOBAL ESPORTS
           </motion.h1>
           <motion.p
@@ -108,7 +109,7 @@ export default function HomePage() {
               </h2>
               <p className="section-subtitle">Happening right now in the arena</p>
             </div>
-            <Link href="/tournaments?status=live" style={{ color: "var(--accent-cyan)", textDecoration: "none", fontWeight: 700, fontSize: "0.9rem" }}>
+            <Link href="/tournaments?status=live" style={{ color: "var(--accent-red)", textDecoration: "none", fontWeight: 700, fontSize: "0.9rem" }}>
               View All Live Matches
             </Link>
           </motion.div>
@@ -116,7 +117,7 @@ export default function HomePage() {
           <AnimatePresence mode="wait">
             {isLoading ? (
               <div className="grid-auto">
-                {[1, 2, 3, 4].map(i => <Skeleton key={i} style={{ height: 200, borderRadius: "14px" }} />)}
+                {[1, 2, 3, 4].map(i => <Skeleton key={i} style={{ height: 200, borderRadius: "2px" }} />)}
               </div>
             ) : liveTournaments.length > 0 ? (
               <motion.div variants={containerVariants} className="grid-auto">
@@ -131,7 +132,7 @@ export default function HomePage() {
                 <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🏟️</div>
                 No top-tier tournaments are currently live.
                 <div style={{ marginTop: "1rem" }}>
-                  <Link href="/tournaments" style={{ color: "var(--accent-cyan)", textDecoration: "none" }}>Check the schedule →</Link>
+                  <Link href="/tournaments" style={{ color: "var(--accent-red)", textDecoration: "none" }}>Check the schedule →</Link>
                 </div>
               </motion.div>
             )}
@@ -149,7 +150,7 @@ export default function HomePage() {
 
           {isLoading ? (
             <div className="grid-auto">
-              {[1, 2, 3, 4].map(i => <Skeleton key={i} style={{ height: 180, borderRadius: "14px" }} />)}
+              {[1, 2, 3, 4].map(i => <Skeleton key={i} style={{ height: 180, borderRadius: "2px" }} />)}
             </div>
           ) : (
             <motion.div variants={containerVariants} className="grid-auto">
@@ -167,14 +168,14 @@ export default function HomePage() {
           <section>
             <motion.div variants={itemVariants} className="section-header">
               <h2 className="section-title">World Rankings</h2>
-              <Link href="/players" style={{ color: "var(--accent-cyan)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>
+              <Link href="/players" style={{ color: "var(--accent-red)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>
                 Full Leaderboard
               </Link>
             </motion.div>
             <AnimatePresence>
               {isLoading ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} style={{ height: 60, borderRadius: "10px" }} />)}
+                  {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} style={{ height: 60, borderRadius: "2px" }} />)}
                 </div>
               ) : (
                 <motion.div variants={containerVariants} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -192,14 +193,14 @@ export default function HomePage() {
           <section>
             <motion.div variants={itemVariants} className="section-header">
               <h2 className="section-title">Schedule</h2>
-              <Link href="/tournaments?status=upcoming" style={{ color: "var(--accent-cyan)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>
+              <Link href="/tournaments?status=upcoming" style={{ color: "var(--accent-red)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>
                 Full Calendar
               </Link>
             </motion.div>
             <AnimatePresence>
               {isLoading ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  {[1, 2, 3, 4].map(i => <Skeleton key={i} style={{ height: 160, borderRadius: "14px" }} />)}
+                  {[1, 2, 3, 4].map(i => <Skeleton key={i} style={{ height: 160, borderRadius: "2px" }} />)}
                 </div>
               ) : (
                 <motion.div variants={containerVariants} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>

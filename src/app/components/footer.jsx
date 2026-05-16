@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 const footerLinks = [
@@ -6,7 +8,7 @@ const footerLinks = [
         links: [
             { href: "/games", label: "Games" },
             { href: "/tournaments", label: "Tournaments" },
-            { href: "/players", label: "Players" },
+            { href: "/players", label: "Pro Players" },
             { href: "/teams", label: "Teams" },
         ],
     },
@@ -19,41 +21,50 @@ const footerLinks = [
             { href: "/games/dota-2", label: "Dota 2" },
         ],
     },
+    {
+        title: "Legal",
+        links: [
+            { href: "/privacy", label: "Privacy Policy" },
+            { href: "/terms", label: "Terms of Service" },
+            { href: "/valorant", label: "Opt-in Policy" },
+        ],
+    },
 ];
 
 export default function Footer() {
     return (
         <footer
             style={{
-                background: "var(--bg-secondary)",
+                background: "var(--bg-primary)",
                 borderTop: "1px solid var(--border-color)",
-                marginTop: "4rem",
+                marginTop: "6rem",
+                paddingBottom: "2rem"
             }}
         >
             <div
                 style={{
                     maxWidth: 1280,
                     margin: "0 auto",
-                    padding: "3rem 1.5rem 2rem",
+                    padding: "4rem 1.5rem 2rem",
                 }}
             >
                 <div
                     style={{
                         display: "grid",
                         gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                        gap: "2rem",
-                        marginBottom: "2rem",
+                        gap: "3rem",
+                        marginBottom: "4rem",
                     }}
                 >
                     {/* Brand */}
-                    <div>
+                    <div style={{ gridColumn: "span 1" }}>
                         <Link href="/" style={{ textDecoration: "none", display: "inline-block" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                 <div style={{
-                                    width: "24px",
-                                    height: "24px",
-                                    background: "var(--gradient-primary)",
-                                    borderRadius: "5px",
+                                    width: "28px",
+                                    height: "28px",
+                                    background: "var(--accent-red)",
+                                    borderRadius: "2px",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
@@ -62,34 +73,36 @@ export default function Footer() {
                                     <span style={{
                                         color: "#fff",
                                         fontFamily: '"Orbitron", sans-serif',
-                                        fontWeight: 800,
-                                        fontSize: "13px",
+                                        fontWeight: 900,
+                                        fontSize: "14px",
                                         transform: "rotate(-45deg)"
                                     }}>K</span>
                                 </div>
                                 <span
                                     style={{
                                         fontFamily: '"Rajdhani", sans-serif',
-                                        fontSize: "1.4rem",
-                                        fontWeight: 700,
-                                        letterSpacing: "-0.01em",
-                                        color: "var(--text-primary)"
+                                        fontSize: "1.5rem",
+                                        fontWeight: 800,
+                                        letterSpacing: "0.05em",
+                                        color: "var(--text-primary)",
+                                        textTransform: "uppercase"
                                     }}
                                 >
-                                    Khel<span style={{ color: "var(--accent-cyan)" }}>PediA</span>
+                                    Khel<span style={{ color: "var(--accent-red)" }}>PediA</span>
                                 </span>
                             </div>
                         </Link>
                         <p
                             style={{
-                                color: "var(--text-muted)",
+                                color: "var(--text-secondary)",
                                 fontSize: "0.85rem",
-                                marginTop: "0.75rem",
-                                lineHeight: 1.6,
+                                marginTop: "1.25rem",
+                                lineHeight: 1.8,
+                                maxWidth: "300px"
                             }}
                         >
-                            Your ultimate esports hub for live tournaments, player stats, and
-                            team rankings across all major competitive titles worldwide.
+                            Your ultimate epicenter for live esports tracking, player stats, and
+                            global team rankings across all major titles.
                         </p>
                     </div>
 
@@ -99,26 +112,29 @@ export default function Footer() {
                             <h4
                                 style={{
                                     color: "var(--text-primary)",
-                                    fontSize: "0.85rem",
-                                    fontWeight: 700,
+                                    fontSize: "0.75rem",
+                                    fontWeight: 800,
                                     textTransform: "uppercase",
-                                    letterSpacing: "0.05em",
-                                    marginBottom: "1rem",
+                                    letterSpacing: "0.15em",
+                                    marginBottom: "1.5rem",
+                                    fontFamily: '"Rajdhani", sans-serif'
                                 }}
                             >
                                 {column.title}
                             </h4>
                             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                                 {column.links.map((link) => (
-                                    <li key={link.href} style={{ marginBottom: "0.5rem" }}>
+                                    <li key={link.href} style={{ marginBottom: "0.75rem" }}>
                                         <Link
                                             href={link.href}
                                             style={{
                                                 color: "var(--text-muted)",
                                                 textDecoration: "none",
-                                                fontSize: "0.9rem",
+                                                fontSize: "0.85rem",
+                                                fontWeight: 500,
                                                 transition: "color 0.2s",
                                             }}
+                                            className="footer-link"
                                         >
                                             {link.label}
                                         </Link>
@@ -133,7 +149,7 @@ export default function Footer() {
                 <div
                     style={{
                         borderTop: "1px solid var(--border-color)",
-                        paddingTop: "1.5rem",
+                        paddingTop: "2rem",
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
@@ -141,14 +157,27 @@ export default function Footer() {
                         gap: "1rem",
                     }}
                 >
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
-                        © 2026 KhelPediA. All rights reserved.
-                    </p>
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
-                        Built with ❤️ for the esports community
-                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem" }}>
+                        <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 500 }}>
+                            © 2026 KHELPEDIA ESPORTS.
+                        </p>
+                        <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 500 }}>
+                            Built with passion for competitive gaming.
+                        </p>
+                    </div>
+                    
+                    <div style={{ display: "flex", gap: "1.5rem" }}>
+                        {/* Social Placeholders */}
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", textTransform: "uppercase" }}>Discord</span>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", textTransform: "uppercase" }}>Twitter</span>
+                    </div>
                 </div>
             </div>
+            <style jsx>{`
+                .footer-link:hover {
+                    color: var(--accent-red) !important;
+                }
+            `}</style>
         </footer>
     );
 }

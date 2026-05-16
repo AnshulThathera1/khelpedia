@@ -1,6 +1,5 @@
 import "./globals.css";
-import AppNavbar from "./components/navbar";
-import Footer from "./components/footer";
+import LayoutWrapper from "./components/LayoutWrapper";
 
 export const metadata = {
   title: "KhelPediA — Esports Tournaments, Stats & Rankings",
@@ -25,9 +24,9 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <AppNavbar user={user} />
-        <main>{children}</main>
-        <Footer />
+        <LayoutWrapper user={user}>
+          {children}
+        </LayoutWrapper>
       </body>
     </html>
   );

@@ -33,20 +33,36 @@ ON public.valorant_matches (puuid);
 ALTER TABLE public.valorant_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.valorant_matches ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow public read access to valorant_accounts" ON public.valorant_accounts;
 CREATE POLICY "Allow public read access to valorant_accounts" 
     ON public.valorant_accounts FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Allow public read access to valorant_matches" ON public.valorant_matches;
 CREATE POLICY "Allow public read access to valorant_matches" 
     ON public.valorant_matches FOR SELECT USING (true);
 
 -- Allow service role (Next.js server with service key) to insert/update, or anon if using anon key.
 -- Since this is caching, we can allow anon to insert/update for simplicity, but tracking who inserted it is better done via backend.
+DROP POLICY IF EXISTS "Allow anon insert to valorant_accounts" ON public.valorant_accounts;
 CREATE POLICY "Allow anon insert to valorant_accounts" 
     ON public.valorant_accounts FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon update to valorant_accounts" ON public.valorant_accounts;
 CREATE POLICY "Allow anon update to valorant_accounts" 
     ON public.valorant_accounts FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Allow anon insert to valorant_matches" ON public.valorant_matches;
 CREATE POLICY "Allow anon insert to valorant_matches" 
     ON public.valorant_matches FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon update to valorant_matches" ON public.valorant_matches;
 CREATE POLICY "Allow anon update to valorant_matches" 
     ON public.valorant_matches FOR UPDATE USING (true);
+
+-- Update 2026-05-17: RSO Compliance
+ALTER TABLE public.valorant_accounts 
+ADD COLUMN IF NOT EXISTS is_opted_in BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+
+-- Index for user_id to find a player's linked Riot account quickly
+CREATE INDEX IF NOT EXISTS idx_valorant_accounts_user_id ON public.valorant_accounts(user_id);

@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 
 export default function TournamentCard({ tournament }) {
     const statusColors = {
-        live: { bg: "rgba(244, 63, 94, 0.1)", color: "#f43f5e", border: "rgba(244, 63, 94, 0.2)" },
-        upcoming: { bg: "rgba(14, 165, 233, 0.1)", color: "#0ea5e9", border: "rgba(14, 165, 233, 0.2)" },
-        completed: { bg: "rgba(255, 255, 255, 0.05)", color: "#94a3b8", border: "rgba(255, 255, 255, 0.1)" },
+        live: { bg: "rgba(255, 70, 85, 0.1)", color: "#ff4655", border: "rgba(255, 70, 85, 0.3)" },
+        upcoming: { bg: "rgba(236, 232, 225, 0.05)", color: "#ece8e1", border: "rgba(236, 232, 225, 0.2)" },
+        completed: { bg: "rgba(0, 0, 0, 0.2)", color: "#7e7e7e", border: "rgba(236, 232, 225, 0.05)" },
     };
 
     const statusStyle = statusColors[tournament.status] || statusColors.upcoming;
@@ -29,14 +29,21 @@ export default function TournamentCard({ tournament }) {
 
     return (
         <motion.div
-            whileHover={{ y: -4, scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 300 }}
+            whileHover={{ y: -2 }}
+            transition={{ duration: 0.2 }}
         >
             <Link
                 href={`/tournaments/${tournament.id}`}
                 style={{ textDecoration: "none", color: "inherit" }}
             >
-                <div className="card" style={{ cursor: "pointer", height: "100%" }}>
+                <div className="card" style={{ 
+                    cursor: "pointer", 
+                    height: "100%", 
+                    borderRadius: "0px", 
+                    background: "var(--bg-secondary)",
+                    border: "1px solid var(--border-color)",
+                    padding: "1.5rem"
+                }}>
                     {/* Header row */}
                     <div
                         style={{
@@ -48,23 +55,23 @@ export default function TournamentCard({ tournament }) {
                     >
                         <div style={{ flex: 1, paddingRight: "10px", display: "flex", gap: "1rem", alignItems: "center" }}>
                             {tournament.logo_url && (
-                                <div style={{ width: 44, height: 44, borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-color)", overflow: "hidden", flexShrink: 0 }}>
-                                    <img src={tournament.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: "4px" }} />
+                                <div style={{ width: 48, height: 48, borderRadius: "0px", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(236, 232, 225, 0.05)", overflow: "hidden", flexShrink: 0, padding: "4px" }}>
+                                    <img src={tournament.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                                 </div>
                             )}
                             <div>
-                                <div style={{ color: "var(--accent-cyan)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
-                                    {tournament.games?.icon_url && (
-                                        <img src={tournament.games.icon_url} alt="" style={{ width: 14, height: 14, objectFit: "contain" }} />
-                                    )}
+                                <div style={{ color: "var(--accent-red)", fontSize: "0.65rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
                                     {tournament.games?.name || "Global Event"}
                                 </div>
                                 <h3
                                     style={{
                                         fontSize: "1.1rem",
-                                        fontWeight: 700,
+                                        fontWeight: 800,
                                         color: "var(--text-primary)",
-                                        lineHeight: 1.3,
+                                        lineHeight: 1.2,
+                                        fontFamily: '"Rajdhani", sans-serif',
+                                        textTransform: "uppercase",
+                                        letterSpacing: "0.02em"
                                     }}
                                 >
                                     {tournament.name}
@@ -72,14 +79,16 @@ export default function TournamentCard({ tournament }) {
                             </div>
                         </div>
                         <span
-                            className="badge"
                             style={{
                                 background: statusStyle.bg,
                                 color: statusStyle.color,
                                 border: `1px solid ${statusStyle.border}`,
                                 flexShrink: 0,
-                                fontSize: "0.65rem",
-                                padding: "2px 8px"
+                                fontSize: "0.6rem",
+                                fontWeight: 900,
+                                padding: "2px 10px",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.1em"
                             }}
                         >
                             {tournament.status === "live" && (
@@ -88,10 +97,10 @@ export default function TournamentCard({ tournament }) {
                                         width: 6,
                                         height: 6,
                                         borderRadius: "50%",
-                                        background: "#f43f5e",
+                                        background: "#ff4655",
                                         display: "inline-block",
                                         animation: "pulse-dot 1.5s infinite",
-                                        marginRight: 4,
+                                        marginRight: 6,
                                     }}
                                 />
                             )}
@@ -100,14 +109,14 @@ export default function TournamentCard({ tournament }) {
                     </div>
 
                     {/* Meta Data */}
-                    <div style={{ display: "flex", gap: "1.5rem", marginBottom: "1rem" }}>
+                    <div style={{ display: "flex", gap: "2rem", marginBottom: "1.5rem" }}>
                         <div>
-                            <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>Prize</div>
-                            <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)" }}>{formatPrize(tournament.prize_pool)}</div>
+                            <div style={{ fontSize: "0.6rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "4px", fontWeight: 700 }}>Prize Pool</div>
+                            <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: '"Rajdhani", sans-serif' }}>{formatPrize(tournament.prize_pool)}</div>
                         </div>
                         <div>
-                            <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>Region</div>
-                            <div style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-primary)" }}>{tournament.region || "Global"}</div>
+                            <div style={{ fontSize: "0.6rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "4px", fontWeight: 700 }}>Region</div>
+                            <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", fontFamily: '"Rajdhani", sans-serif' }}>{tournament.region || "Global"}</div>
                         </div>
                     </div>
 
@@ -115,21 +124,22 @@ export default function TournamentCard({ tournament }) {
                     <div style={{
                         marginTop: "auto",
                         paddingTop: "1rem",
-                        borderTop: "1px solid rgba(255,255,255,0.05)",
+                        borderTop: "1px solid rgba(236, 232, 225, 0.05)",
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center"
                     }}>
-                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+                        <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                             {formatDate(tournament.start_date)}
                         </div>
                         <div style={{
-                            fontSize: "0.75rem",
-                            fontWeight: 700,
-                            color: "var(--accent-purple)",
-                            background: "rgba(99, 102, 241, 0.1)",
-                            padding: "2px 8px",
-                            borderRadius: "4px"
+                            fontSize: "0.7rem",
+                            fontWeight: 900,
+                            color: "var(--text-primary)",
+                            background: "rgba(236, 232, 225, 0.05)",
+                            padding: "4px 10px",
+                            border: "1px solid rgba(236, 232, 225, 0.1)",
+                            letterSpacing: "0.1em"
                         }}>
                             {tournament.tier || "S"} TIER
                         </div>
