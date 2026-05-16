@@ -15,11 +15,17 @@ export default function AppNavbar({ user }) {
   const [results, setResults] = useState({ players: [], teams: [], news: [] });
   const [isSearching, setIsSearching] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const pathname = usePathname();
   const router = useRouter();
   const searchRef = useRef(null);
   const supabase = createClient();
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -66,6 +72,7 @@ export default function AppNavbar({ user }) {
   const handleResultClick = (href) => {
     setIsSearchOpen(false);
     setSearchQuery("");
+    setIsMobileMenuOpen(false);
     router.push(href);
   };
 
@@ -78,17 +85,17 @@ export default function AppNavbar({ user }) {
           top: 0,
           left: 0,
           right: 0,
-          zIndex: 100,
+          zIndex: 1000,
           transition: "all 0.3s ease",
           padding: isScrolled ? "0.75rem 0" : "1.25rem 0",
-          background: isScrolled ? "rgba(10, 15, 20, 0.95)" : "transparent",
+          background: isScrolled ? "rgba(10, 15, 20, 0.98)" : "transparent",
           backdropFilter: isScrolled ? "blur(20px)" : "none",
           borderBottom: isScrolled ? "1px solid var(--border-color)" : "1px solid transparent"
         }}
       >
         <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           {/* Brand */}
-          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
+          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px", zIndex: 1100 }}>
             <div style={{
               width: "32px",
               height: "32px",
@@ -122,8 +129,8 @@ export default function AppNavbar({ user }) {
             </span>
           </Link>
 
-          {/* Navigation Links */}
-          <div style={{ display: "flex", alignItems: "center", gap: "2.5rem" }}>
+          {/* Desktop Navigation */}
+          <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: "2.5rem" }}>
             <div className="nav-links" style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
               <Link href="/tournaments" className={`nav-link ${pathname === '/tournaments' ? 'active' : ''}`}>Tournaments</Link>
               <Link href="/games" className={`nav-link ${pathname === '/games' ? 'active' : ''}`}>Games</Link>
@@ -309,11 +316,78 @@ export default function AppNavbar({ user }) {
                   e.target.style.transform = "translateY(0)";
                 }}
               >
-                Sign In
               </button>
             )}
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="mobile-toggle"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--text-primary)",
+              fontSize: "1.5rem",
+              cursor: "pointer",
+              display: "none",
+              zIndex: 1100
+            }}
+          >
+            {isMobileMenuOpen ? "✕" : "☰"}
+          </button>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "tween", duration: 0.3 }}
+              style={{
+                position: "fixed",
+                top: 0,
+                right: 0,
+                width: "100%",
+                height: "100vh",
+                background: "var(--bg-primary)",
+                zIndex: 1050,
+                padding: "8rem 2rem 2rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "2rem"
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                <Link href="/tournaments" className="nav-link" style={{ fontSize: "1.5rem" }}>Tournaments</Link>
+                <Link href="/games" className="nav-link" style={{ fontSize: "1.5rem" }}>Games</Link>
+                <Link href="/players" className="nav-link" style={{ fontSize: "1.5rem" }}>Players</Link>
+              </div>
+
+              <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "2rem" }}>
+                {user ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                    <Link href="/dashboard" className="nav-link" style={{ fontSize: "1.2rem" }}>Dashboard</Link>
+                    <button onClick={handleLogout} className="nav-link" style={{ background: "none", border: "none", textAlign: "left", fontSize: "1.2rem", cursor: "pointer", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)" }}>Logout</button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setIsLoginModalOpen(true);
+                    }}
+                    className="btn-primary" 
+                    style={{ width: "100%", justifyContent: "center" }}
+                  >
+                    Sign In
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Login Modal */}
@@ -323,6 +397,15 @@ export default function AppNavbar({ user }) {
       />
 
       <style jsx global>{`
+        @media (max-width: 1024px) {
+          .desktop-only {
+            display: none !important;
+          }
+          .mobile-toggle {
+            display: block !important;
+          }
+        }
+
         .nav-link {
           color: var(--text-secondary);
           text-decoration: none;

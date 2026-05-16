@@ -39,10 +39,10 @@ export default async function TournamentsPage({ searchParams: searchParamsPromis
 
     return (
         <div className="page-container">
-            <div className="page-header" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2rem", marginBottom: "4rem" }}>
-                <div style={{ textAlign: "center" }}>
-                    <h1 className="page-title" style={{ fontSize: "3.5rem", fontWeight: 900, fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>Tournaments</h1>
-                    <p className="page-description" style={{ fontSize: "1rem", color: "var(--text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <div className="page-header" style={{ marginBottom: "4rem" }}>
+                <div>
+                    <h1 className="page-title">Tournaments</h1>
+                    <p className="page-description">
                         Tracking <span style={{ color: "var(--accent-red)", fontWeight: 800 }}>{count}</span> active competitions worldwide.
                     </p>
                 </div>

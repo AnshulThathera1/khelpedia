@@ -39,9 +39,9 @@ export default function GamesPage() {
             className="page-container"
         >
             <motion.div variants={itemVariants}>
-                <div className="page-header" style={{ textAlign: "center", marginBottom: "4rem" }}>
-                    <h1 className="page-title" style={{ fontSize: "3.5rem", fontWeight: 900, fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Supported Games</h1>
-                    <p className="page-description" style={{ fontSize: "1.1rem", color: "var(--text-secondary)", maxWidth: "800px", margin: "0 auto" }}>
+                <div className="page-header">
+                    <h1 className="page-title">Supported Games</h1>
+                    <p className="page-description">
                         Find tournaments, players, and stats for your favorite esports titles.
                     </p>
                 </div>

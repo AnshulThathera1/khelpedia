@@ -482,33 +482,48 @@ main {
 }
 
 .page-header {
-  margin-bottom: 3rem;
-  text-align: center; /* Centering the text inside headers as well */
+  margin-bottom: 4rem;
+  text-align: center;
+  padding-top: 1rem;
 }
 
 .page-title {
   font-family: "Rajdhani", sans-serif;
-  font-size: 2.25rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  letter-spacing: 0.01em;
+  font-size: clamp(2rem, 5vw, 3.5rem); /* Fluid typography */
+  font-weight: 900;
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.1;
 }
 
 .page-description {
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 @media (max-width: 768px) {
+  main {
+    padding-top: 80px;
+  }
+  
   .hero {
     padding: 3rem 0 2rem;
+  }
+  
+  .page-header {
+    margin-bottom: 2.5rem;
+    padding-top: 0;
   }
 
   .grid-auto {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
-  .page-title {
-    font-size: 1.75rem;
+  .container, .page-container {
+    padding: 0 1rem;
   }
 }

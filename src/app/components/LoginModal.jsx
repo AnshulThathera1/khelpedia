@@ -62,79 +62,83 @@ export default function LoginModal({ isOpen, onClose }) {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            style={{
-                                width: "100%",
-                                maxWidth: "440px",
-                                background: "var(--bg-secondary)",
-                                border: "1px solid var(--border-color)",
-                                borderRadius: "0px",
-                                position: "relative",
-                                padding: "3rem 2rem",
-                                overflow: "hidden",
-                                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
-                            }}
                         >
-                            {/* Accent Lines */}
-                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "4px", background: "var(--accent-red)" }} />
-                            <div style={{ position: "absolute", top: 0, left: 0, width: "4px", height: "40px", background: "var(--accent-red)" }} />
+                             <style jsx>{`
+                                .modal-inner {
+                                    width: 100%;
+                                    max-width: 440px;
+                                    background: var(--bg-secondary);
+                                    border: 1px solid var(--border-color);
+                                    border-radius: 0px;
+                                    position: relative;
+                                    padding: clamp(2rem, 5vw, 3rem) clamp(1.5rem, 5vw, 2.5rem);
+                                    overflow: hidden;
+                                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                                }
+                                .modal-title {
+                                    font-family: "Rajdhani", sans-serif;
+                                    font-size: clamp(1.5rem, 5vw, 2.2rem);
+                                    font-weight: 800;
+                                    color: var(--text-primary);
+                                    text-transform: uppercase;
+                                    letter-spacing: 0.05em;
+                                    margin-bottom: 0.5rem;
+                                    line-height: 1.1;
+                                }
+                             `}</style>
+                             <div className="modal-inner">
+                             {/* Accent Lines */}
+                             <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "4px", background: "var(--accent-red)" }} />
+                             <div style={{ position: "absolute", top: 0, left: 0, width: "4px", height: "40px", background: "var(--accent-red)" }} />
 
-                            {/* Close Button */}
-                            <button 
-                                onClick={onClose}
-                                style={{
-                                    position: "absolute",
-                                    top: "1.5rem",
-                                    right: "1.5rem",
-                                    background: "transparent",
-                                    border: "none",
-                                    color: "var(--text-muted)",
-                                    fontSize: "1.5rem",
-                                    cursor: "pointer",
-                                    transition: "color 0.2s"
-                                }}
-                                onMouseEnter={(e) => e.target.style.color = "var(--accent-red)"}
-                                onMouseLeave={(e) => e.target.style.color = "var(--text-muted)"}
-                            >
-                                ✕
-                            </button>
+                             {/* Close Button */}
+                             <button 
+                                 onClick={onClose}
+                                 style={{
+                                     position: "absolute",
+                                     top: "1.5rem",
+                                     right: "1.5rem",
+                                     background: "transparent",
+                                     border: "none",
+                                     color: "var(--text-muted)",
+                                     fontSize: "1.5rem",
+                                     cursor: "pointer",
+                                     transition: "color 0.2s",
+                                     zIndex: 10
+                                 }}
+                             >
+                                 ✕
+                             </button>
 
-                            {/* Header */}
-                            <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-                                <div style={{
-                                    width: "50px",
-                                    height: "50px",
-                                    background: "var(--accent-red)",
-                                    borderRadius: "2px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    transform: "rotate(45deg)",
-                                    margin: "0 auto 1.5rem",
-                                    boxShadow: "0 0 20px rgba(255, 70, 85, 0.3)"
-                                }}>
-                                    <span style={{
-                                        color: "#fff",
-                                        fontFamily: '"Orbitron", sans-serif',
-                                        fontWeight: 900,
-                                        fontSize: "24px",
-                                        transform: "rotate(-45deg)"
-                                    }}>K</span>
-                                </div>
-                                <h2 style={{ 
-                                    fontFamily: '"Rajdhani", sans-serif', 
-                                    fontSize: "2rem", 
-                                    fontWeight: 800, 
-                                    color: "var(--text-primary)",
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.05em",
-                                    marginBottom: "0.5rem"
-                                }}>
-                                    Welcome <span style={{ color: "var(--accent-red)" }}>Agent</span>
-                                </h2>
-                                <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", fontWeight: 500 }}>
-                                    Sign in to track your stats and tournaments
-                                </p>
-                            </div>
+                             {/* Header */}
+                             <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+                                 <div style={{
+                                     width: "50px",
+                                     height: "50px",
+                                     background: "var(--accent-red)",
+                                     borderRadius: "2px",
+                                     display: "flex",
+                                     alignItems: "center",
+                                     justifyContent: "center",
+                                     transform: "rotate(45deg)",
+                                     margin: "0 auto 1.5rem",
+                                     boxShadow: "0 0 20px rgba(255, 70, 85, 0.3)"
+                                 }}>
+                                     <span style={{
+                                         color: "#fff",
+                                         fontFamily: '"Orbitron", sans-serif',
+                                         fontWeight: 900,
+                                         fontSize: "24px",
+                                         transform: "rotate(-45deg)"
+                                     }}>K</span>
+                                 </div>
+                                 <h2 className="modal-title">
+                                     Welcome <span style={{ color: "var(--accent-red)" }}>Agent</span>
+                                 </h2>
+                                 <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", fontWeight: 500 }}>
+                                     Sign in to track your stats and tournaments
+                                 </p>
+                             </div>
 
                             {/* Login Options */}
                             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -249,6 +253,7 @@ export default function LoginModal({ isOpen, onClose }) {
                                 opacity: 0.1,
                                 transform: "rotate(45deg)"
                             }} />
+                             </div>
                         </motion.div>
                     </motion.div>
                 </>

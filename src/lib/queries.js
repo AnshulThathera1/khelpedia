@@ -197,3 +197,26 @@ export async function getSiteStats() {
     teams: teams.count || 0,
   };
 }
+
+export async function searchAll(query) {
+  if (!query) return { players: [], teams: [], news: [] };
+  
+  const [players, teams] = await Promise.all([
+    supabase
+      .from("players")
+      .select("id, ign, name, image_url")
+      .or(`ign.ilike.%${query}%,name.ilike.%${query}%`)
+      .limit(5),
+    supabase
+      .from("teams")
+      .select("id, name, logo_url")
+      .ilike("name", `%${query}%`)
+      .limit(5)
+  ]);
+
+  return {
+    players: players.data || [],
+    teams: teams.data || [],
+    news: [] // Add news search here later if needed
+  };
+}

@@ -16,7 +16,7 @@ export default async function AdminDashboardPage() {
 
     return (
         <div className="page-container">
-            <div className="page-header" style={{ textAlign: "center", marginBottom: "5rem", paddingTop: "2rem" }}>
+            <div className="page-header">
                 <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "1rem", marginBottom: "2rem" }}>
                     <div style={{ 
                         padding: "0.5rem 1.25rem", 
@@ -32,8 +32,8 @@ export default async function AdminDashboardPage() {
                         RESTRICTED ACCESS
                     </div>
                 </div>
-                <h1 className="page-title" style={{ fontSize: "3.5rem", fontWeight: 900, fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Content Management System</h1>
-                <p className="page-description" style={{ fontSize: "1.1rem", color: "var(--text-secondary)", maxWidth: "800px", margin: "0 auto" }}>
+                <h1 className="page-title">Content Management System</h1>
+                <p className="page-description">
                     Create news articles, manage custom verified players, and moderate the KhelPediA platform.
                 </p>
             </div>
