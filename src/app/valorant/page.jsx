@@ -115,6 +115,17 @@ export default function ValorantTrackerSearchPage() {
               <p className="text-gray-400 text-sm">See which agents you perform best with to climb the ranks faster.</p>
             </div>
           </div>
+
+          {/* Riot Compliance Disclaimer */}
+          <div className="mt-12 p-6 rounded-xl bg-zinc-900/20 border border-zinc-800/30 text-left max-w-2xl mx-auto">
+            <h4 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-2">Compliance & Privacy</h4>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              KhelPediA complies with Riot Games' official API policies. By searching for a player, you acknowledge that 
+              detailed match history and statistics are only available for players who have explicitly **opted-in** 
+              to our service via Riot Sign On (RSO). If you wish to display your own stats, please log in and 
+              verify your account.
+            </p>
+          </div>
         </div>
       </main>
 
