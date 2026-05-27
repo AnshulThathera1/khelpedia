@@ -27,6 +27,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r scraper-engine/requirements.txt
 
+    - name: Notify Sync Started
+      env:
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      if: env.DISCORD_WEBHOOK_URL != ''
+      run: |
+        curl -H "Content-Type: application/json" \
+             -X POST \
+             -d '{"embeds": [{"title": "🚀 KhelPediA Sync Started", "description": "Valorant scraper cron job has started fetching matches and tournaments in the cloud.", "color": 16738133}]}' \
+             $DISCORD_WEBHOOK_URL
+
     - name: Execute Scrapers
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -42,3 +52,23 @@ jobs:
         
         echo "=== Running PandaScore Match Sync ==="
         python scraper-engine/pandascore_engine.py
+
+    - name: Notify Sync Success
+      env:
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      if: success() && env.DISCORD_WEBHOOK_URL != ''
+      run: |
+        curl -H "Content-Type: application/json" \
+             -X POST \
+             -d '{"embeds": [{"title": "✅ KhelPediA Sync Completed", "description": "All matches and active tournaments synced successfully to Supabase database.", "color": 3066993}]}' \
+             $DISCORD_WEBHOOK_URL
+
+    - name: Notify Sync Failure
+      env:
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      if: failure() && env.DISCORD_WEBHOOK_URL != ''
+      run: |
+        curl -H "Content-Type: application/json" \
+             -X POST \
+             -d '{"embeds": [{"title": "❌ KhelPediA Sync Failed", "description": "An error occurred during execution. Please check the logs in GitHub Actions.", "color": 15158332}]}' \
+             $DISCORD_WEBHOOK_URL
