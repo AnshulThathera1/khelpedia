@@ -1,0 +1,44 @@
+name: Valorant Scraper Sync
+
+on:
+  schedule:
+    # Runs every 15 minutes (staggered to respect rate limits)
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions dashboard
+
+jobs:
+  sync:
+    name: Fetch and Sync Valorant Data
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: 'scraper-engine/requirements.txt'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r scraper-engine/requirements.txt
+
+    - name: Execute Scrapers
+      env:
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        PANDASCORE_API_KEY: ${{ secrets.PANDASCORE_API_KEY }}
+        PYTHONIOENCODING: "utf-8"
+      run: |
+        echo "=== Running Live Matches Sync ==="
+        python scraper-engine/vlr_scraper.py
+        
+        echo "=== Running Tournaments & Events Sync ==="
+        python scraper-engine/vlr_tournament_scraper.py
+        
+        echo "=== Running PandaScore Match Sync ==="
+        python scraper-engine/pandascore_engine.py
