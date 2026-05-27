@@ -72,7 +72,7 @@ export default function PlayerCard({ player, rank }) {
                             }}
                         >
                             {player.image_url ? (
-                                <img src={player.image_url} alt={player.ign} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                <img src={player.image_url} alt={player.ign} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.style.display='none'; }} />
                             ) : (
                                 player.ign?.charAt(0)?.toUpperCase() || "?"
                             )}
@@ -100,7 +100,7 @@ export default function PlayerCard({ player, rank }) {
                                         <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>·</span>
                                         <div style={{ color: "var(--accent-cyan)", fontSize: "0.75rem", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
                                             {player.teams.logo_url && (
-                                                <img src={player.teams.logo_url} alt={player.teams.name} style={{ width: 14, height: 14, objectFit: "contain" }} />
+                                                <img src={player.teams.logo_url} alt={player.teams.name} style={{ width: 14, height: 14, objectFit: "contain" }} onError={(e) => e.target.style.display='none'} />
                                             )}
                                             {player.teams.name}
                                         </div>

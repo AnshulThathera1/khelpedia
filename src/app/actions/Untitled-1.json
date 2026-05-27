@@ -1,0 +1,142 @@
+[
+    {
+        "tier": "all", /*all tiers*/
+        "region": [
+            {
+                "all": "all"
+            },
+            {
+                "Americas": 26
+            },
+            {
+                "EMEA": 27
+            },
+            {
+                "Pacific": 28
+            },
+            {
+                "China": 24
+            }
+        ]
+    },
+    {
+        "tier": "60", /*VCT*/
+        "region": [
+            {
+                "all": "all"
+            },
+            {
+                "Americas": 26
+            },
+            {
+                "EMEA": 27
+            },
+            {
+                "Pacific": 28
+            },
+            {
+                "China": 24
+            }
+        ]
+    },
+    {
+        "tier": "61", /*VCL*/
+        "region": [
+            {
+                "all": "all"
+            },
+            {
+                "Americas": 26
+            },
+            {
+                "EMEA": 27
+            },
+            {
+                "Pacific": 28
+            },
+            {
+                "China": 24
+            }
+        ]
+    },
+    {
+        "tier": "62", /*T3*/
+        "region": [
+            {
+                "all": "all"
+            },
+            {
+                "Americas": 26
+            },
+            {
+                "EMEA": 27
+            },
+            {
+                "Pacific": 28
+            },
+            {
+                "China": 24
+            }
+        ]
+    },
+    {
+        "tier": "63", /*Game Changers*/
+        "region": [
+            {
+                "all": "all"
+            },
+            {
+                "Americas": 26
+            },
+            {
+                "EMEA": 27
+            },
+            {
+                "Pacific": 28
+            },
+            {
+                "China": 24
+            }
+        ]
+    },
+    {
+        "tier": "64", /*Collegiate*/
+        "region": [
+            {
+                "all": "all"
+            },
+            {
+                "Americas": 26
+            },
+            {
+                "EMEA": 27
+            },
+            {
+                "Pacific": 28
+            },
+            {
+                "China": 24
+            }
+        ]
+    },
+    {
+        "tier": "67", /*OffSeason*/
+        "region": [
+            {
+                "all": "all"
+            },
+            {
+                "Americas": 26
+            },
+            {
+                "EMEA": 27
+            },
+            {
+                "Pacific": 28
+            },
+            {
+                "China": 24
+            }
+        ]
+    }
+]

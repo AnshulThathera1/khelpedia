@@ -56,7 +56,7 @@ export default function TournamentCard({ tournament }) {
                         <div style={{ flex: 1, paddingRight: "10px", display: "flex", gap: "1rem", alignItems: "center" }}>
                             {tournament.logo_url && (
                                 <div style={{ width: 48, height: 48, borderRadius: "0px", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(236, 232, 225, 0.05)", overflow: "hidden", flexShrink: 0, padding: "4px" }}>
-                                    <img src={tournament.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                                    <img src={tournament.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} onError={(e) => e.target.parentElement.style.display='none'} />
                                 </div>
                             )}
                             <div>

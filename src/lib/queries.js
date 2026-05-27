@@ -84,6 +84,37 @@ export async function getTournamentMatches(tournamentId) {
   return data || [];
 }
 
+export async function getMatchesByGame(gameId, limit = 20) {
+  const { data: tournaments, error: tError } = await supabase
+    .from("tournaments")
+    .select("id")
+    .eq("game_id", gameId)
+    .order("start_date", { ascending: false })
+    .limit(50);
+    
+  if (tError || !tournaments || tournaments.length === 0) {
+    return [];
+  }
+  
+  const tournamentIds = tournaments.map(t => t.id);
+  
+  const { data, error } = await supabase
+    .from("matches")
+    .select(
+      `*, 
+      tournament:tournaments(name, slug, tier),
+      team1:teams!matches_team1_id_fkey(name, slug, logo_url),
+      team2:teams!matches_team2_id_fkey(name, slug, logo_url),
+      winner:teams!matches_winner_id_fkey(name, slug)`
+    )
+    .in("tournament_id", tournamentIds)
+    .order("played_at", { ascending: false })
+    .limit(limit);
+    
+  if (error) console.error("Error fetching matches by game:", error);
+  return data || [];
+}
+
 // ======================== PLAYERS ========================
 export async function getPlayers(filters = {}) {
   let query = supabase

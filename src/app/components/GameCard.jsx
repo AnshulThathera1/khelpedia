@@ -1,20 +1,22 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
 export default function GameCard({ game, tournamentCount }) {
-    // Official Logo Mapping for Premium Look
+    // Official Logo Mapping — using reliable CDN/official sources
     const officialLogos = {
-        "valorant": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Valorant_logo.svg/1280px-Valorant_logo.svg.png",
-        "cs2": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Counter_Strike_2_Logo.png",
-        "bgmi": "https://upload.wikimedia.org/wikipedia/commons/9/99/Battlegrounds_Mobile_India%2C_BGMI_LOGO_white_-_1082x360.png",
-        "dota-2": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Dota_logo.svg/1280px-Dota_logo.svg.png",
-        "free-fire": "https://upload.wikimedia.org/wikipedia/en/c/c5/Logo_of_Garena_Free_Fire.png",
-        "pubg-mobile": "https://upload.wikimedia.org/wikipedia/commons/4/43/PUBG_Mobile_simple_logo_black.png"
+        "valorant": "https://cdn.pandascore.co/images/game/icon_url/26/valorant.png",
+        "cs2": "https://cdn.pandascore.co/images/game/icon_url/33602/counter_strike_2.png",
+        "bgmi": "https://cdn.pandascore.co/images/game/icon_url/23344/bgmi.png",
+        "dota-2": "https://cdn.pandascore.co/images/game/icon_url/4/dota2.png",
+        "free-fire": "https://cdn.pandascore.co/images/game/icon_url/22889/free_fire.png",
+        "pubg-mobile": "https://cdn.pandascore.co/images/game/icon_url/20853/pubg_mobile.png"
     };
 
     const logoUrl = officialLogos[game.slug] || game.icon_url;
+    const [imgError, setImgError] = React.useState(false);
 
     return (
         <motion.div
@@ -54,10 +56,11 @@ export default function GameCard({ game, tournamentCount }) {
                             border: "1px solid rgba(236, 232, 225, 0.05)"
                         }}
                     >
-                        {logoUrl ? (
+                        {logoUrl && !imgError ? (
                             <img
                                 src={logoUrl}
                                 alt={game.name}
+                                onError={() => setImgError(true)}
                                 style={{ 
                                     maxWidth: "100%", 
                                     maxHeight: "100%", 

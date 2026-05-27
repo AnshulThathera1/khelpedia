@@ -31,6 +31,7 @@ export default function TeamCard({ team }) {
                                 src={team.logo_url}
                                 alt={team.name}
                                 style={{ width: "100%", height: "100%", objectFit: "contain", padding: "4px" }}
+                                onError={(e) => { e.target.style.display = 'none'; }}
                             />
                         ) : null}
                         <span style={{ display: team.logo_url ? 'none' : 'block' }}>
