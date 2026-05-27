@@ -81,10 +81,7 @@ def fetch_vlr_matches():
     
     matches_data = []
     
-    count = 0
     for card in match_cards:
-        if count >= 6:  # Let's just process 6 matches for testing
-            break
             
         try:
             # 1. Teams
@@ -115,7 +112,6 @@ def fetch_vlr_matches():
                 "status": status,
                 "time": match_time
             })
-            count += 1
             
         except Exception as e:
             continue
