@@ -25,6 +25,11 @@ SCRAPERS = {
         "script": "pandascore_engine.py",
         "interval": 3600,      # 60 minutes
         "last_run": 0
+    },
+    "liquipedia": {
+        "script": "liquipedia_scraper.py",
+        "interval": 3600,      # 60 minutes
+        "last_run": 0
     }
 }
 

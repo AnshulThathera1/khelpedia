@@ -1,4 +1,4 @@
-name: Valorant Scraper Sync
+name: KhelPediA Scraper Sync
 
 on:
   schedule:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   sync:
-    name: Fetch and Sync Valorant Data
+    name: Fetch and Sync All Game Data
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -36,7 +36,7 @@ jobs:
       run: |
         curl -H "Content-Type: application/json" \
              -X POST \
-             -d '{"embeds": [{"title": "🚀 KhelPediA Sync Started", "description": "Valorant scraper cron job has started fetching matches and tournaments in the cloud.", "color": 16738133}]}' \
+             -d '{"embeds": [{"title": "🚀 KhelPediA Sync Started", "description": "Scraper cron job started — syncing Valorant, PUBG, BGMI data from VLR.gg, Liquipedia, and PandaScore.", "color": 16738133}]}' \
              $DISCORD_WEBHOOK_URL
 
     - name: Execute Scrapers
@@ -46,14 +46,17 @@ jobs:
         PANDASCORE_API_KEY: ${{ secrets.PANDASCORE_API_KEY }}
         PYTHONIOENCODING: "utf-8"
       run: |
-        echo "=== Running Live Matches Sync ==="
+        echo "=== Running Valorant Live Matches Sync ==="
         python scraper-engine/vlr_scraper.py
         
-        echo "=== Running Tournaments & Events Sync ==="
+        echo "=== Running Valorant Tournaments & Events Sync ==="
         python scraper-engine/vlr_tournament_scraper.py
         
         echo "=== Running PandaScore Match Sync ==="
         python scraper-engine/pandascore_engine.py
+        
+        echo "=== Running Liquipedia Sync (BGMI, PUBG Mobile, PUBG PC) ==="
+        python scraper-engine/liquipedia_scraper.py
 
     - name: Notify Sync Success
       env:
@@ -62,7 +65,7 @@ jobs:
       run: |
         curl -H "Content-Type: application/json" \
              -X POST \
-             -d '{"embeds": [{"title": "✅ KhelPediA Sync Completed", "description": "All matches and active tournaments synced successfully to Supabase database.", "color": 3066993}]}' \
+             -d '{"embeds": [{"title": "✅ KhelPediA Sync Completed", "description": "Valorant + PUBG + BGMI — all matches and tournaments synced to Supabase.", "color": 3066993}]}' \
              $DISCORD_WEBHOOK_URL
 
     - name: Notify Sync Failure
