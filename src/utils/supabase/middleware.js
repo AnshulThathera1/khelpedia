@@ -37,7 +37,11 @@ export async function updateSession(request) {
   } = await supabase.auth.getUser()
 
   console.log("Middleware check:", request.nextUrl.pathname, "found user:", !!user);
-  if (error) console.error("Middleware auth error:", error);
+  
+  // Ignore the 'Auth session missing!' error since it just means the user is a guest
+  if (error && error.name !== 'AuthSessionMissingError') {
+    console.error("Middleware auth error:", error);
+  }
 
   if (
     !user &&

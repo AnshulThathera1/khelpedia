@@ -1,14 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Trophy, Crosshair, TrendingUp } from 'lucide-react';
+import { Search, Trophy, Crosshair, TrendingUp, Activity, AlertTriangle } from 'lucide-react';
+import { getValorantServerStatus } from '@/app/actions/valorant';
+import Link from 'next/link';
 
 export default function ValorantTrackerSearchPage() {
   const [riotId, setRiotId] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [serverStatus, setServerStatus] = useState(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const res = await getValorantServerStatus();
+      if (!res.error && res.data) {
+        // Find if there are any active maintenances or incidents
+        const hasIncidents = res.data.incidents?.length > 0;
+        const hasMaintenance = res.data.maintenances?.length > 0;
+        
+        if (hasMaintenance) {
+          setServerStatus({ type: 'warning', message: 'Servers are currently under maintenance.' });
+        } else if (hasIncidents) {
+          setServerStatus({ type: 'error', message: 'Servers are experiencing issues.' });
+        } else {
+          setServerStatus({ type: 'success', message: 'Servers are online and operational.' });
+        }
+      }
+    };
+    fetchStatus();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -45,6 +68,25 @@ export default function ValorantTrackerSearchPage() {
 
       <main className="flex-grow flex flex-col items-center justify-center px-4 relative z-10 pt-20">
         
+        {/* Top Actions & Status */}
+        <div className="absolute top-8 w-full max-w-6xl flex justify-between items-center px-4">
+          <Link href="/valorant/leaderboard" className="flex items-center gap-2 bg-zinc-900/80 border border-zinc-700 hover:border-red-500 px-4 py-2 rounded-full transition-all text-sm font-bold text-gray-300 hover:text-white">
+            <Trophy className="w-4 h-4 text-yellow-500" />
+            View AP Leaderboard
+          </Link>
+          
+          {serverStatus && (
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold border backdrop-blur-md shadow-lg ${
+              serverStatus.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
+              serverStatus.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
+              'bg-red-500/10 border-red-500/20 text-red-400'
+            }`}>
+              {serverStatus.type === 'success' ? <Activity className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+              {serverStatus.message}
+            </div>
+          )}
+        </div>
+
         {/* Hero Section */}
         <div className="max-w-3xl w-full text-center space-y-8 animate-fade-in-up">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-semibold tracking-wider mb-4 shadow-[0_0_15px_rgba(239,68,68,0.2)]">

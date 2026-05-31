@@ -7,6 +7,7 @@ import GameCard from "./components/GameCard";
 import Skeleton from "./components/Skeleton";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import ValorantPromoPopup from "./components/ValorantPromoPopup";
 
 export default function HomePage() {
   const [liveTournaments, setLiveTournaments] = useState([]);
@@ -54,6 +55,8 @@ export default function HomePage() {
 
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants}>
+      <ValorantPromoPopup />
+      
       {/* Hero Section */}
       <section className="hero">
         <div className="hero-grid"></div>

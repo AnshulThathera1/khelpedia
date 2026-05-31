@@ -1,8 +1,9 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
+import { cache } from 'react';
 
-const RIOT_API_KEY = process.env.RIOT_API_KEY;
+// Read process.env.RIOT_API_KEY dynamically
 
 // Base URLs
 // For Account API, Riot uses regional proxies (americas, asia, europe). 'americas' works globally for accounts.
@@ -35,9 +36,109 @@ export async function getValorantMaps() {
   }
 }
 
-const headers = {
-  'X-Riot-Token': RIOT_API_KEY,
-};
+export async function getValorantWeapons() {
+  try {
+    const res = await fetch('https://valorant-api.com/v1/weapons', { next: { revalidate: 86400 } });
+    const json = await res.json();
+    return json.data || [];
+  } catch (e) {
+    console.error('Failed to fetch weapons:', e);
+    return [];
+  }
+}
+
+export async function getValorantPlayerCards() {
+  try {
+    const res = await fetch('https://valorant-api.com/v1/playercards', { next: { revalidate: 86400 } });
+    const json = await res.json();
+    return json.data || [];
+  } catch (e) {
+    console.error('Failed to fetch player cards:', e);
+    return [];
+  }
+}
+
+export async function getValorantTiers() {
+  try {
+    const res = await fetch('https://valorant-api.com/v1/competitivetiers', { next: { revalidate: 86400 } });
+    const json = await res.json();
+    // The API returns an array of episodes, usually the last one has the most up-to-date tier definitions
+    if (!json.data || json.data.length === 0) return [];
+    const latestEpisode = json.data[json.data.length - 1];
+    return latestEpisode.tiers || [];
+  } catch (e) {
+    console.error('Failed to fetch competitive tiers:', e);
+    return [];
+  }
+}
+
+function getHeaders() {
+  return {
+    'X-Riot-Token': process.env.RIOT_API_KEY,
+  };
+}
+
+export const getValorantProfile = cache(async (gameName, tagLine) => {
+  const accountRes = await getValorantAccount(gameName, tagLine);
+  if (accountRes.error) return { error: accountRes.error };
+
+  const { puuid } = accountRes.data;
+  const historyRes = await getMatchHistoryIds(puuid);
+  if (historyRes.error) return { error: historyRes.error };
+
+  const matchIds = historyRes.data || [];
+  const playerRegion = historyRes.region || 'ap';
+
+  if (matchIds.length === 0) return { error: "This player has no recent match history in Valorant." };
+
+  const matchesData = [];
+  const errors = [];
+  let rateLimited = false;
+
+  for (const id of matchIds.slice(0, 10)) { // Limit to 10 for dev key
+    const matchRes = await getMatchDetails(id, puuid, playerRegion);
+    if (matchRes.error) {
+      if (matchRes.error === 'Rate limit exceeded') rateLimited = true;
+      errors.push(`${id}: ${matchRes.error}`);
+      if (rateLimited) break;
+    }
+    if (!matchRes.error && matchRes.data) {
+      matchesData.push(matchRes.data);
+    }
+  }
+
+  const cleanMatches = matchesData.filter(Boolean);
+  if (cleanMatches.length === 0) {
+    if (rateLimited) return { error: "Riot API Rate Limit Exceeded. Please try again in 2 minutes." };
+    return { error: `Failed to fetch match details. Errors: ${errors.join(' | ')}` };
+  }
+
+  const playerStats = await aggregatePlayerStats(cleanMatches, puuid);
+  if (!playerStats) return { error: "No robust match data found for this player after aggregation." };
+
+  const [agentsRes, mapsRes, tiersRes, weaponsRes, playerCardsRes] = await Promise.all([
+    getValorantAgents(),
+    getValorantMaps(),
+    getValorantTiers(),
+    getValorantWeapons(),
+    getValorantPlayerCards()
+  ]);
+
+  const agentDict = agentsRes.reduce((acc, a) => ({ ...acc, [a.uuid.toLowerCase()]: a }), {});
+  const mapDict = mapsRes.reduce((acc, m) => ({ ...acc, [m.mapUrl]: m }), {});
+  const weaponDict = weaponsRes.reduce((acc, w) => ({ ...acc, [w.uuid.toLowerCase()]: w }), {});
+  const playerCardDict = playerCardsRes.reduce((acc, c) => ({ ...acc, [c.uuid.toLowerCase()]: c }), {});
+  
+  return { 
+    account: accountRes.data, 
+    playerStats, 
+    agentDict, 
+    mapDict, 
+    tiersRes,
+    weaponDict,
+    playerCardDict
+  };
+});
 
 /**
  * Fetch Account by Riot ID
@@ -45,7 +146,6 @@ const headers = {
 export async function getValorantAccount(gameName, tagLine) {
   const supabase = await createClient();
 
-  // 1. Check DB Cache
   const { data: cachedAccount, error: dbError } = await supabase
     .from('valorant_accounts')
     .select('*')
@@ -57,7 +157,7 @@ export async function getValorantAccount(gameName, tagLine) {
     return { data: cachedAccount, source: 'cache' };
   }
 
-  if (!RIOT_API_KEY) {
+  if (!process.env.RIOT_API_KEY) {
      return { error: 'RIOT_API_KEY is missing' };
   }
 
@@ -66,8 +166,8 @@ export async function getValorantAccount(gameName, tagLine) {
     const encodedName = encodeURIComponent(gameName);
     const encodedTag = encodeURIComponent(tagLine);
     const res = await fetch(`${ACCOUNT_BASE_URL}/riot/account/v1/accounts/by-riot-id/${encodedName}/${encodedTag}`, {
-      headers,
-      next: { revalidate: 3600 } // Next.js fetch cache fallback
+      headers: getHeaders(),
+      cache: 'no-store'
     });
 
     if (!res.ok) {
@@ -86,7 +186,7 @@ export async function getValorantAccount(gameName, tagLine) {
         game_name: accountData.gameName,
         tag_line: accountData.tagLine,
         last_updated: new Date().toISOString()
-      }, { onConflict: 'puuid' });
+      }, { onConflict: 'game_name, tag_line' });
 
     if (insertError) {
       console.error('Error caching account:', insertError);
@@ -110,21 +210,45 @@ export async function getValorantAccount(gameName, tagLine) {
  * Fetch Match History IDs
  */
 export async function getMatchHistoryIds(puuid) {
-  if (!RIOT_API_KEY) return { error: 'RIOT_API_KEY is missing' };
+  if (!process.env.RIOT_API_KEY) return { error: 'RIOT_API_KEY is missing' };
 
   try {
-    // Get top 10 matches
-    const res = await fetch(`${MATCH_BASE_URL}/val/match/v1/matches/by-puuid/${puuid}/ids?start=0&size=10`, {
-      headers,
-      next: { revalidate: 60 } // Short lived cache
+    // 1. Get active shard
+    const shardRes = await fetch(`${ACCOUNT_BASE_URL}/riot/account/v1/active-shards/by-game/val/by-puuid/${puuid}`, {
+      headers: getHeaders(),
+      cache: 'no-store'
+    });
+    let region = REGION;
+    if (shardRes.ok) {
+       const shardData = await shardRes.json();
+       region = shardData.activeShard || REGION;
+    }
+
+    const matchBaseUrl = `https://${region}.api.riotgames.com`;
+
+    // 2. Get top 10 matches from matchlist
+    const res = await fetch(`${matchBaseUrl}/val/match/v1/matchlists/by-puuid/${puuid}`, {
+      headers: getHeaders(),
+      cache: 'no-store'
     });
 
     if (!res.ok) {
+      const errorText = await res.text();
+      console.error('Match History Fetch Failed:', res.status, errorText, puuid);
+      if (res.status === 403) return { error: 'API Key is forbidden (403) from accessing Match History. Ensure val-match-v1 is approved on your Riot App.' };
       return { error: 'Failed to fetch match history IDs' };
     }
 
-    const matchIds = await res.json();
-    return { data: matchIds };
+    const matchlistData = await res.json();
+    
+    // The Valorant matchlist API returns an object with a 'history' array
+    // Each item in history has { matchId, gameStartTimeMillis, queueId }
+    if (!matchlistData || !matchlistData.history) {
+       return { error: 'Invalid match history data format' };
+    }
+    
+    const matchIds = matchlistData.history.slice(0, 10).map(match => match.matchId);
+    return { data: matchIds, region: region };
   } catch (error) {
     console.error('Error fetching match IDs:', error);
     return { error: 'Internal server error' };
@@ -134,7 +258,7 @@ export async function getMatchHistoryIds(puuid) {
 /**
  * Fetch Match Details (with Caching)
  */
-export async function getMatchDetails(matchId, puuid) {
+export async function getMatchDetails(matchId, puuid, region = REGION) {
   const supabase = await createClient();
 
   // 1. Check DB Cache
@@ -148,12 +272,14 @@ export async function getMatchDetails(matchId, puuid) {
     return { data: cachedMatch.match_info_json, source: 'cache' };
   }
 
-  if (!RIOT_API_KEY) return { error: 'RIOT_API_KEY is missing' };
+  if (!process.env.RIOT_API_KEY) return { error: 'RIOT_API_KEY is missing' };
 
   // 2. Fetch from Riot API
   try {
-    const res = await fetch(`${MATCH_BASE_URL}/val/match/v1/matches/${matchId}`, {
-      headers
+    const matchBaseUrl = `https://${region}.api.riotgames.com`;
+    const res = await fetch(`${matchBaseUrl}/val/match/v1/matches/${matchId}`, {
+      headers: getHeaders(),
+      cache: 'no-store'
     });
 
     if (!res.ok) {
@@ -189,32 +315,116 @@ export async function getMatchDetails(matchId, puuid) {
 export async function aggregatePlayerStats(matchesData, puuid) {
   if (!matchesData || matchesData.length === 0) return null;
 
-  let totalKills = 0;
-  let totalDeaths = 0;
-  let totalAssists = 0;
-  let wins = 0;
-  let losses = 0;
+  let totalKills = 0, totalDeaths = 0, totalAssists = 0;
+  let wins = 0, losses = 0;
+  let totalDamage = 0, totalHeadshots = 0, totalBodyshots = 0, totalLegshots = 0;
+  let totalRoundsPlayed = 0;
+  let totalCombatScore = 0;
   
-  const agentCount = {};
+  const agentStats = {};
+  const weaponStats = {};
+  const mapStats = {};
+  let currentRankTier = null;
+  let currentPlayerCard = null;
 
-  const processedMatches = matchesData.map(match => {
-    // Find the player's specific stats in this match
+  const processedMatches = matchesData.map((match, index) => {
     const player = match.players.find(p => p.puuid === puuid);
     if (!player) return null;
 
-    // Determine if won or lost. Find player's team, then check if that team won
+    if (!currentRankTier && player.competitiveTier) {
+       currentRankTier = player.competitiveTier;
+    }
+    
+    // Extract player card from the most recent match
+    if (index === 0 && player.playerCard) {
+       currentPlayerCard = player.playerCard;
+    }
+
     const team = match.teams.find(t => t.teamId === player.teamId);
+    const enemyTeam = match.teams.find(t => t.teamId !== player.teamId);
     const hasWon = team ? team.won : false;
     
     if (hasWon) wins++;
     else losses++;
 
+    // Track map stats
+    const mapId = match.matchInfo.mapId;
+    if (!mapStats[mapId]) {
+      mapStats[mapId] = { matches: 0, wins: 0, losses: 0 };
+    }
+    mapStats[mapId].matches++;
+    if (hasWon) mapStats[mapId].wins++;
+    else mapStats[mapId].losses++;
+
+    const teamRounds = team ? team.roundsWon : 0;
+    const enemyRounds = enemyTeam ? enemyTeam.roundsWon : 0;
+    const scoreString = `${teamRounds} - ${enemyRounds}`;
+
     totalKills += player.stats.kills;
     totalDeaths += player.stats.deaths;
     totalAssists += player.stats.assists;
+    totalRoundsPlayed += player.stats.roundsPlayed || 1;
 
+    let matchDamage = 0, matchHS = 0, matchBS = 0, matchLS = 0;
+
+    // Calculate Damage and Headshots from Round Results
+    if (match.roundResults) {
+      match.roundResults.forEach(round => {
+        const pStats = round.playerStats.find(ps => ps.puuid === puuid);
+        if (pStats) {
+          const weaponId = pStats.economy?.weapon?.toLowerCase();
+          if (weaponId && !weaponStats[weaponId]) {
+            weaponStats[weaponId] = { kills: 0, headshots: 0, bodyshots: 0, legshots: 0, damage: 0 };
+          }
+
+          if (pStats.damage) {
+            pStats.damage.forEach(dmg => {
+              matchDamage += dmg.damage;
+              matchHS += dmg.headshots;
+              matchBS += dmg.bodyshots;
+              matchLS += dmg.legshots;
+
+              if (weaponId) {
+                weaponStats[weaponId].headshots += dmg.headshots;
+                weaponStats[weaponId].bodyshots += dmg.bodyshots;
+                weaponStats[weaponId].legshots += dmg.legshots;
+                weaponStats[weaponId].damage += dmg.damage;
+              }
+            });
+          }
+
+          if (pStats.kills && weaponId) {
+            pStats.kills.forEach(k => {
+              if (k.killer === puuid) {
+                weaponStats[weaponId].kills++;
+              }
+            });
+          }
+        }
+      });
+    }
+
+    totalDamage += matchDamage;
+    totalHeadshots += matchHS;
+    totalBodyshots += matchBS;
+    totalLegshots += matchLS;
+
+    const matchHits = matchHS + matchBS + matchLS;
+    const matchHsPercent = matchHits > 0 ? ((matchHS / matchHits) * 100).toFixed(1) : 0;
+    const matchAdr = player.stats.roundsPlayed > 0 ? Math.round(matchDamage / player.stats.roundsPlayed) : 0;
+    const combatScore = player.stats.score / (player.stats.roundsPlayed || 1);
+    totalCombatScore += combatScore;
+
+    // Agent Stats Aggregation
     const agent = player.characterId;
-    agentCount[agent] = (agentCount[agent] || 0) + 1;
+    if (!agentStats[agent]) {
+       agentStats[agent] = { matches: 0, wins: 0, kills: 0, deaths: 0, score: 0 };
+    }
+    agentStats[agent].matches++;
+    if (hasWon) agentStats[agent].wins++;
+    agentStats[agent].kills += player.stats.kills;
+    agentStats[agent].deaths += player.stats.deaths;
+    agentStats[agent].score += combatScore;
 
     return {
       matchId: match.matchInfo.matchId,
@@ -223,14 +433,66 @@ export async function aggregatePlayerStats(matchesData, puuid) {
       gameStartMillis: match.matchInfo.gameStartMillis,
       stats: player.stats,
       characterId: player.characterId,
-      combatScore: player.stats.score / (match.matchInfo.gameLengthMillis / 60000), // simplified
+      combatScore,
       hasWon,
+      scoreString,
+      matchHsPercent,
+      matchAdr,
       teamId: player.teamId,
-      roundsPlayed: match.matchInfo.gameLengthMillis // not true rounds, but approximation if team data missing
+      rawMatch: match // Add full lobby payload for scoreboards
     };
   }).filter(Boolean);
 
-  const mostPlayedAgent = Object.keys(agentCount).reduce((a, b) => agentCount[a] > agentCount[b] ? a : b, null);
+  const totalHits = totalHeadshots + totalBodyshots + totalLegshots;
+  const globalHsPercent = totalHits > 0 ? ((totalHeadshots / totalHits) * 100).toFixed(1) : 0;
+  const globalAdr = totalRoundsPlayed > 0 ? Math.round(totalDamage / totalRoundsPlayed) : 0;
+  const globalAcs = processedMatches.length > 0 ? Math.round(totalCombatScore / processedMatches.length) : 0;
+
+  // Process all agents
+  const allAgents = Object.keys(agentStats)
+    .map(agentId => {
+      const a = agentStats[agentId];
+      return {
+        characterId: agentId,
+        matches: a.matches,
+        winRate: Math.round((a.wins / a.matches) * 100),
+        kdRatio: a.deaths > 0 ? (a.kills / a.deaths).toFixed(2) : a.kills.toFixed(2),
+        acs: Math.round(a.score / a.matches)
+      };
+    })
+    .sort((a, b) => b.matches - a.matches);
+
+  const topAgents = allAgents.slice(0, 3); // top 3
+
+  // Process all weapons
+  const allWeapons = Object.keys(weaponStats)
+    .map(weaponId => {
+      const w = weaponStats[weaponId];
+      const hits = w.headshots + w.bodyshots + w.legshots;
+      return {
+        weaponId,
+        kills: w.kills,
+        damage: w.damage,
+        headshots: hits > 0 ? Math.round((w.headshots / hits) * 100) : 0,
+        bodyshots: hits > 0 ? Math.round((w.bodyshots / hits) * 100) : 0,
+        legshots: hits > 0 ? Math.round((w.legshots / hits) * 100) : 0
+      };
+    })
+    .sort((a, b) => b.kills - a.kills);
+
+  // Process all maps
+  const allMaps = Object.keys(mapStats)
+    .map(mapId => {
+      const m = mapStats[mapId];
+      return {
+        mapId,
+        matches: m.matches,
+        wins: m.wins,
+        losses: m.losses,
+        winRate: Math.round((m.wins / m.matches) * 100)
+      };
+    })
+    .sort((a, b) => b.matches - a.matches);
 
   const totalMatches = wins + losses;
   
@@ -245,7 +507,123 @@ export async function aggregatePlayerStats(matchesData, puuid) {
       totalDeaths,
       totalAssists,
       kdRatio: totalDeaths > 0 ? (totalKills / totalDeaths).toFixed(2) : totalKills.toFixed(2),
-      mostPlayedAgent
+      globalHsPercent,
+      globalAdr,
+      globalAcs,
+      topAgents,
+      allAgents,
+      allWeapons,
+      allMaps,
+      currentRankTier,
+      currentPlayerCard
     }
   };
 }
+
+/**
+ * Fetch Current Act ID
+ */
+export async function getCurrentActId() {
+  try {
+    const res = await fetch('https://valorant-api.com/v1/seasons', { next: { revalidate: 86400 } });
+    const json = await res.json();
+    if (!json.data) return null;
+    
+    // Find the active competitive act
+    const now = new Date();
+    const activeAct = json.data.find(season => {
+        if (season.type !== 'EA_Act') return false;
+        const start = new Date(season.startTime);
+        const end = new Date(season.endTime);
+        return now >= start && now <= end;
+    });
+    
+    return activeAct ? activeAct.uuid : null;
+  } catch (e) {
+    console.error('Failed to fetch acts:', e);
+    return null;
+  }
+}
+
+/**
+ * Fetch Ranked Leaderboard
+ */
+export async function getValorantLeaderboard(actId, region = REGION) {
+  if (!process.env.RIOT_API_KEY) return { error: 'RIOT_API_KEY is missing' };
+
+  try {
+    const res = await fetch(`https://${region}.api.riotgames.com/val/ranked/v1/leaderboards/by-act/${actId}?size=100`, {
+      headers: getHeaders(),
+      next: { revalidate: 3600 } // Cache leaderboard for 1 hour
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) return { error: 'Leaderboard not found for this act' };
+      if (res.status === 429) return { error: 'Rate limit exceeded' };
+      return { error: 'Failed to fetch leaderboard from Riot API' };
+    }
+
+    const leaderboardData = await res.json();
+    return { data: leaderboardData.players || [] };
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    return { error: 'Internal server error' };
+  }
+}
+
+/**
+ * Fetch Server Status
+ */
+export async function getValorantServerStatus(region = REGION) {
+  if (!process.env.RIOT_API_KEY) return { error: 'RIOT_API_KEY is missing' };
+
+  try {
+    const res = await fetch(`https://${region}.api.riotgames.com/val/status/v1/platform-data`, {
+      headers: getHeaders(),
+      next: { revalidate: 300 } // Cache for 5 mins
+    });
+
+    if (!res.ok) {
+      return { error: 'Failed to fetch status' };
+    }
+
+    const data = await res.json();
+    return { data };
+  } catch (error) {
+    console.error('Error fetching server status:', error);
+    return { error: 'Internal server error' };
+  }
+}
+
+/**
+ * Fetch Game Content (Characters, Maps, Chromas, Skins, etc)
+ * Optionally filtered by locale (e.g. en-US, es-ES, ko-KR)
+ */
+export async function getValorantContent(locale, region = REGION) {
+  if (!process.env.RIOT_API_KEY) return { error: 'RIOT_API_KEY is missing' };
+
+  try {
+    let url = `https://${region}.api.riotgames.com/val/content/v1/contents`;
+    if (locale) {
+      url += `?locale=${encodeURIComponent(locale)}`;
+    }
+
+    const res = await fetch(url, {
+      headers: getHeaders(),
+      next: { revalidate: 86400 } // Content rarely changes, cache for 1 day
+    });
+
+    if (!res.ok) {
+      if (res.status === 429) return { error: 'Rate limit exceeded' };
+      return { error: 'Failed to fetch content data' };
+    }
+
+    const data = await res.json();
+    return { data };
+  } catch (error) {
+    console.error('Error fetching game content:', error);
+    return { error: 'Internal server error' };
+  }
+}
+
+
