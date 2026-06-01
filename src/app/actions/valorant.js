@@ -89,7 +89,49 @@ export const getValorantProfile = cache(async (gameName, tagLine) => {
   const matchIds = historyRes.data || [];
   const playerRegion = historyRes.region || 'ap';
 
-  if (matchIds.length === 0) return { error: "This player has no recent match history in Valorant." };
+  const emptyPlayerStats = {
+    summary: {
+      totalMatches: 0, winRate: 0, wins: 0, losses: 0, kdRatio: 0,
+      totalKills: 0, totalDeaths: 0, totalDamage: 0,
+      globalHsPercent: 0,
+      globalAdr: 0,
+      globalAcs: 0,
+      globalKast: 0,
+      globalDdPerRound: 0,
+      globalKadRatio: 0,
+      globalKillsPerRound: 0,
+      totalFirstBloods: 0,
+      totalAces: 0,
+      totalFlawlessRounds: 0,
+      kpsScore: 0,
+      totalHeadshots: 0,
+      totalBodyshots: 0,
+      totalLegshots: 0,
+      totalHits: 0,
+      currentRankTier: null,
+      currentPlayerCard: null,
+      topAgents: []
+    },
+    recentMatches: [],
+    topWeapons: [],
+    topMaps: []
+  };
+
+  if (matchIds.length === 0) {
+    // Player hasn't played recently, but account exists. Don't throw error, return empty stats.
+    const [agentsRes, mapsRes, tiersRes, weaponsRes, playerCardsRes] = await Promise.all([
+      getValorantAgents(), getValorantMaps(), getValorantTiers(), getValorantWeapons(), getValorantPlayerCards()
+    ]);
+    return {
+      account: accountRes.data,
+      playerStats: emptyPlayerStats,
+      agentDict: agentsRes.reduce((acc, a) => ({ ...acc, [a.uuid.toLowerCase()]: a }), {}),
+      mapDict: mapsRes.reduce((acc, m) => ({ ...acc, [m.mapUrl]: m }), {}),
+      tiersRes,
+      weaponDict: weaponsRes.reduce((acc, w) => ({ ...acc, [w.uuid.toLowerCase()]: w }), {}),
+      playerCardDict: playerCardsRes.reduce((acc, c) => ({ ...acc, [c.uuid.toLowerCase()]: c }), {})
+    };
+  }
 
   const matchesData = [];
   const errors = [];
@@ -108,13 +150,13 @@ export const getValorantProfile = cache(async (gameName, tagLine) => {
   }
 
   const cleanMatches = matchesData.filter(Boolean);
-  if (cleanMatches.length === 0) {
-    if (rateLimited) return { error: "Riot API Rate Limit Exceeded. Please try again in 2 minutes." };
-    return { error: `Failed to fetch match details. Errors: ${errors.join(' | ')}` };
+  let playerStats = emptyPlayerStats;
+  
+  if (cleanMatches.length > 0) {
+    playerStats = await aggregatePlayerStats(cleanMatches, puuid) || emptyPlayerStats;
+  } else if (rateLimited) {
+    return { error: "Riot API Rate Limit Exceeded. Please try again in 2 minutes." };
   }
-
-  const playerStats = await aggregatePlayerStats(cleanMatches, puuid);
-  if (!playerStats) return { error: "No robust match data found for this player after aggregation." };
 
   const [agentsRes, mapsRes, tiersRes, weaponsRes, playerCardsRes] = await Promise.all([
     getValorantAgents(),
@@ -317,10 +359,16 @@ export async function aggregatePlayerStats(matchesData, puuid) {
 
   let totalKills = 0, totalDeaths = 0, totalAssists = 0;
   let wins = 0, losses = 0;
-  let totalDamage = 0, totalHeadshots = 0, totalBodyshots = 0, totalLegshots = 0;
+  let totalDamage = 0, totalDamageReceived = 0, totalHeadshots = 0, totalBodyshots = 0, totalLegshots = 0;
   let totalRoundsPlayed = 0;
   let totalCombatScore = 0;
   
+  // Advanced Stats
+  let totalFirstBloods = 0;
+  let totalAces = 0;
+  let totalFlawlessRounds = 0;
+  let totalKastRounds = 0;
+
   const agentStats = {};
   const weaponStats = {};
   const mapStats = {};
@@ -365,11 +413,38 @@ export async function aggregatePlayerStats(matchesData, puuid) {
     totalAssists += player.stats.assists;
     totalRoundsPlayed += player.stats.roundsPlayed || 1;
 
-    let matchDamage = 0, matchHS = 0, matchBS = 0, matchLS = 0;
+    let matchDamage = 0, matchDamageReceived = 0, matchHS = 0, matchBS = 0, matchLS = 0;
+    let matchFirstBloods = 0, matchAces = 0, matchFlawless = 0, matchKastRounds = 0;
 
     // Calculate Damage and Headshots from Round Results
     if (match.roundResults) {
       match.roundResults.forEach(round => {
+        let pKillsInRound = 0;
+        let pDiedInRound = false;
+        let pAssistedInRound = false;
+        let teamDeathsInRound = 0;
+        
+        // Find all kills in the round
+        let allKills = [];
+        round.playerStats.forEach(ps => {
+          if (ps.kills) allKills.push(...ps.kills);
+          
+          // Calculate damage received
+          if (ps.damage) {
+            ps.damage.forEach(dmg => {
+              if (dmg.receiver === puuid) {
+                matchDamageReceived += dmg.damage;
+              }
+            });
+          }
+        });
+
+        // Sort all kills by time to find First Blood
+        allKills.sort((a, b) => a.timeSinceRoundStartMillis - b.timeSinceRoundStartMillis);
+        if (allKills.length > 0 && allKills[0].killer === puuid) {
+          matchFirstBloods++;
+        }
+
         const pStats = round.playerStats.find(ps => ps.puuid === puuid);
         if (pStats) {
           const weaponId = pStats.economy?.weapon?.toLowerCase();
@@ -393,21 +468,50 @@ export async function aggregatePlayerStats(matchesData, puuid) {
             });
           }
 
-          if (pStats.kills && weaponId) {
-            pStats.kills.forEach(k => {
-              if (k.killer === puuid) {
-                weaponStats[weaponId].kills++;
-              }
-            });
+          if (pStats.kills) {
+            pKillsInRound = pStats.kills.length;
+            if (weaponId) {
+              pStats.kills.forEach(k => {
+                if (k.killer === puuid) weaponStats[weaponId].kills++;
+              });
+            }
           }
+        }
+        
+        // Determine KAST components and Flawless
+        allKills.forEach(k => {
+           if (k.victim === puuid) pDiedInRound = true;
+           if (k.assistants && k.assistants.includes(puuid)) pAssistedInRound = true;
+           
+           // Check if victim is on our team
+           const victimTeam = match.players.find(p => p.puuid === k.victim)?.teamId;
+           if (victimTeam === player.teamId) teamDeathsInRound++;
+        });
+
+        // Aces
+        if (pKillsInRound >= 5) matchAces++;
+        
+        // Flawless Round
+        if (round.winningTeam === player.teamId && teamDeathsInRound === 0) {
+           matchFlawless++;
+        }
+        
+        // KAST: Kill, Assist, Survived, or Traded (Simplified trade as KAS for now)
+        if (pKillsInRound > 0 || pAssistedInRound || !pDiedInRound) {
+           matchKastRounds++;
         }
       });
     }
 
     totalDamage += matchDamage;
+    totalDamageReceived += matchDamageReceived;
     totalHeadshots += matchHS;
     totalBodyshots += matchBS;
     totalLegshots += matchLS;
+    totalFirstBloods += matchFirstBloods;
+    totalAces += matchAces;
+    totalFlawlessRounds += matchFlawless;
+    totalKastRounds += matchKastRounds;
 
     const matchHits = matchHS + matchBS + matchLS;
     const matchHsPercent = matchHits > 0 ? ((matchHS / matchHits) * 100).toFixed(1) : 0;
@@ -447,6 +551,19 @@ export async function aggregatePlayerStats(matchesData, puuid) {
   const globalHsPercent = totalHits > 0 ? ((totalHeadshots / totalHits) * 100).toFixed(1) : 0;
   const globalAdr = totalRoundsPlayed > 0 ? Math.round(totalDamage / totalRoundsPlayed) : 0;
   const globalAcs = processedMatches.length > 0 ? Math.round(totalCombatScore / processedMatches.length) : 0;
+  const globalKast = totalRoundsPlayed > 0 ? ((totalKastRounds / totalRoundsPlayed) * 100).toFixed(1) : 0;
+  const globalDdPerRound = totalRoundsPlayed > 0 ? Math.round((totalDamage - totalDamageReceived) / totalRoundsPlayed) : 0;
+  const globalKdRatio = totalDeaths > 0 ? (totalKills / totalDeaths).toFixed(2) : totalKills.toFixed(2);
+  const globalKadRatio = totalDeaths > 0 ? ((totalKills + totalAssists) / totalDeaths).toFixed(2) : (totalKills + totalAssists).toFixed(2);
+  const globalKillsPerRound = totalRoundsPlayed > 0 ? (totalKills / totalRoundsPlayed).toFixed(2) : 0;
+  
+  // Calculate Performance Score (KPS)
+  // Max score ~1000. Weight ACS (max 300), KD (max 3.0 = 300), ADR (max 200), HS% (max 50% = 200)
+  const acsScore = Math.min(300, (globalAcs / 300) * 300);
+  const kdScore = Math.min(300, (globalKdRatio / 1.5) * 300);
+  const adrScore = Math.min(200, (globalAdr / 160) * 200);
+  const hsScore = Math.min(200, (globalHsPercent / 40) * 200);
+  const kpsScore = Math.round(acsScore + kdScore + adrScore + hsScore);
 
   // Process all agents
   const allAgents = Object.keys(agentStats)
@@ -510,6 +627,19 @@ export async function aggregatePlayerStats(matchesData, puuid) {
       globalHsPercent,
       globalAdr,
       globalAcs,
+      globalKast,
+      globalDdPerRound,
+      globalKadRatio,
+      globalKillsPerRound,
+      totalFirstBloods,
+      totalAces,
+      totalFlawlessRounds,
+      kpsScore,
+      totalHeadshots,
+      totalBodyshots,
+      totalLegshots,
+      totalHits,
+      totalDamage,
       topAgents,
       allAgents,
       allWeapons,
@@ -532,7 +662,7 @@ export async function getCurrentActId() {
     // Find the active competitive act
     const now = new Date();
     const activeAct = json.data.find(season => {
-        if (season.type !== 'EA_Act') return false;
+        if (season.type !== 'EAresSeasonType::Act') return false;
         const start = new Date(season.startTime);
         const end = new Date(season.endTime);
         return now >= start && now <= end;
@@ -626,4 +756,61 @@ export async function getValorantContent(locale, region = REGION) {
   }
 }
 
+/**
+ * Search Cached Valorant Accounts by partial name
+ */
+export async function searchValorantAccounts(query) {
+  if (!query || query.trim().length < 2) return { data: [] };
 
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('valorant_accounts')
+    .select('puuid, game_name, tag_line, last_updated')
+    .ilike('game_name', `%${query.trim()}%`)
+    .order('last_updated', { ascending: false })
+    .limit(8);
+
+  if (error) {
+    console.error('Error searching accounts:', error);
+    return { data: [] };
+  }
+
+  return { data: data || [] };
+}
+
+/**
+ * Get Global Stats (Total Players Tracked & Season End Time)
+ */
+export async function getValorantGlobalStats() {
+  const supabase = await createClient();
+  let playersTracked = 0;
+  let seasonEndTime = null;
+
+  try {
+    // 1. Get total players tracked
+    const { count, error } = await supabase
+      .from('valorant_accounts')
+      .select('*', { count: 'exact', head: true });
+    
+    if (!error) playersTracked = count || 0;
+
+    // 2. Get season end time
+    const res = await fetch('https://valorant-api.com/v1/seasons', { next: { revalidate: 86400 } });
+    const json = await res.json();
+    if (json.data) {
+      const now = new Date();
+      const activeAct = json.data.find(season => {
+          if (season.type !== 'EAresSeasonType::Act') return false;
+          const start = new Date(season.startTime);
+          const end = new Date(season.endTime);
+          return now >= start && now <= end;
+      });
+      if (activeAct) seasonEndTime = activeAct.endTime;
+    }
+  } catch (err) {
+    console.error('Error fetching global stats:', err);
+  }
+
+  return { playersTracked, seasonEndTime };
+}
