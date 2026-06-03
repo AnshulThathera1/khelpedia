@@ -33,7 +33,7 @@ export const metadata = {
     canonical: "/",
   },
   verification: {
-    google: "Y8F1ukynFn6r9Gu4IiFh9xRRYGzeC2hQ-32O-9Xw7TU",
+    google: "dJx1z7y3he6vo1cqT3IwvJ9hoHdlEZmsc-3fLJG9IJw",
   },
 };
 
