@@ -32,6 +32,9 @@ export const metadata = {
   alternates: {
     canonical: "/",
   },
+  verification: {
+    google: "Y8F1ukynFn6r9Gu4IiFh9xRRYGzeC2hQ-32O-9Xw7TU",
+  },
 };
 
 import { createClient } from "@/utils/supabase/server";

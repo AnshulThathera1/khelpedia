@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 export const dynamic = 'force-dynamic';
 
@@ -10,16 +11,30 @@ export async function generateMetadata({ params }) {
 
     const { data: blog } = await supabase
         .from("blogs")
-        .select("title, excerpt")
+        .select("title, excerpt, cover_image_url")
         .eq("slug", resolvedParams.slug)
         .eq("is_published", true)
         .single();
 
     if (!blog) return { title: "Article Not Found | KhelPediA" };
 
+    const images = blog.cover_image_url ? [blog.cover_image_url] : [];
+
     return {
         title: `${blog.title} | KhelPediA News`,
         description: blog.excerpt,
+        openGraph: {
+            title: blog.title,
+            description: blog.excerpt,
+            type: "article",
+            images: images,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: blog.title,
+            description: blog.excerpt,
+            images: images,
+        }
     };
 }
 
@@ -49,12 +64,30 @@ export default async function BlogPostPage({ params }) {
         blog.profiles = profile || null;
     }
 
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'NewsArticle',
+        headline: blog.title,
+        image: blog.cover_image_url ? [blog.cover_image_url] : [],
+        datePublished: blog.created_at,
+        dateModified: blog.updated_at || blog.created_at,
+        author: [{
+            '@type': 'Person',
+            name: blog.profiles?.display_name || "KhelPediA Staff",
+            url: `https://khelpedia.vercel.app`
+        }]
+    };
+
     return (
         <article style={{
             maxWidth: "800px",
             margin: "0 auto",
             padding: "4rem 1.5rem",
         }}>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <Link href="/blogs" style={{ color: "var(--accent-cyan)", textDecoration: "none", fontSize: "0.9rem", display: "inline-flex", alignItems: "center", gap: "0.5rem", marginBottom: "2rem" }}>
                 &larr; Back to News
             </Link>
@@ -76,9 +109,9 @@ export default async function BlogPostPage({ params }) {
 
                 {/* Author Info */}
                 <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--bg-secondary)", overflow: "hidden", border: "2px solid var(--border-color)" }}>
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--bg-secondary)", overflow: "hidden", border: "2px solid var(--border-color)", position: "relative" }}>
                         {blog.profiles?.avatar_url ? (
-                            <img src={blog.profiles.avatar_url} alt={blog.profiles.display_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <Image src={blog.profiles.avatar_url} alt={blog.profiles.display_name} fill style={{ objectFit: "cover" }} />
                         ) : (
                             <div style={{ width: "100%", height: "100%", background: "var(--gradient-primary)" }} />
                         )}
@@ -92,8 +125,8 @@ export default async function BlogPostPage({ params }) {
 
             {/* Optional Cover Image */}
             {blog.cover_image_url && (
-                <div style={{ width: "100%", height: "400px", borderRadius: "12px", overflow: "hidden", marginBottom: "3rem", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}>
-                    <img src={blog.cover_image_url} alt={blog.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ width: "100%", height: "400px", borderRadius: "12px", overflow: "hidden", marginBottom: "3rem", boxShadow: "0 20px 40px rgba(0,0,0,0.3)", position: "relative" }}>
+                    <Image src={blog.cover_image_url} alt={blog.title} fill style={{ objectFit: "cover" }} priority />
                 </div>
             )}
 

@@ -1,12 +1,33 @@
 import { getTournamentById, getTournamentTeams, getTournamentMatches } from "@/lib/queries";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 
 export async function generateMetadata({ params }) {
     const { id } = await params;
     const tournament = await getTournamentById(id);
     if (!tournament) return { title: "Tournament Not Found | KhelPediA" };
-    return { title: `${tournament.name} | KhelPediA`, description: `Follow ${tournament.name} live.` };
+
+    const title = `${tournament.name} | KhelPediA`;
+    const description = `Follow ${tournament.name} live. Track participating teams, recent matches, and tournament brackets for ${tournament.games?.name || 'this game'}.`;
+    const images = tournament.games?.icon_url ? [tournament.games.icon_url] : [];
+
+    return { 
+        title, 
+        description,
+        openGraph: {
+            title,
+            description,
+            type: "website",
+            images: images,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            images: images,
+        }
+    };
 }
 
 export default async function TournamentDetailPage({ params }) {
@@ -30,8 +51,33 @@ export default async function TournamentDetailPage({ params }) {
 
     const formatDate = (d) => d ? new Date(d).toLocaleDateString() : 'TBA';
 
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Event',
+        name: tournament.name,
+        startDate: tournament.start_date,
+        endDate: tournament.end_date,
+        eventStatus: "https://schema.org/EventScheduled",
+        eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
+        location: {
+            '@type': 'VirtualLocation',
+            url: `https://khelpedia.vercel.app/tournaments/${tournament.id}`
+        },
+        image: tournament.games?.icon_url ? [tournament.games.icon_url] : [],
+        description: `Follow ${tournament.name} live on KhelPediA.`,
+        organizer: {
+            '@type': 'Organization',
+            name: 'KhelPediA',
+            url: 'https://khelpedia.vercel.app'
+        }
+    };
+
     return (
         <div className="page-container">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             {/* Tournament Header */}
             <div className="glass-card" style={{ padding: "3rem 2rem", marginBottom: "3rem", borderTop: "4px solid var(--accent-cyan)" }}>
                 <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
@@ -78,7 +124,7 @@ export default async function TournamentDetailPage({ params }) {
                                     <tr key={t.id}>
                                         <td>
                                             <Link href={`/teams/${t.team_id}`} style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-primary)", textDecoration: "none", fontWeight: 600 }}>
-                                                {t.teams?.logo_url && <img src={t.teams.logo_url} alt={t.teams?.name} style={{ width: 20, height: 20, objectFit: "contain" }} />}
+                                                {t.teams?.logo_url && <Image src={t.teams.logo_url} alt={t.teams?.name} width={20} height={20} style={{ objectFit: "contain" }} />}
                                                 {t.teams?.name}
                                             </Link>
                                         </td>
@@ -106,7 +152,7 @@ export default async function TournamentDetailPage({ params }) {
                                     <Link href={`/teams/${m.team1_id}`} style={{ textDecoration: "none", color: m.winner_id === m.team1_id ? "var(--text-primary)" : "var(--text-muted)", fontWeight: m.winner_id === m.team1_id ? 700 : 400 }}>
                                         {m.team1?.name || "TBD"}
                                     </Link>
-                                    {m.team1?.logo_url && <img src={m.team1.logo_url} alt={m.team1.name} style={{ width: 24, height: 24, objectFit: "contain", filter: m.winner_id === m.team1_id ? "none" : "grayscale(50%)" }} />}
+                                    {m.team1?.logo_url && <Image src={m.team1.logo_url} alt={m.team1.name} width={24} height={24} style={{ objectFit: "contain", filter: m.winner_id === m.team1_id ? "none" : "grayscale(50%)" }} />}
                                 </div>
 
                                 <div style={{ display: "flex", gap: "1rem", alignItems: "center", background: "var(--bg-secondary)", padding: "0.5rem 1.5rem", borderRadius: "12px", fontFamily: '"Rajdhani", sans-serif' }}>
@@ -116,7 +162,7 @@ export default async function TournamentDetailPage({ params }) {
                                 </div>
 
                                 <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "12px", paddingLeft: "2rem" }}>
-                                    {m.team2?.logo_url && <img src={m.team2.logo_url} alt={m.team2.name} style={{ width: 24, height: 24, objectFit: "contain", filter: m.winner_id === m.team2_id ? "none" : "grayscale(50%)" }} />}
+                                    {m.team2?.logo_url && <Image src={m.team2.logo_url} alt={m.team2.name} width={24} height={24} style={{ objectFit: "contain", filter: m.winner_id === m.team2_id ? "none" : "grayscale(50%)" }} />}
                                     <Link href={`/teams/${m.team2_id}`} style={{ textDecoration: "none", color: m.winner_id === m.team2_id ? "var(--text-primary)" : "var(--text-muted)", fontWeight: m.winner_id === m.team2_id ? 700 : 400 }}>
                                         {m.team2?.name || "TBD"}
                                     </Link>
