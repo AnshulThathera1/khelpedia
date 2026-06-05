@@ -16,9 +16,9 @@ export async function GET(request) {
         // }
 
         // Initialize API clients
-        const geminiApiKey = process.env.GEMINI_API_KEY || "AIzaSyBUw1eSMdh0dGXgZpJqaEG9AXLNwK9Q58Q";
+        const geminiApiKey = process.env.GEMINI_API_KEY;
         if (!geminiApiKey) {
-            throw new Error("GEMINI_API_KEY is not set.");
+            throw new Error("GEMINI_API_KEY is not set in environment variables.");
         }
         const ai = new GoogleGenAI({ apiKey: geminiApiKey });
         const parser = new Parser();
@@ -90,7 +90,7 @@ export async function GET(request) {
         }
 
         // Send Discord Notification
-        const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1509256893665771641/Wln5LB1n_ypHzdWzRBOELu9NXzs9SHQuRkXWat-Zv3F-sxFnhKShbM4y2kzZqTwCa_ur";
+        const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
         if (discordWebhookUrl) {
             try {
                 await fetch(discordWebhookUrl, {
