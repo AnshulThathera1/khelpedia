@@ -221,7 +221,7 @@ export default function DashboardPage() {
                                         Verify your identity via Riot Sign On to enable detailed stat tracking and opt-in to public rankings.
                                     </p>
                                     <button 
-                                        onClick={() => alert("Verification will be enabled once Riot approves the RSO Client (Application ID: 806922).")}
+                                        onClick={() => window.location.href = '/api/auth/riot/login'}
                                         className="btn btn-primary" 
                                         style={{ 
                                             width: "100%", 

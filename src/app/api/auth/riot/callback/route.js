@@ -67,53 +67,86 @@ export async function GET(request) {
     const { puuid, gameName, tagLine } = profile;
 
     // 3. Sync with Supabase Auth
-    const email = `${puuid}@riot.khelpedia.com`;
-    // We generate a long secure temporary password for this session
-    // Since we don't store it, they will just generate a new one via OAuth next time
-    const tempPassword = crypto.randomUUID() + crypto.randomUUID(); 
-
+    const supabaseClient = await createClient();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     const adminClient = createAdminClient();
-    
-    // Check if user exists
-    const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers();
-    let user = users.find(u => u.email === email);
 
-    if (!user) {
-      // Create a new user mapping to the Riot PUUID
-      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-        email: email,
-        password: tempPassword,
-        email_confirm: true,
+    let userId;
+
+    if (session) {
+      // LINKING FLOW: User is already logged in, link the Riot account to current session
+      userId = session.user.id;
+      
+      // Update user metadata
+      await adminClient.auth.admin.updateUserById(userId, { 
         user_metadata: {
+          ...session.user.user_metadata,
           riot_puuid: puuid,
-          game_name: gameName,
-          tag_line: tagLine,
-          provider: 'riot'
-        }
-      });
-      if (createError) throw createError;
-      user = newUser.user;
-    } else {
-      // User exists, update password so we can sign in right now
-      const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, { 
-        password: tempPassword,
-        user_metadata: {
-          ...user.user_metadata,
           game_name: gameName,
           tag_line: tagLine
         }
       });
-      if (updateError) throw updateError;
+    } else {
+      // LOGIN FLOW: User is not logged in, create/login as Riot user
+      const email = `${puuid}@riot.khelpedia.com`;
+      const tempPassword = crypto.randomUUID() + crypto.randomUUID(); 
+      
+      // Check if user exists
+      const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers();
+      let user = users.find(u => u.email === email);
+
+      if (!user) {
+        // Create a new user mapping to the Riot PUUID
+        const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+          email: email,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            riot_puuid: puuid,
+            game_name: gameName,
+            tag_line: tagLine,
+            provider: 'riot'
+          }
+        });
+        if (createError) throw createError;
+        user = newUser.user;
+      } else {
+        // User exists, update password so we can sign in right now
+        const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, { 
+          password: tempPassword,
+          user_metadata: {
+            ...user.user_metadata,
+            game_name: gameName,
+            tag_line: tagLine
+          }
+        });
+        if (updateError) throw updateError;
+      }
+
+      userId = user.id;
+
+      // Sign in the user using the standard SSR client to set the cookies
+      const { error: signInError } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: tempPassword
+      });
+
+      if (signInError) throw signInError;
     }
 
-    // 4. Sign in the user using the standard SSR client to set the cookies
-    const supabaseClient = await createClient();
-    const { error: signInError } = await supabaseClient.auth.signInWithPassword({
-      email: email,
-      password: tempPassword
-    });
+    // 4. Link the valorant_accounts table to the user
+    // We use adminClient to bypass RLS and ensure the account is updated/inserted correctly
+    const { error: dbError } = await adminClient.from('valorant_accounts').upsert({
+      puuid: puuid,
+      game_name: gameName,
+      tag_line: tagLine,
+      user_id: userId,
+      last_updated: new Date().toISOString()
+    }, { onConflict: 'game_name, tag_line' });
 
-    if (signInError) throw signInError;
+    if (dbError) {
+      console.error('Failed to link valorant_accounts:', dbError);
+    }
 
     // 5. Redirect to Dashboard
     return NextResponse.redirect(`${origin}/dashboard?rso=success`);
