@@ -92,8 +92,13 @@ export async function GET(request) {
       const tempPassword = crypto.randomUUID() + crypto.randomUUID(); 
       
       // Check if user exists
-      const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers();
-      let user = users.find(u => u.email === email);
+      const { data, error: listError } = await adminClient.auth.admin.listUsers();
+      if (listError) throw new Error("List Users Error: " + listError.message);
+      
+      let user = null;
+      if (data && data.users) {
+        user = data.users.find(u => u.email === email);
+      }
 
       if (!user) {
         // Create a new user mapping to the Riot PUUID
@@ -153,6 +158,8 @@ export async function GET(request) {
 
   } catch (err) {
     console.error('RSO flow exception:', err);
-    return NextResponse.redirect(`${origin}/login?error=rso_exception`);
+    // Append the error message to the URL to help debugging (truncate to 100 chars)
+    const errMsg = encodeURIComponent(err?.message?.substring(0, 100) || 'unknown');
+    return NextResponse.redirect(`${origin}/login?error=rso_exception&details=${errMsg}`);
   }
 }
