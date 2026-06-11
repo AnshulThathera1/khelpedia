@@ -24,8 +24,8 @@ export default function LoginPage() {
     };
 
     const handleRiotLogin = () => {
-        // This will be enabled once Riot approves the RSO Client
-        alert("Riot Sign On is currently being verified by Riot Games. It will be enabled shortly! (App ID: 806922)");
+        setIsLoading(true);
+        window.location.href = '/api/auth/riot/login';
     };
 
     const handleEmailLogin = async (e) => {
