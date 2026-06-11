@@ -88,16 +88,20 @@ export async function GET(request) {
       });
     } else {
       // LOGIN FLOW: User is not logged in, create/login as Riot user
-      const email = `${puuid}@riot.khelpedia.com`;
+      const email = `${puuid.toLowerCase()}@riot.khelpedia.com`;
       const tempPassword = crypto.randomUUID() + crypto.randomUUID(); 
       
-      // Check if user exists
-      const { data, error: listError } = await adminClient.auth.admin.listUsers();
-      if (listError) throw new Error("List Users Error: " + listError.message);
-      
+      // Check if user exists (with pagination support in case of >50 users)
       let user = null;
-      if (data && data.users) {
+      let page = 1;
+      while (true) {
+        const { data, error: listError } = await adminClient.auth.admin.listUsers({ page: page, perPage: 100 });
+        if (listError) throw new Error("List Users Error: " + listError.message);
+        if (!data || !data.users || data.users.length === 0) break;
+        
         user = data.users.find(u => u.email === email);
+        if (user) break;
+        page++;
       }
 
       if (!user) {
