@@ -1,5 +1,6 @@
 import "./globals.css";
 import LayoutWrapper from "./components/LayoutWrapper";
+import Script from "next/script";
 
 export const metadata = {
   metadataBase: new URL("https://khelpedia.vercel.app"),
@@ -56,6 +57,14 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3395571758829715"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+      </head>
       <body suppressHydrationWarning>
         <LayoutWrapper user={user}>
           {children}
