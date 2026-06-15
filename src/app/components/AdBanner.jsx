@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-export default function AdBanner({ dataAdSlot, dataAdFormat = "auto", dataFullWidthResponsive = true }) {
+export default function AdBanner({ dataAdSlot = "9430211570", dataAdFormat = "auto", dataFullWidthResponsive = true }) {
   useEffect(() => {
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
