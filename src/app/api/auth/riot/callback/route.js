@@ -4,11 +4,8 @@ import { createAdminClient } from '@/utils/supabase/admin';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const protocol = request.headers.get("x-forwarded-proto") || "http";
-  const host = request.headers.get("host");
-  // Don't use process.env.NEXT_PUBLIC_SITE_URL here if we want localhost to work independently,
-  // but it's safe to just use the actual accessed host.
-  const origin = `${protocol}://${host}`;
+  const isDev = process.env.NODE_ENV === "development";
+  const origin = isDev ? "http://localhost:3000" : "https://khelpedia.org";
   const code = searchParams.get('code');
   const error = searchParams.get('error');
 

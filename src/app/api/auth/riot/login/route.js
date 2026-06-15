@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {
-  const protocol = request.headers.get("x-forwarded-proto") || "http";
-  const host = request.headers.get("host");
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+  const isDev = process.env.NODE_ENV === "development";
+  const origin = isDev ? "http://localhost:3000" : "https://khelpedia.org";
   
   const clientId = process.env.RIOT_CLIENT_ID;
   const redirectUri = `${origin}/api/auth/riot/callback`;
