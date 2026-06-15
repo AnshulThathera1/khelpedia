@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import AdBanner from "@/app/components/AdBanner";
 
 export const dynamic = 'force-dynamic';
 
@@ -141,6 +142,9 @@ export default async function BlogPostPage({ params }) {
                 }}
                 dangerouslySetInnerHTML={{ __html: blog.content }}
             />
+
+            {/* Ad Banner at bottom of article */}
+            <AdBanner />
 
             {/* Simple CSS injected to style the raw HTML content output */}
             <style dangerouslySetInnerHTML={{

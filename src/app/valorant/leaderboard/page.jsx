@@ -1,5 +1,6 @@
 import { getValorantLeaderboard, getCurrentActId } from '@/app/actions/valorant';
 import Link from 'next/link';
+import AdBanner from '@/app/components/AdBanner';
 import { Trophy, Medal, ChevronLeft, Target } from 'lucide-react';
 
 export const revalidate = 3600; // Cache leaderboard for 1 hour
@@ -74,6 +75,9 @@ export default async function ValorantLeaderboardPage() {
             </div>
           )}
         </div>
+
+        {/* Ad Banner at bottom of leaderboard */}
+        <AdBanner />
       </main>
     </div>
   );
