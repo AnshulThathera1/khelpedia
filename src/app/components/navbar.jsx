@@ -16,7 +16,7 @@ export default function AppNavbar({ user }) {
   const [isSearching, setIsSearching] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   const pathname = usePathname();
   const router = useRouter();
   const searchRef = useRef(null);
@@ -315,13 +315,13 @@ export default function AppNavbar({ user }) {
                   e.target.style.background = "var(--accent-red)";
                   e.target.style.transform = "translateY(0)";
                 }}
-              >
+              > Sign In
               </button>
             )}
           </div>
 
           {/* Mobile Menu Toggle */}
-          <button 
+          <button
             className="mobile-toggle"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             style={{
@@ -373,12 +373,12 @@ export default function AppNavbar({ user }) {
                     <button onClick={handleLogout} className="nav-link" style={{ background: "none", border: "none", textAlign: "left", fontSize: "1.2rem", cursor: "pointer", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)" }}>Logout</button>
                   </div>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);
                       setIsLoginModalOpen(true);
                     }}
-                    className="btn-primary" 
+                    className="btn-primary"
                     style={{ width: "100%", justifyContent: "center" }}
                   >
                     Sign In
@@ -391,9 +391,9 @@ export default function AppNavbar({ user }) {
       </nav>
 
       {/* Login Modal */}
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)} 
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
       />
 
       <style jsx global>{`
