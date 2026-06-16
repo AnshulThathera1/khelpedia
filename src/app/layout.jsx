@@ -62,7 +62,7 @@ export default async function RootLayout({ children }) {
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3395571758829715"
           crossOrigin="anonymous"
-          strategy="beforeInteractive"
+          strategy="lazyOnload"
         />
         {/* Google Analytics */}
         <Script
@@ -81,6 +81,9 @@ export default async function RootLayout({ children }) {
             `,
           }}
         />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet" />
       </head>
       <body suppressHydrationWarning>
         <LayoutWrapper user={user}>
