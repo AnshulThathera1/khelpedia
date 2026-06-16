@@ -20,12 +20,13 @@ export default async function RelatedArticles({ currentSlug }) {
       <h3 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "1.5rem", fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase" }}>
         Read Next
       </h3>
+      <style dangerouslySetInnerHTML={{__html: `
+        .related-card { transition: transform 0.2s ease; }
+        .related-card:hover { transform: translateY(-4px); }
+      `}} />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem" }}>
         {relatedBlogs.map((blog) => (
-          <Link href={`/blogs/${blog.slug}`} key={blog.slug} style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: "0.75rem", transition: "transform 0.2s ease" }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-4px)"}
-            onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
-          >
+          <Link href={`/blogs/${blog.slug}`} key={blog.slug} className="related-card" style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             <div style={{ width: "100%", height: "140px", borderRadius: "8px", overflow: "hidden", position: "relative", background: "var(--bg-secondary)", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }}>
               {blog.cover_image_url ? (
                 <Image src={blog.cover_image_url} alt={blog.title} fill style={{ objectFit: "cover" }} />
