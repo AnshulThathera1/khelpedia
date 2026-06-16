@@ -65,10 +65,15 @@ export default function AdminNavbar() {
 
                     {/* Admin Links - Desktop */}
                     <div className="admin-links-desktop" style={{ display: "flex", gap: "1.5rem", marginLeft: "2rem" }}>
+                        <style dangerouslySetInnerHTML={{__html: `
+                            .admin-nav-link { transition: color 0.2s; }
+                            .admin-nav-link:hover { color: var(--accent-red) !important; }
+                        `}} />
                         {adminLinks.map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}
+                                className="admin-nav-link"
                                 style={{
                                     textDecoration: "none",
                                     color: pathname === link.href ? "var(--accent-red)" : "var(--text-secondary)",
@@ -77,10 +82,7 @@ export default function AdminNavbar() {
                                     textTransform: "uppercase",
                                     letterSpacing: "0.1em",
                                     fontFamily: '"Rajdhani", sans-serif',
-                                    transition: "color 0.2s"
                                 }}
-                                onMouseEnter={(e) => e.target.style.color = "var(--accent-red)"}
-                                onMouseLeave={(e) => e.target.style.color = pathname === link.href ? "var(--accent-red)" : "var(--text-secondary)"}
                             >
                                 {link.label}
                             </Link>
