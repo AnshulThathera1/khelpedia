@@ -32,7 +32,7 @@ export async function GET() {
       <channel>
         <title>KhelPediA News</title>
         <link>${baseUrl}</link>
-        <description>Latest Esports Tournaments, Stats & Rankings</description>
+        <description>Latest Esports Tournaments, Stats and Rankings</description>
         <language>en-us</language>
         <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
         ${itemsXml}
