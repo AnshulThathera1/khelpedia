@@ -64,8 +64,26 @@ export default async function PlayerProfilePage({ params }) {
     // Determine primary stats (if available) or render placeholders
     const primaryStats = player.player_stats?.[0] || null;
 
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: player.name || player.ign,
+        alternateName: player.ign,
+        jobTitle: 'Esports Player',
+        image: player.image_url || '',
+        url: \`https://khelpedia.org/players/\${player.slug}\`,
+        memberOf: player.teams ? {
+            '@type': 'SportsTeam',
+            name: player.teams.name
+        } : undefined
+    };
+
     return (
         <div className="page-container" style={{ maxWidth: "1000px" }}>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
 
             {/* Breadcrumbs */}
             <div style={{ marginBottom: "2rem" }}>

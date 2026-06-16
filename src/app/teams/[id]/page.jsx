@@ -23,8 +23,22 @@ export default async function TeamDetailPage({ params }) {
         notFound();
     }
 
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'SportsTeam',
+        name: team.name,
+        sport: 'Esports',
+        url: \`https://khelpedia.org/teams/\${team.id}\`,
+        logo: team.logo_url || '',
+        description: team.description || \`Roster and results for \${team.name}.\`
+    };
+
     return (
         <div className="page-container">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             {/* Team Header */}
             <div className="glass-card" style={{ padding: "4rem 2rem", marginBottom: "3rem", textAlign: "center", background: "linear-gradient(135deg, rgba(26,31,46,0.9), rgba(139,92,246,0.15))" }}>
                 <div style={{ width: 120, height: 120, margin: "0 auto 1.5rem", borderRadius: "24px", background: "var(--bg-secondary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3rem", fontWeight: 800, color: "var(--accent-purple)", boxShadow: "0 0 30px rgba(139,92,246,0.2)", border: "1px solid var(--border-color)", overflow: "hidden" }}>
