@@ -28,9 +28,9 @@ export default async function TeamDetailPage({ params }) {
         '@type': 'SportsTeam',
         name: team.name,
         sport: 'Esports',
-        url: \`https://khelpedia.org/teams/\${team.id}\`,
+        url: `https://khelpedia.org/teams/${team.id}`,
         logo: team.logo_url || '',
-        description: team.description || \`Roster and results for \${team.name}.\`
+        description: team.description || `Roster and results for ${team.name}.`
     };
 
     return (

@@ -71,7 +71,7 @@ export default async function PlayerProfilePage({ params }) {
         alternateName: player.ign,
         jobTitle: 'Esports Player',
         image: player.image_url || '',
-        url: \`https://khelpedia.org/players/\${player.slug}\`,
+        url: `https://khelpedia.org/players/${player.slug}`,
         memberOf: player.teams ? {
             '@type': 'SportsTeam',
             name: player.teams.name
