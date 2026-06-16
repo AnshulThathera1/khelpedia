@@ -12,6 +12,11 @@ export async function GET() {
 
   const baseUrl = "https://khelpedia.org";
 
+  const escapeXml = (unsafe) => {
+    if (!unsafe) return "";
+    return unsafe.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  };
+
   const itemsXml = blogs
     ?.map((blog) => {
       return `
@@ -21,7 +26,7 @@ export async function GET() {
           <guid>${baseUrl}/blogs/${blog.slug}</guid>
           <pubDate>${new Date(blog.created_at).toUTCString()}</pubDate>
           <description><![CDATA[${blog.excerpt}]]></description>
-          ${blog.cover_image_url ? `<enclosure url="${blog.cover_image_url}" type="image/jpeg" />` : ""}
+          ${blog.cover_image_url ? `<enclosure url="${escapeXml(blog.cover_image_url)}" type="image/jpeg" />` : ""}
         </item>
       `;
     })
