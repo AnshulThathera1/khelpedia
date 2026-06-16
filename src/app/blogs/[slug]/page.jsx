@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import AdBanner from "@/app/components/AdBanner";
+import SocialShare from "@/app/components/SocialShare";
+import RelatedArticles from "@/app/components/RelatedArticles";
 
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +81,10 @@ export default async function BlogPostPage({ params }) {
         }]
     };
 
+    const isDev = process.env.NODE_ENV === "development";
+    const origin = isDev ? "http://localhost:3000" : "https://khelpedia.org";
+    const currentUrl = `${origin}/blogs/${blog.slug}`;
+
     return (
         <article style={{
             maxWidth: "800px",
@@ -122,6 +128,8 @@ export default async function BlogPostPage({ params }) {
                         <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Platform Administrator</div>
                     </div>
                 </div>
+
+                <SocialShare url={currentUrl} title={blog.title} />
             </header>
 
             {/* Optional Cover Image */}
@@ -142,6 +150,9 @@ export default async function BlogPostPage({ params }) {
                 }}
                 dangerouslySetInnerHTML={{ __html: blog.content }}
             />
+
+            {/* Related Articles Component */}
+            <RelatedArticles currentSlug={blog.slug} />
 
             {/* Ad Banner at bottom of article */}
             <AdBanner />
