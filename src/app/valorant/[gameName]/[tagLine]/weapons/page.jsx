@@ -18,12 +18,12 @@ export default async function WeaponsTab({ params }) {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">
-      <h2 className="font-bold text-xl text-white mb-4">Weapon Performance</h2>
+      <h2 className="font-bold text-xl text-[var(--text-primary)] mb-4">Weapon Performance</h2>
       
-      <div className="bg-zinc-900 border border-zinc-800 rounded shadow-sm overflow-hidden">
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded shadow-sm overflow-hidden">
         <div className="overflow-x-auto no-scrollbar">
           <div className="min-w-[600px]">
-             <div className="grid grid-cols-12 px-4 py-3 bg-zinc-900/50 border-b border-zinc-800 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+             <div className="grid grid-cols-12 px-4 py-3 bg-[var(--bg-secondary)]/50 border-b border-[var(--border-color)] text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
                 <div className="col-span-4">Weapon</div>
                 <div className="col-span-2 text-center">Kills</div>
                 <div className="col-span-2 text-center">Headshots %</div>
@@ -31,43 +31,43 @@ export default async function WeaponsTab({ params }) {
                 <div className="col-span-2 text-center">Legshots %</div>
              </div>
              
-             <div className="divide-y divide-zinc-800">
+             <div className="divide-y divide-[var(--border-color)]">
                 {allWeapons.filter(w => w.kills > 0 || w.damage > 0).map((wStat, idx) => {
                   const weapon = weaponDict[wStat.weaponId?.toLowerCase()];
                   const name = weapon?.displayName || 'Unknown Weapon';
                   const icon = weapon?.displayIcon || null;
 
                   return (
-                    <div key={idx} className="grid grid-cols-12 px-4 py-4 items-center hover:bg-zinc-800/30 transition-colors">
+                    <div key={idx} className="grid grid-cols-12 px-4 py-4 items-center hover:bg-[var(--bg-card-hover)] transition-colors">
                        <div className="col-span-4 flex items-center gap-4">
                          {icon ? (
-                           <div className="w-20 h-10 flex items-center justify-center p-1 bg-zinc-800 border border-zinc-700 rounded">
+                           <div className="w-20 h-10 flex items-center justify-center p-1 bg-[var(--bg-card)] border border-[var(--border-color)] rounded">
                              <img src={icon} alt={name} className="max-w-full max-h-full object-contain" />
                            </div>
                          ) : (
-                           <div className="w-20 h-10 rounded bg-zinc-800 border border-zinc-700" />
+                           <div className="w-20 h-10 rounded bg-[var(--bg-card)] border border-[var(--border-color)]" />
                          )}
-                         <p className="text-sm font-bold text-white capitalize">{name}</p>
+                         <p className="text-sm font-bold text-[var(--text-primary)] capitalize">{name}</p>
                        </div>
                        
                        <div className="col-span-2 text-center">
-                          <p className="text-sm font-bold text-zinc-300">{wStat.kills}</p>
+                          <p className="text-sm font-bold text-[var(--text-secondary)]">{wStat.kills}</p>
                        </div>
                        
                        <div className="col-span-2 text-center">
-                          <p className={`text-sm font-bold ${wStat.headshots >= 20 ? 'text-green-400' : 'text-zinc-300'}`}>
+                          <p className={`text-sm font-bold ${wStat.headshots >= 20 ? 'text-green-400' : 'text-[var(--text-secondary)]'}`}>
                              {wStat.headshots}%
                           </p>
                        </div>
                        
                        <div className="col-span-2 text-center">
-                          <p className="text-sm font-bold text-zinc-300">
+                          <p className="text-sm font-bold text-[var(--text-secondary)]">
                              {wStat.bodyshots}%
                           </p>
                        </div>
                        
                        <div className="col-span-2 text-center">
-                          <p className="text-sm font-bold text-zinc-500">
+                          <p className="text-sm font-bold text-[var(--text-muted)]">
                              {wStat.legshots}%
                           </p>
                        </div>
@@ -76,7 +76,7 @@ export default async function WeaponsTab({ params }) {
                 })}
                 
                 {allWeapons.length === 0 && (
-                   <div className="p-8 text-center text-zinc-500 font-medium">
+                   <div className="p-8 text-center text-[var(--text-muted)] font-medium">
                       Not enough weapon data available for this set of matches.
                    </div>
                 )}

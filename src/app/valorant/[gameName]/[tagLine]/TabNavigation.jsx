@@ -28,8 +28,8 @@ export default function TabNavigation({ gameName, tagLine }) {
             href={tab.href}
             className={`py-4 text-sm font-bold tracking-widest uppercase border-b-2 whitespace-nowrap transition-colors ${
               isActive
-                ? 'border-red-500 text-white'
-                : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                ? 'border-red-500 text-[var(--text-primary)]'
+                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
             }`}
           >
             {tab.name}

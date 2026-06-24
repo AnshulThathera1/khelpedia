@@ -56,8 +56,23 @@ export default async function RootLayout({ children }) {
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Anti-FOUC: set theme class before paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var t = localStorage.getItem('khelpedia-theme');
+                  document.documentElement.className = (t === 'light') ? 'light' : 'dark';
+                } catch(e) {
+                  document.documentElement.className = 'dark';
+                }
+              })();
+            `,
+          }}
+        />
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3395571758829715"

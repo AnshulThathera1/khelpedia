@@ -264,7 +264,7 @@ export default function ValorantTrackerHub() {
       {/* ═══════ SUB-NAVIGATION ═══════ */}
       <nav style={{
         borderBottom: '1px solid var(--border-color)',
-        background: 'rgba(15, 25, 35, 0.8)',
+        background: 'var(--bg-secondary)',
         backdropFilter: 'blur(12px)',
         position: 'sticky',
         top: 72,
@@ -411,9 +411,9 @@ export default function ValorantTrackerHub() {
               }} />
               <div style={{
                 position: 'relative', display: 'flex', alignItems: 'center',
-                background: searchOpen ? 'rgba(20,30,42,0.99)' : 'rgba(15,25,35,0.95)',
+                background: searchOpen ? 'var(--bg-secondary)' : 'var(--bg-primary)',
                 border: '1px solid',
-                borderColor: searchOpen ? 'rgba(255,70,85,0.35)' : 'rgba(255,70,85,0.2)',
+                borderColor: searchOpen ? 'var(--accent-red)' : 'var(--border-color)',
                 borderBottom: searchOpen ? '1px solid var(--border-color)' : undefined,
                 padding: '4px', transition: 'all 0.2s', zIndex: 2,
               }}>
@@ -465,7 +465,7 @@ export default function ValorantTrackerHub() {
                   transition={{ duration: 0.15 }}
                   style={{
                     position: 'absolute', top: '100%', left: 0, right: 0,
-                    background: 'rgba(20,30,42,0.99)', border: '1px solid rgba(255,70,85,0.2)',
+                    background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
                     borderTop: 'none', zIndex: 100,
                     boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
                     maxHeight: 420, overflowY: 'auto',

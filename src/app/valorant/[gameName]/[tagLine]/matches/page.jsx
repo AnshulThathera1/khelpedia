@@ -18,7 +18,7 @@ export default async function MatchesTab({ params }) {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">
-      <h2 className="font-bold text-xl text-white mb-4">Detailed Match History</h2>
+      <h2 className="font-bold text-xl text-[var(--text-primary)] mb-4">Detailed Match History</h2>
       <MatchFeedClient 
         recentMatches={recentMatches} 
         agentDict={agentDict} 

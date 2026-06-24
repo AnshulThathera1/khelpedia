@@ -51,9 +51,9 @@ export default function GameCard({ game, tournamentCount }) {
                             alignItems: "center",
                             justifyContent: "center",
                             marginBottom: "1.5rem",
-                            background: "rgba(0,0,0,0.2)",
+                            background: "var(--bg-card)",
                             padding: "1rem",
-                            border: "1px solid rgba(236, 232, 225, 0.05)"
+                            border: "1px solid var(--border-color)"
                         }}
                     >
                         {logoUrl && !imgError ? (

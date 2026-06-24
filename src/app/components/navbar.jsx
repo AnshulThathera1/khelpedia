@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { searchAll } from "@/lib/queries";
 import LoginModal from "./LoginModal";
+import ThemeToggle from "./ThemeToggle";
+import { useTheme } from "./ThemeProvider";
 
 export default function AppNavbar({ user }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -21,6 +23,7 @@ export default function AppNavbar({ user }) {
   const router = useRouter();
   const searchRef = useRef(null);
   const supabase = createClient();
+  const { theme } = useTheme();
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -88,7 +91,7 @@ export default function AppNavbar({ user }) {
           zIndex: 1000,
           transition: "all 0.3s ease",
           padding: isScrolled ? "0.75rem 0" : "1.25rem 0",
-          background: isScrolled ? "rgba(10, 15, 20, 0.98)" : "transparent",
+          background: isScrolled ? (theme === 'dark' ? "rgba(10, 15, 20, 0.98)" : "rgba(245, 245, 247, 0.95)") : "transparent",
           backdropFilter: isScrolled ? "blur(20px)" : "none",
           borderBottom: isScrolled ? "1px solid var(--border-color)" : "1px solid transparent"
         }}
@@ -143,7 +146,9 @@ export default function AppNavbar({ user }) {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  background: isScrolled ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.2)",
+                  background: isScrolled
+                    ? (theme === 'dark' ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)")
+                    : (theme === 'dark' ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.05)"),
                   border: "1px solid var(--border-color)",
                   borderRadius: "0px",
                   padding: "0.4rem 0.8rem",
@@ -185,7 +190,7 @@ export default function AppNavbar({ user }) {
                       top: "100%",
                       right: 0,
                       width: "360px",
-                      background: "rgba(15, 25, 35, 0.98)",
+                      background: theme === 'dark' ? "rgba(15, 25, 35, 0.98)" : "rgba(255, 255, 255, 0.98)",
                       backdropFilter: "blur(20px)",
                       border: "1px solid var(--border-color)",
                       marginTop: "0.75rem",
@@ -212,8 +217,9 @@ export default function AppNavbar({ user }) {
                                 style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem", cursor: "pointer", transition: "all 0.2s" }}
                                 className="search-result-item"
                               >
-                                <div style={{ width: 40, height: 40, background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-color)", flexShrink: 0 }}>
-                                  {player.image_url ? <img src={player.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ background: "var(--accent-red)", width: "100%", height: "100%", opacity: 0.1 }} />}
+                                <div style={{ width: 40, height: 40, background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-color)", flexShrink: 0, position: "relative" }}>
+                                  <div style={{ background: "var(--accent-red)", width: "100%", height: "100%", opacity: 0.1, position: "absolute", top: 0, left: 0 }} />
+                                  {player.image_url && <img src={player.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", position: "relative", zIndex: 1 }} onError={(e) => e.target.style.display = 'none'} />}
                                 </div>
                                 <div>
                                   <div style={{ color: "var(--text-primary)", fontWeight: 800, fontSize: "1rem", textTransform: "uppercase", fontFamily: '"Rajdhani", sans-serif' }}>{player.ign}</div>
@@ -235,8 +241,9 @@ export default function AppNavbar({ user }) {
                                 style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem", cursor: "pointer", transition: "all 0.2s" }}
                                 className="search-result-item"
                               >
-                                <div style={{ width: 40, height: 40, background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-color)", flexShrink: 0, padding: "6px" }}>
-                                  {team.logo_url ? <img src={team.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <div style={{ background: "rgba(255,255,255,0.05)", width: "100%", height: "100%" }} />}
+                                <div style={{ width: 40, height: 40, background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-color)", flexShrink: 0, padding: "6px", position: "relative" }}>
+                                  <div style={{ background: "rgba(255,255,255,0.05)", width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }} />
+                                  {team.logo_url && <img src={team.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", position: "relative", zIndex: 1 }} onError={(e) => e.target.style.display = 'none'} />}
                                 </div>
                                 <div style={{ color: "var(--text-primary)", fontWeight: 800, fontSize: "1rem", textTransform: "uppercase", fontFamily: '"Rajdhani", sans-serif' }}>{team.name}</div>
                               </div>
@@ -255,6 +262,9 @@ export default function AppNavbar({ user }) {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Theme Toggle */}
+            <ThemeToggle size={38} />
 
             {/* Auth Button */}
             {user ? (
@@ -320,22 +330,24 @@ export default function AppNavbar({ user }) {
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            className="mobile-toggle"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--text-primary)",
-              fontSize: "1.5rem",
-              cursor: "pointer",
-              display: "none",
-              zIndex: 1100
-            }}
-          >
-            {isMobileMenuOpen ? "✕" : "☰"}
-          </button>
+          {/* Mobile Actions */}
+          <div className="mobile-toggle" style={{ display: "none", alignItems: "center", gap: "1rem", zIndex: 1100 }}>
+            <ThemeToggle size={32} />
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--text-primary)",
+                fontSize: "1.5rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center"
+              }}
+            >
+              {isMobileMenuOpen ? "✕" : "☰"}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu Overlay */}
@@ -352,7 +364,7 @@ export default function AppNavbar({ user }) {
                 right: 0,
                 width: "100%",
                 height: "100vh",
-                background: "var(--bg-primary)",
+                background: theme === 'dark' ? "var(--bg-primary)" : "var(--bg-secondary)",
                 zIndex: 1050,
                 padding: "8rem 2rem 2rem",
                 display: "flex",
@@ -365,6 +377,7 @@ export default function AppNavbar({ user }) {
                 <Link href="/games" className="nav-link" style={{ fontSize: "1.5rem" }}>Games</Link>
                 <Link href="/players" className="nav-link" style={{ fontSize: "1.5rem" }}>Players</Link>
               </div>
+
 
               <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "2rem" }}>
                 {user ? (
@@ -402,7 +415,7 @@ export default function AppNavbar({ user }) {
             display: none !important;
           }
           .mobile-toggle {
-            display: block !important;
+            display: flex !important;
           }
         }
 

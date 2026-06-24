@@ -27,12 +27,12 @@ export default async function ValorantLeaderboardPage() {
   const players = leaderboardRes.data || [];
 
   return (
-    <div className="min-h-screen bg-[#0f1923] text-white selection:bg-red-500/30">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-red-500/30">
       
       {/* Header NavBar */}
-      <header className="border-b border-zinc-800 bg-zinc-950/50 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b border-[var(--border-color)] bg-[var(--bg-primary)]/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/valorant" className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 font-medium">
+          <Link href="/valorant" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2 font-medium">
             <ChevronLeft className="w-5 h-5" />
             Back to Search
           </Link>
@@ -51,26 +51,26 @@ export default async function ValorantLeaderboardPage() {
           <h1 className="text-5xl font-black tracking-tighter uppercase drop-shadow-md">
             Top 100 <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Radiant</span>
           </h1>
-          <p className="text-gray-400 text-lg font-medium">Asia Pacific (AP) Region - Current Act</p>
+          <p className="text-[var(--text-secondary)] text-lg font-medium">Asia Pacific (AP) Region - Current Act</p>
         </div>
 
         {/* Leaderboard Table */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
-          <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-zinc-950/50 border-b border-zinc-800 text-xs font-bold text-gray-500 uppercase tracking-widest">
+        <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-2xl">
+          <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-[var(--bg-primary)]/50 border-b border-[var(--border-color)] text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
             <div className="col-span-2 md:col-span-1 text-center">Rank</div>
             <div className="col-span-6 md:col-span-5">Player (Riot ID)</div>
             <div className="col-span-4 md:col-span-3 text-right">Rating (RR)</div>
             <div className="col-span-3 text-right hidden md:block">Wins</div>
           </div>
           
-          <div className="divide-y divide-zinc-800">
+          <div className="divide-y divide-[var(--border-color)]">
             {players.map((player, index) => (
               <PlayerRow key={player.puuid || index} player={player} rank={index + 1} />
             ))}
           </div>
 
           {players.length === 0 && (
-            <div className="p-12 text-center text-gray-400">
+            <div className="p-12 text-center text-[var(--text-secondary)]">
               No leaderboard data available at this time.
             </div>
           )}
@@ -93,15 +93,15 @@ function PlayerRow({ player, rank }) {
   const isTop3 = rank <= 3;
   const rankColors = {
     1: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
-    2: 'text-zinc-300 bg-zinc-300/10 border-zinc-300/20',
+    2: 'text-[var(--text-secondary)] bg-zinc-300/10 border-zinc-300/20',
     3: 'text-amber-600 bg-amber-600/10 border-amber-600/20',
   };
   
-  const defaultColor = 'text-gray-400';
+  const defaultColor = 'text-[var(--text-secondary)]';
   const rankColor = rankColors[rank] || defaultColor;
 
   return (
-    <div className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-zinc-800/50 transition-colors group ${isTop3 ? 'bg-zinc-900/30' : ''}`}>
+    <div className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-[var(--bg-card-hover)] transition-colors group ${isTop3 ? 'bg-[var(--bg-secondary)]/30' : ''}`}>
       
       <div className="col-span-2 md:col-span-1 flex justify-center">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border ${rankColor}`}>
@@ -113,19 +113,19 @@ function PlayerRow({ player, rank }) {
         {!isAnonymous && rank <= 10 ? <Medal className="w-4 h-4 text-red-500 hidden sm:block flex-shrink-0" /> : <div className="w-4 hidden sm:block" />}
         <div className="truncate">
           {isAnonymous ? (
-            <span className="text-gray-500 font-bold italic">{displayName}</span>
+            <span className="text-[var(--text-muted)] font-bold italic">{displayName}</span>
           ) : (
             <Link href={`/valorant/${encodeURIComponent(player.gameName)}/${encodeURIComponent(player.tagLine)}`} className="hover:underline focus:outline-none">
-              <span className="text-white font-bold text-lg">{displayName}</span>
-              <span className="text-gray-500 font-medium text-sm ml-1">{tagLine}</span>
+              <span className="text-[var(--text-primary)] font-bold text-lg">{displayName}</span>
+              <span className="text-[var(--text-muted)] font-medium text-sm ml-1">{tagLine}</span>
             </Link>
           )}
         </div>
       </div>
 
       <div className="col-span-4 md:col-span-3 text-right">
-        <span className="text-xl font-black text-white">{player.rankedRating}</span>
-        <span className="text-xs text-gray-500 font-bold ml-1 uppercase">RR</span>
+        <span className="text-xl font-black text-[var(--text-primary)]">{player.rankedRating}</span>
+        <span className="text-xs text-[var(--text-muted)] font-bold ml-1 uppercase">RR</span>
       </div>
 
       <div className="col-span-3 text-right hidden md:flex flex-col items-end justify-center">
@@ -140,14 +140,14 @@ function PlayerRow({ player, rank }) {
 
 function ErrorState({ message }) {
   return (
-    <div className="min-h-screen bg-[#0f1923] text-white flex flex-col items-center justify-center p-4">
-      <Link href="/valorant" className="absolute top-8 left-8 text-gray-400 hover:text-white flex items-center gap-2">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col items-center justify-center p-4">
+      <Link href="/valorant" className="absolute top-8 left-8 text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-2">
         <ChevronLeft className="w-5 h-5" /> Search
       </Link>
       <div className="bg-red-500/10 border border-red-500/20 p-8 rounded-2xl flex flex-col items-center max-w-lg text-center gap-4">
         <h2 className="text-xl font-bold text-red-100">Leaderboard Error</h2>
         <p className="text-red-400 font-medium">{message}</p>
-        <p className="text-sm text-gray-500 mt-2">Make sure RIOT_API_KEY is properly set in the environment variables and the act ID is valid.</p>
+        <p className="text-sm text-[var(--text-muted)] mt-2">Make sure RIOT_API_KEY is properly set in the environment variables and the act ID is valid.</p>
       </div>
     </div>
   );

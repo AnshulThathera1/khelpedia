@@ -8,6 +8,7 @@ const nextConfig = {
       { protocol: "https", hostname: "upload.wikimedia.org" },
       { protocol: "https", hostname: "static.wikia.nocookie.net" },
       { protocol: "https", hostname: "*.supabase.co" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
   },
 };

@@ -47,7 +47,7 @@ export default function LoginModal({ isOpen, onClose }) {
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            background: "rgba(10, 15, 20, 0.95)",
+                            background: "var(--bg-glass)",
                             backdropFilter: "blur(10px)",
                             zIndex: 1000,
                             display: "flex",
