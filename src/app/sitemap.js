@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 
 export default async function sitemap() {
   const supabase = await createClient();
-  const baseUrl = "https://khelpedia.vercel.app";
+  const baseUrl = "https://khelpedia.org";
 
   // Get dynamic blogs
   const { data: blogs } = await supabase
@@ -19,6 +19,18 @@ export default async function sitemap() {
   const { data: games } = await supabase
     .from("games")
     .select("slug");
+
+  // Get dynamic players
+  const { data: players } = await supabase
+    .from("players")
+    .select("id, slug, updated_at")
+    .limit(500);
+
+  // Get dynamic teams
+  const { data: teams } = await supabase
+    .from("teams")
+    .select("id, updated_at")
+    .limit(500);
 
   const blogUrls = (blogs || []).map((blog) => ({
     url: `${baseUrl}/blogs/${blog.slug}`,
@@ -41,7 +53,21 @@ export default async function sitemap() {
     priority: 0.8,
   }));
 
-  // Static routes
+  const playerUrls = (players || []).map((player) => ({
+    url: `${baseUrl}/players/${player.slug || player.id}`,
+    lastModified: player.updated_at ? new Date(player.updated_at) : new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }));
+
+  const teamUrls = (teams || []).map((team) => ({
+    url: `${baseUrl}/teams/${team.id}`,
+    lastModified: team.updated_at ? new Date(team.updated_at) : new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }));
+
+  // Static routes — includes all new trust pages
   const routes = [
     '',
     '/tournaments',
@@ -49,13 +75,19 @@ export default async function sitemap() {
     '/games',
     '/players',
     '/teams',
-    '/valorant'
+    '/valorant',
+    '/about',
+    '/contact',
+    '/privacy',
+    '/terms',
+    '/cookies',
+    '/disclaimer',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
-    changeFrequency: 'daily',
-    priority: route === '' ? 1 : 0.8,
+    changeFrequency: route === '' ? 'daily' : 'monthly',
+    priority: route === '' ? 1 : route === '/blogs' ? 0.9 : 0.7,
   }));
 
-  return [...routes, ...blogUrls, ...tournamentUrls, ...gameUrls];
+  return [...routes, ...blogUrls, ...tournamentUrls, ...gameUrls, ...playerUrls, ...teamUrls];
 }

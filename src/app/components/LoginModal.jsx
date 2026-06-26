@@ -28,7 +28,7 @@ export default function LoginModal({ isOpen, onClose }) {
         setIsLoading(true);
         // This will be connected to your Riot RSO logic once approved
         // For now, it mimics the OAuth flow
-        window.location.href = `https://khelpedia.vercel.app/api/auth/riot/login`;
+        window.location.href = `https://khelpedia.org/api/auth/riot/login`;
     };
 
     return (

@@ -3,7 +3,7 @@ import LayoutWrapper from "./components/LayoutWrapper";
 import Script from "next/script";
 
 export const metadata = {
-  metadataBase: new URL("https://khelpedia.vercel.app"),
+  metadataBase: new URL("https://khelpedia.org"),
   title: {
     default: "KhelPediA — Esports Tournaments, Stats & Rankings",
     template: "%s | KhelPediA",
@@ -19,7 +19,7 @@ export const metadata = {
     title: "KhelPediA — Esports Tournaments, Stats & Rankings",
     description:
       "Track live esports tournaments worldwide. Player stats, team rankings, match results.",
-    url: "https://khelpedia.vercel.app",
+    url: "https://khelpedia.org",
     siteName: "KhelPediA",
     locale: "en_US",
     type: "website",
@@ -99,6 +99,38 @@ export default async function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet" />
+        {/* WebSite Schema for Site Name */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'KhelPediA',
+              url: 'https://khelpedia.org',
+            }),
+          }}
+        />
+        {/* Organization Schema for Trust Signals */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'KhelPediA',
+              url: 'https://khelpedia.org',
+              logo: 'https://khelpedia.org/icon.png',
+              description: 'The definitive esports encyclopedia — real-time tournament tracking, player analytics, team rankings, and original editorial content across all major competitive gaming titles.',
+              contactPoint: {
+                '@type': 'ContactPoint',
+                email: 'contact@khelpedia.org',
+                contactType: 'customer service',
+              },
+              sameAs: [],
+            }),
+          }}
+        />
       </head>
       <body suppressHydrationWarning>
         <LayoutWrapper user={user}>

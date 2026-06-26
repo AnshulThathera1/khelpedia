@@ -21,20 +21,40 @@ export async function generateAIBlog() {
     // Pick the top recent article that we haven't processed (for simplicity, we take the newest)
     const topStory = feed.items[0];
 
-    // Use Gemini to rewrite the article
+    // Use Gemini to rewrite the article with much higher quality
     const prompt = `
-    You are an expert esports journalist writing for KhelPediA.
-    Please rewrite the following news story into an engaging, completely original blog post.
-    Avoid plagiarism. Write in a professional yet exciting tone.
+    You are an expert esports journalist writing for KhelPediA, a comprehensive esports encyclopedia and news platform.
     
+    Rewrite the following news story into an ORIGINAL, in-depth article. This is NOT a simple rewrite — you must add substantial original value through analysis, context, and expert insight.
+
     Original Title: ${topStory.title}
     Original Content / Snippet: ${topStory.contentSnippet || topStory.content}
     Original Link: ${topStory.link}
 
+    REQUIREMENTS:
+    1. Write 800–1500 words minimum. Short articles will be rejected.
+    2. Structure with multiple H2 sections. Suggested structure:
+       - Opening paragraph with key news
+       - Background & Context (why this matters)
+       - Detailed Analysis (what this means for the competitive scene)
+       - Key Takeaways (bullet points summarizing main points)
+       - Looking Ahead (what to watch for next)
+    3. Add your own analysis and expert commentary — don't just restate facts.
+    4. Use engaging, professional esports journalism tone.
+    5. Include internal links where relevant using these KhelPediA URL patterns:
+       - Tournament pages: /tournaments/[id]
+       - Team pages: /teams/[id]
+       - Player pages: /players/[id]
+       - Games: /games/valorant, /games/cs2, /games/bgmi, /games/dota-2
+       - Other news: /blogs
+    6. Avoid plagiarism completely. This must be 100% original writing.
+    7. Include relevant statistics, historical context, or comparisons where applicable.
+
     Format your response as a JSON object with the following keys:
-    - "title": A catchy, SEO-optimized title for the article.
-    - "excerpt": A 2-3 sentence summary of the article.
-    - "content": The full rewritten HTML content of the article (use <h2>, <p>, etc.). DO NOT wrap the json output in markdown backticks, just output raw JSON.
+    - "title": A catchy, SEO-optimized title (60-70 characters ideal)
+    - "excerpt": A compelling 2-3 sentence summary (150-160 characters ideal for meta description)
+    - "content": The full HTML content using <h2>, <p>, <ul>, <li>, <strong>, <a>, <blockquote> tags. Do NOT use <h1>. DO NOT wrap the JSON in markdown backticks.
+    - "category": One of: "news", "analysis", "guide", "preview", "opinion"
     `;
 
     const aiResponse = await ai.models.generateContent({
@@ -63,17 +83,31 @@ export async function generateAIBlog() {
     }
     const authorId = userData.users[0].id;
 
-    const { data, error } = await supabase.from('blogs').insert([{
+    const insertData = {
         title: generatedData.title,
         slug: slug,
         excerpt: generatedData.excerpt,
         content: generatedData.content,
         author_id: authorId,
-        is_published: true, // Automatically publish
-    }]);
+        is_published: true,
+    };
+
+    // Add category if the column exists (gracefully handle if it doesn't)
+    if (generatedData.category) {
+        insertData.category = generatedData.category;
+    }
+
+    const { data, error } = await supabase.from('blogs').insert([insertData]);
 
     if (error) {
-        throw error;
+        // If category column doesn't exist, retry without it
+        if (error.message && error.message.includes('category')) {
+            delete insertData.category;
+            const { error: retryError } = await supabase.from('blogs').insert([insertData]);
+            if (retryError) throw retryError;
+        } else {
+            throw error;
+        }
     }
 
     // Send Discord Notification
@@ -84,7 +118,7 @@ export async function generateAIBlog() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    content: `🚨 **New AI Article Published!**\n**${generatedData.title}**\nhttps://khelpedia.vercel.app/blogs/${slug}`
+                    content: `🚨 **New AI Article Published!**\n**${generatedData.title}**\n📂 Category: ${generatedData.category || 'news'}\nhttps://khelpedia.org/blogs/${slug}`
                 })
             });
         } catch (discordError) {
@@ -92,5 +126,5 @@ export async function generateAIBlog() {
         }
     }
 
-    return { slug };
+    return { slug, category: generatedData.category };
 }

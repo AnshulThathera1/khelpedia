@@ -138,6 +138,7 @@ export default function AppNavbar({ user }) {
               <Link href="/tournaments" className={`nav-link ${pathname === '/tournaments' ? 'active' : ''}`}>Tournaments</Link>
               <Link href="/games" className={`nav-link ${pathname === '/games' ? 'active' : ''}`}>Games</Link>
               <Link href="/players" className={`nav-link ${pathname === '/players' ? 'active' : ''}`}>Players</Link>
+              <Link href="/blogs" className={`nav-link ${pathname === '/blogs' ? 'active' : ''}`}>News</Link>
             </div>
 
             {/* Search Bar */}
@@ -376,6 +377,7 @@ export default function AppNavbar({ user }) {
                 <Link href="/tournaments" className="nav-link" style={{ fontSize: "1.5rem" }}>Tournaments</Link>
                 <Link href="/games" className="nav-link" style={{ fontSize: "1.5rem" }}>Games</Link>
                 <Link href="/players" className="nav-link" style={{ fontSize: "1.5rem" }}>Players</Link>
+                <Link href="/blogs" className="nav-link" style={{ fontSize: "1.5rem" }}>News</Link>
               </div>
 
 

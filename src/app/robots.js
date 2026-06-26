@@ -5,6 +5,6 @@ export default function robots() {
       allow: '/',
       disallow: ['/admin/', '/dashboard/'],
     },
-    sitemap: 'https://khelpedia.vercel.app/sitemap.xml',
+    sitemap: 'https://khelpedia.org/sitemap.xml',
   }
 }

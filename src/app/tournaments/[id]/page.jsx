@@ -1,4 +1,5 @@
 import { getTournamentById, getTournamentTeams, getTournamentMatches } from "@/lib/queries";
+import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -8,8 +9,9 @@ export async function generateMetadata({ params }) {
     const tournament = await getTournamentById(id);
     if (!tournament) return { title: "Tournament Not Found | KhelPediA" };
 
-    const title = `${tournament.name} | KhelPediA`;
-    const description = `Follow ${tournament.name} live. Track participating teams, recent matches, and tournament brackets for ${tournament.games?.name || 'this game'}.`;
+    const gameName = tournament.games?.name || "Esports";
+    const title = `${tournament.name} — ${gameName} Tournament | KhelPediA`;
+    const description = `Complete coverage of ${tournament.name}. Track participating teams, live match results, tournament brackets, prize pool, and format for this ${gameName} event on KhelPediA.`;
     const images = tournament.games?.icon_url ? [tournament.games.icon_url] : [];
 
     return { 
@@ -43,13 +45,33 @@ export default async function TournamentDetailPage({ params }) {
         notFound();
     }
 
+    // Fetch related blog posts
+    const supabase = await createClient();
+    const tournamentNameWords = tournament.name.split(/\s+/).filter(w => w.length > 3).slice(0, 3);
+    let relatedBlogs = [];
+    if (tournamentNameWords.length > 0) {
+        const searchPattern = tournamentNameWords.map(w => `%${w}%`);
+        const orConditions = searchPattern.map(p => `title.ilike.${p}`).join(',');
+        const { data } = await supabase
+            .from("blogs")
+            .select("title, slug, created_at")
+            .eq("is_published", true)
+            .or(orConditions)
+            .order("created_at", { ascending: false })
+            .limit(3);
+        relatedBlogs = data || [];
+    }
+
     const formatPrize = (amount, curr) => {
         if (!amount) return "TBA";
         const cc = curr || "USD";
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: cc, maximumFractionDigits: 0 }).format(amount);
     };
 
-    const formatDate = (d) => d ? new Date(d).toLocaleDateString() : 'TBA';
+    const formatDate = (d) => d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'TBA';
+
+    const gameName = tournament.games?.name || "Unknown";
+    const gameSlug = tournament.games?.slug;
 
     const jsonLd = {
         '@context': 'https://schema.org',
@@ -57,19 +79,24 @@ export default async function TournamentDetailPage({ params }) {
         name: tournament.name,
         startDate: tournament.start_date,
         endDate: tournament.end_date,
-        eventStatus: "https://schema.org/EventScheduled",
+        eventStatus: tournament.status === 'live' ? "https://schema.org/EventMovedOnline" : "https://schema.org/EventScheduled",
         eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
         location: {
             '@type': 'VirtualLocation',
-            url: `https://khelpedia.vercel.app/tournaments/${tournament.id}`
+            url: `https://khelpedia.org/tournaments/${tournament.id}`
         },
         image: tournament.games?.icon_url ? [tournament.games.icon_url] : [],
-        description: `Follow ${tournament.name} live on KhelPediA.`,
+        description: `Follow ${tournament.name} live on KhelPediA. Track teams, matches, and results for this ${gameName} tournament.`,
         organizer: {
             '@type': 'Organization',
             name: 'KhelPediA',
-            url: 'https://khelpedia.vercel.app'
-        }
+            url: 'https://khelpedia.org'
+        },
+        offers: tournament.prize_pool ? {
+            '@type': 'Offer',
+            price: tournament.prize_pool,
+            priceCurrency: tournament.currency || 'USD',
+        } : undefined,
     };
 
     return (
@@ -78,6 +105,7 @@ export default async function TournamentDetailPage({ params }) {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
+
             {/* Tournament Header */}
             <div className="glass-card" style={{ padding: "3rem 2rem", marginBottom: "3rem", borderTop: "4px solid var(--accent-cyan)" }}>
                 <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
@@ -90,7 +118,13 @@ export default async function TournamentDetailPage({ params }) {
                 <div style={{ display: "flex", gap: "2rem", marginTop: "2rem", flexWrap: "wrap" }}>
                     <div>
                         <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase" }}>Game</p>
-                        <p style={{ fontWeight: 600 }}>{tournament.games?.name || "Unknown"}</p>
+                        <p style={{ fontWeight: 600 }}>
+                            {gameSlug ? (
+                                <Link href={`/games/${gameSlug}`} style={{ color: "var(--text-primary)", textDecoration: "none" }}>
+                                    {gameName}
+                                </Link>
+                            ) : gameName}
+                        </p>
                     </div>
                     <div>
                         <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase" }}>Prize Pool</p>
@@ -98,14 +132,96 @@ export default async function TournamentDetailPage({ params }) {
                     </div>
                     <div>
                         <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase" }}>Dates</p>
-                        <p style={{ fontWeight: 600 }}>{formatDate(tournament.start_date)} - {formatDate(tournament.end_date)}</p>
+                        <p style={{ fontWeight: 600 }}>{formatDate(tournament.start_date)} — {formatDate(tournament.end_date)}</p>
                     </div>
                     <div>
-                        <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase" }}>Location</p>
-                        <p style={{ fontWeight: 600 }}>{tournament.region}</p>
+                        <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase" }}>Region</p>
+                        <p style={{ fontWeight: 600 }}>{tournament.region || "International"}</p>
                     </div>
                 </div>
             </div>
+
+            {/* Tournament Overview — adds original content to avoid thin pages */}
+            <section style={{ marginBottom: "3rem" }}>
+                <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
+                    Tournament Overview
+                </h2>
+                <div className="glass-card" style={{ padding: "2rem" }}>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
+                        {tournament.name} is {tournament.status === 'live' ? 'an ongoing' : tournament.status === 'upcoming' ? 'an upcoming' : 'a completed'}{' '}
+                        {gameName} tournament{tournament.region ? ` in the ${tournament.region} region` : ''}.
+                        {tournament.prize_pool ? ` With a prize pool of ${formatPrize(tournament.prize_pool, tournament.currency)}, it attracts some of the best professional teams in the ${gameName} competitive scene.` : ''}
+                    </p>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
+                        {teams.length > 0
+                            ? `${teams.length} team${teams.length > 1 ? 's' : ''} ${tournament.status === 'completed' ? 'competed' : tournament.status === 'live' ? 'are competing' : 'are set to compete'} in this event, battling for glory and ranking points.`
+                            : 'Teams for this tournament have not yet been announced.'
+                        }
+                        {matches.length > 0
+                            ? ` So far, ${matches.length} match${matches.length > 1 ? 'es have' : ' has'} been played.`
+                            : ''
+                        }
+                    </p>
+                    {gameSlug && (
+                        <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", lineHeight: 1.7 }}>
+                            Looking for more {gameName} tournaments?{' '}
+                            <Link href={`/games/${gameSlug}`} style={{ color: "var(--accent-cyan)", textDecoration: "none", fontWeight: 600 }}>
+                                Browse all {gameName} events →
+                            </Link>
+                        </p>
+                    )}
+                </div>
+            </section>
+
+            {/* Teams to Watch */}
+            {teams.length > 0 && (
+                <section style={{ marginBottom: "3rem" }}>
+                    <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
+                        Teams to Watch
+                    </h2>
+                    <div className="glass-card" style={{ padding: "2rem" }}>
+                        <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "1.5rem" }}>
+                            {teams.length > 3 
+                                ? `Here are some of the key teams competing in ${tournament.name}. Follow their journey through the brackets and matches below.`
+                                : `${teams.length} team${teams.length > 1 ? 's are' : ' is'} participating in ${tournament.name}.`
+                            }
+                        </p>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
+                            {teams.slice(0, 8).map((t) => (
+                                <Link
+                                    key={t.id}
+                                    href={`/teams/${t.team_id}`}
+                                    style={{
+                                        textDecoration: "none",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "10px",
+                                        padding: "0.75rem 1rem",
+                                        background: "var(--bg-secondary)",
+                                        border: "1px solid var(--border-color)",
+                                        transition: "all 0.2s",
+                                    }}
+                                    className="team-watch-card"
+                                >
+                                    {t.teams?.logo_url && (
+                                        <Image src={t.teams.logo_url} alt={t.teams?.name || ''} width={28} height={28} style={{ objectFit: "contain" }} />
+                                    )}
+                                    <div>
+                                        <div style={{ color: "var(--text-primary)", fontWeight: 700, fontSize: "0.9rem" }}>
+                                            {t.teams?.name}
+                                        </div>
+                                        {t.teams?.region && (
+                                            <div style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                                                {t.teams.region}
+                                            </div>
+                                        )}
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: "3rem" }}>
                 {/* Left Column: Teams */}
@@ -181,6 +297,49 @@ export default async function TournamentDetailPage({ params }) {
                     </div>
                 </main>
             </div>
+
+            {/* Related Articles */}
+            {relatedBlogs.length > 0 && (
+                <section style={{ marginTop: "4rem" }}>
+                    <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
+                        Related Articles
+                    </h2>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem" }}>
+                        {relatedBlogs.map(blog => (
+                            <Link
+                                key={blog.slug}
+                                href={`/blogs/${blog.slug}`}
+                                className="card"
+                                style={{
+                                    textDecoration: "none",
+                                    padding: "1.5rem",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "0.5rem",
+                                }}
+                            >
+                                <span style={{ color: "var(--accent-cyan)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                                    NEWS
+                                </span>
+                                <h3 style={{ color: "var(--text-primary)", fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.3, fontFamily: '"Rajdhani", sans-serif' }}>
+                                    {blog.title}
+                                </h3>
+                                <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+                                    {new Date(blog.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </span>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .team-watch-card:hover {
+                    border-color: var(--accent-red) !important;
+                    transform: translateY(-2px);
+                }
+            `}} />
         </div>
     );
 }
