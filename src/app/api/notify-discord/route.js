@@ -14,12 +14,32 @@ export async function POST(request) {
       if (body.path) urlPath = body.path;
     } catch(e) {}
 
+    // 1. Get the user's IP Address
+    let ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null;
+    if (ip) {
+      ip = ip.split(',')[0].trim();
+    }
+
+    // 2. Fetch geolocation data based on IP
+    let location = "Unknown Location 🌍";
+    if (ip) {
+      try {
+        const geoResponse = await fetch(`http://ip-api.com/json/${ip}`);
+        const geoData = await geoResponse.json();
+        if (geoData.status === "success") {
+          location = `${geoData.city}, ${geoData.country} (${geoData.countryCode}) ${geoData.countryCode === 'IN' ? '🇮🇳' : '🌍'}`;
+        }
+      } catch (e) {
+        console.error("Geo fetch failed", e);
+      }
+    }
+
     const payload = {
       content: null,
       embeds: [
         {
           title: "🚨 New Site Visitor!",
-          description: `Someone just opened KhelPediA!\n**Page:** \`${urlPath}\``,
+          description: `Someone just opened KhelPediA!\n\n**Page:** \`${urlPath}\`\n**Location:** ${location}`,
           color: 5814783, // blurple color
           timestamp: new Date().toISOString()
         }

@@ -1,6 +1,28 @@
 import "./globals.css";
 import LayoutWrapper from "./components/LayoutWrapper";
 import Script from "next/script";
+import { Outfit, Rajdhani, Orbitron } from 'next/font/google';
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-outfit',
+  weight: ['300', '400', '500', '600', '700'],
+});
+
+const rajdhani = Rajdhani({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-rajdhani',
+  weight: ['500', '600', '700'],
+});
+
+const orbitron = Orbitron({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-orbitron',
+  weight: ['600', '700', '800', '900'],
+});
 
 export const metadata = {
   metadataBase: new URL("https://khelpedia.org"),
@@ -96,9 +118,6 @@ export default async function RootLayout({ children }) {
             `,
           }}
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet" />
         {/* WebSite Schema for Site Name */}
         <script
           type="application/ld+json"
@@ -132,7 +151,7 @@ export default async function RootLayout({ children }) {
           }}
         />
       </head>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className={`${outfit.variable} ${rajdhani.variable} ${orbitron.variable}`}>
         <LayoutWrapper user={user}>
           {children}
         </LayoutWrapper>

@@ -16,11 +16,18 @@ export default function LayoutWrapper({ user, children }) {
     // Only notify once per session/mount to avoid spam
     if (!notifiedRef.current) {
       notifiedRef.current = true;
-      fetch('/api/notify-discord', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: window.location.pathname })
-      }).catch(err => console.error("Failed to notify discord", err));
+      
+      // Filter out bots, crawlers, and headless browsers
+      const ua = navigator.userAgent.toLowerCase();
+      const isBot = /bot|crawler|spider|crawling|headless|lighthouse|discord|preview|google|bing|yandex|yahoo|slurp/i.test(ua);
+      
+      if (!isBot) {
+        fetch('/api/notify-discord', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: window.location.pathname })
+        }).catch(err => console.error("Failed to notify discord", err));
+      }
     }
   }, []);
 
