@@ -66,6 +66,16 @@ export default async function TeamDetailPage({ params }) {
                 </p>
             </div>
 
+            {/* AI Editorial Content */}
+            {team.editorial_content && (
+                <section style={{ marginBottom: "3rem" }}>
+                    <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
+                        About the Team
+                    </h2>
+                    <div className="glass-card" style={{ padding: "2rem", lineHeight: 1.8, color: "var(--text-secondary)" }} dangerouslySetInnerHTML={{ __html: team.editorial_content }} />
+                </section>
+            )}
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem" }}>
 
                 {/* Active Roster */}

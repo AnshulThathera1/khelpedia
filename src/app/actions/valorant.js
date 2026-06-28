@@ -298,6 +298,59 @@ export async function getMatchHistoryIds(puuid) {
 }
 
 /**
+ * Trims massive unneeded coordinate arrays from the Riot API JSON to save 80% DB space
+ */
+function trimMatchData(data) {
+  if (!data || !data.roundResults) return data;
+  
+  // Clone to avoid mutating original reference
+  const trimmed = JSON.parse(JSON.stringify(data));
+
+  // Root-level bloat
+  delete trimmed.coaches;
+  if (trimmed.matchInfo) {
+    delete trimmed.matchInfo.premierMatchInfo;
+    delete trimmed.matchInfo.provisioningFlowId;
+    delete trimmed.matchInfo.gameVersion;
+    delete trimmed.matchInfo.isCompleted;
+    delete trimmed.matchInfo.customGameName;
+  }
+  
+  trimmed.roundResults.forEach(round => {
+    // Round-level bloat
+    delete round.playerLocations;
+    delete round.locations;
+    delete round.plantSite;
+    delete round.bombDefuser;
+    delete round.bombPlanter;
+    
+    if (round.playerStats) {
+      round.playerStats.forEach(ps => {
+        // Player-round bloat
+        delete ps.score;
+        delete ps.ability;
+        
+        if (ps.economy) {
+          ps.economy = { weapon: ps.economy.weapon }; // Keep only weapon
+        }
+        
+        if (ps.kills) {
+          ps.kills.forEach(k => {
+            // Kill event bloat
+            delete k.playerLocations; 
+            delete k.victimLocation;
+            delete k.finishingDamage;
+            delete k.timeSinceGameStartMillis;
+          });
+        }
+      });
+    }
+  });
+  
+  return trimmed;
+}
+
+/**
  * Fetch Match Details (with Caching)
  */
 export async function getMatchDetails(matchId, puuid, region = REGION) {
@@ -330,6 +383,9 @@ export async function getMatchDetails(matchId, puuid, region = REGION) {
     }
 
     const matchData = await res.json();
+    
+    // Trim the massive JSON payload before saving to DB
+    const trimmedData = trimMatchData(matchData);
 
     // 3. Save to DB Cache
     const { error: insertError } = await supabase
@@ -337,14 +393,14 @@ export async function getMatchDetails(matchId, puuid, region = REGION) {
       .upsert({
         match_id: matchId,
         puuid: puuid,
-        match_info_json: matchData
+        match_info_json: trimmedData
       }, { onConflict: 'match_id' });
 
     if (insertError) {
       console.error('Error caching match:', insertError);
     }
 
-    return { data: matchData, source: 'api' };
+    return { data: trimmedData, source: 'api' };
   } catch (error) {
     console.error('Error fetching match details:', error);
     return { error: 'Internal server error' };

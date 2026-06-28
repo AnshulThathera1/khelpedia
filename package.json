@@ -13,6 +13,7 @@
     "@nextui-org/react": "^2.6.11",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.98.0",
+    "dotenv": "^17.4.2",
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.577.0",
     "next": "15.5.9",

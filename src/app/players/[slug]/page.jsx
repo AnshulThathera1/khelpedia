@@ -175,8 +175,18 @@ export default async function PlayerProfilePage({ params }) {
                 ))}
             </div>
 
+            {/* AI Editorial Content */}
+            {player.editorial_content && (
+                <section style={{ marginBottom: "3rem" }}>
+                    <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
+                        Biography & Playstyle
+                    </h2>
+                    <div className="glass-card" style={{ padding: "2rem", lineHeight: 1.8, color: "var(--text-secondary)" }} dangerouslySetInnerHTML={{ __html: player.editorial_content }} />
+                </section>
+            )}
+
             {/* Bottom Section Layout */}
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "3rem" }}>
 
                 {/* Recent Matches */}
                 <div className="glass-card" style={{ padding: "2rem" }}>

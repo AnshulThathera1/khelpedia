@@ -147,28 +147,34 @@ export default async function TournamentDetailPage({ params }) {
                     Tournament Overview
                 </h2>
                 <div className="glass-card" style={{ padding: "2rem" }}>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
-                        {tournament.name} is {tournament.status === 'live' ? 'an ongoing' : tournament.status === 'upcoming' ? 'an upcoming' : 'a completed'}{' '}
-                        {gameName} tournament{tournament.region ? ` in the ${tournament.region} region` : ''}.
-                        {tournament.prize_pool ? ` With a prize pool of ${formatPrize(tournament.prize_pool, tournament.currency)}, it attracts some of the best professional teams in the ${gameName} competitive scene.` : ''}
-                    </p>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
-                        {teams.length > 0
-                            ? `${teams.length} team${teams.length > 1 ? 's' : ''} ${tournament.status === 'completed' ? 'competed' : tournament.status === 'live' ? 'are competing' : 'are set to compete'} in this event, battling for glory and ranking points.`
-                            : 'Teams for this tournament have not yet been announced.'
-                        }
-                        {matches.length > 0
-                            ? ` So far, ${matches.length} match${matches.length > 1 ? 'es have' : ' has'} been played.`
-                            : ''
-                        }
-                    </p>
-                    {gameSlug && (
-                        <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", lineHeight: 1.7 }}>
-                            Looking for more {gameName} tournaments?{' '}
-                            <Link href={`/games/${gameSlug}`} style={{ color: "var(--accent-cyan)", textDecoration: "none", fontWeight: 600 }}>
-                                Browse all {gameName} events →
-                            </Link>
-                        </p>
+                    {tournament.editorial_content ? (
+                        <div style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: tournament.editorial_content }} />
+                    ) : (
+                        <>
+                            <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
+                                {tournament.name} is {tournament.status === 'live' ? 'an ongoing' : tournament.status === 'upcoming' ? 'an upcoming' : 'a completed'}{' '}
+                                {gameName} tournament{tournament.region ? ` in the ${tournament.region} region` : ''}.
+                                {tournament.prize_pool ? ` With a prize pool of ${formatPrize(tournament.prize_pool, tournament.currency)}, it attracts some of the best professional teams in the ${gameName} competitive scene.` : ''}
+                            </p>
+                            <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
+                                {teams.length > 0
+                                    ? `${teams.length} team${teams.length > 1 ? 's' : ''} ${tournament.status === 'completed' ? 'competed' : tournament.status === 'live' ? 'are competing' : 'are set to compete'} in this event, battling for glory and ranking points.`
+                                    : 'Teams for this tournament have not yet been announced.'
+                                }
+                                {matches.length > 0
+                                    ? ` So far, ${matches.length} match${matches.length > 1 ? 'es have' : ' has'} been played.`
+                                    : ''
+                                }
+                            </p>
+                            {gameSlug && (
+                                <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", lineHeight: 1.7 }}>
+                                    Looking for more {gameName} tournaments?{' '}
+                                    <Link href={`/games/${gameSlug}`} style={{ color: "var(--accent-cyan)", textDecoration: "none", fontWeight: 600 }}>
+                                        Browse all {gameName} events →
+                                    </Link>
+                                </p>
+                            )}
+                        </>
                     )}
                 </div>
             </section>
