@@ -138,14 +138,10 @@ export default async function BlogsIndexPage() {
 
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "auto" }}>
                                     <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--bg-secondary)", overflow: "hidden", position: "relative" }}>
-                                        {featuredBlog.profiles?.avatar_url ? (
-                                            <Image src={featuredBlog.profiles.avatar_url} alt="author" fill style={{ objectFit: "cover" }} />
-                                        ) : (
-                                            <div style={{ width: "100%", height: "100%", background: "var(--gradient-primary)" }} />
-                                        )}
+                                        <div style={{ width: "100%", height: "100%", background: "var(--gradient-primary)" }} />
                                     </div>
                                     <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                                        {featuredBlog.profiles?.display_name || "KhelPediA Staff"}
+                                        KhelPediA Staff
                                     </span>
                                 </div>
                             </div>
@@ -191,14 +187,10 @@ export default async function BlogsIndexPage() {
 
                                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "auto", paddingTop: "1rem", borderTop: "1px solid rgba(148, 163, 184, 0.1)" }}>
                                             <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--bg-secondary)", overflow: "hidden" }}>
-                                                {blog.profiles?.avatar_url ? (
-                                                    <img src={blog.profiles.avatar_url} alt="author" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                                ) : (
-                                                    <div style={{ width: "100%", height: "100%", background: "var(--gradient-primary)" }} />
-                                                )}
+                                                <div style={{ width: "100%", height: "100%", background: "var(--gradient-primary)" }} />
                                             </div>
                                             <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                                                {blog.profiles?.display_name || "KhelPediA Staff"}
+                                                KhelPediA Staff
                                             </span>
                                         </div>
                                     </div>

@@ -185,7 +185,7 @@ export default async function HomePage() {
                                                 {blog.excerpt}
                                             </p>
                                             <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border-color)" }}>
-                                                By {blog.profiles?.display_name || "KhelPediA Staff"}
+                                                By KhelPediA Staff
                                             </div>
                                         </div>
                                     </div>
