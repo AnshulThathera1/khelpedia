@@ -6,6 +6,7 @@ import AppNavbar from "./navbar";
 import AdminNavbar from "./AdminNavbar";
 import Footer from "./footer";
 import ThemeProvider from "./ThemeProvider";
+import FeedbackWidget from "./FeedbackWidget";
 
 export default function LayoutWrapper({ user, children }) {
   const pathname = usePathname();
@@ -38,6 +39,7 @@ export default function LayoutWrapper({ user, children }) {
         {children}
       </main>
       {!isAdminPage && <Footer />}
+      {!isAdminPage && <FeedbackWidget user={user} />}
     </ThemeProvider>
   );
 }

@@ -87,7 +87,13 @@ export default async function RootLayout({ children }) {
               (function() {
                 try {
                   var t = localStorage.getItem('khelpedia-theme');
-                  document.documentElement.className = (t === 'light') ? 'light' : 'dark';
+                  if (t) {
+                    document.documentElement.className = (t === 'light') ? 'light' : 'dark';
+                  } else {
+                    var h = new Date().getHours();
+                    var isDay = h >= 6 && h < 18;
+                    document.documentElement.className = isDay ? 'light' : 'dark';
+                  }
                 } catch(e) {
                   document.documentElement.className = 'dark';
                 }

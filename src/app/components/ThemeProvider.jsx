@@ -18,7 +18,13 @@ export default function ThemeProvider({ children }) {
   useEffect(() => {
     // Read saved theme from localStorage
     const saved = localStorage.getItem("khelpedia-theme");
-    const initial = saved === "light" ? "light" : "dark";
+    let initial;
+    if (saved) {
+      initial = saved === "light" ? "light" : "dark";
+    } else {
+      const h = new Date().getHours();
+      initial = (h >= 6 && h < 18) ? "light" : "dark";
+    }
     setTheme(initial);
     document.documentElement.className = initial;
     setMounted(true);

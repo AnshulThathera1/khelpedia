@@ -259,7 +259,7 @@ export default function ValorantTrackerHub() {
     .slice(0, 8);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <div className="overflow-x-hidden" style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
 
       {/* ═══════ SUB-NAVIGATION ═══════ */}
       <nav style={{
@@ -270,10 +270,7 @@ export default function ValorantTrackerHub() {
         top: 72,
         zIndex: 40,
       }}>
-        <div className="container" style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0.75rem 1.5rem',
-        }}>
+        <div className="container flex flex-col md:flex-row items-center justify-between p-3 md:p-4 gap-3 md:gap-0">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{
               background: 'var(--accent-red)', width: 28, height: 28,
@@ -440,14 +437,8 @@ export default function ValorantTrackerHub() {
                   </button>
                 )}
                 <button id="search-btn" type="submit" disabled={isLoading}
-                  style={{
-                    background: 'var(--accent-red)', color: '#fff', fontWeight: 800,
-                    padding: '14px 32px', border: 'none', cursor: 'pointer',
-                    fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em',
-                    fontFamily: '"Rajdhani", sans-serif', transition: 'all 0.2s',
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    opacity: isLoading ? 0.6 : 1,
-                  }}>
+                  className="bg-[var(--accent-red)] text-white font-extrabold px-4 md:px-8 py-3 md:py-3.5 border-none cursor-pointer text-xs md:text-sm tracking-widest font-rajdhani uppercase transition-all flex items-center gap-2"
+                  style={{ opacity: isLoading ? 0.6 : 1 }}>
                   {isLoading ? (
                     <div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
                   ) : 'SEARCH'}
@@ -471,12 +462,9 @@ export default function ValorantTrackerHub() {
                     maxHeight: 420, overflowY: 'auto',
                   }}
                 >
-                  <div style={{ display: 'flex' }}>
+                  <div className="flex flex-col md:flex-row">
                     {/* Left Sidebar Tabs */}
-                    <div style={{
-                      width: 160, borderRight: '1px solid var(--border-color)',
-                      padding: '0.75rem 0', flexShrink: 0,
-                    }}>
+                    <div className="w-full md:w-[160px] border-b md:border-b-0 md:border-r border-[var(--border-color)] p-2 md:py-3 shrink-0 flex flex-row md:flex-col overflow-x-auto gap-2 md:gap-0">
                       {hasQuery && (
                         <button onClick={() => setActiveTab('results')}
                           style={{
@@ -509,7 +497,9 @@ export default function ValorantTrackerHub() {
                           color: activeTab === 'favorites' ? '#ffb400' : 'var(--text-muted)',
                           fontSize: '0.8rem', fontWeight: 700, textAlign: 'left',
                           borderLeft: activeTab === 'favorites' ? '2px solid #ffb400' : '2px solid transparent',
-                        }}>
+                        }}
+                        className="whitespace-nowrap rounded-md md:rounded-none border-l-0 border-b-2 md:border-b-0 md:border-l-2 !border-l-transparent md:!border-l-[#ffb400]"
+                      >
                         <Star className="w-3.5 h-3.5" /> Favorites
                       </button>
                     </div>
@@ -706,12 +696,7 @@ export default function ValorantTrackerHub() {
             )}
 
             {/* ═══ Global Stats Banner (Season & Players) ═══ */}
-            <motion.div variants={fadeUp} style={{
-              marginTop: '1.25rem', background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)', borderRadius: '4px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: '12px', gap: '24px', position: 'relative', zIndex: 1
-            }}>
+            <motion.div variants={fadeUp} className="flex flex-wrap sm:flex-nowrap items-center justify-center p-3 gap-3 sm:gap-6 mt-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-md relative z-10">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <Calendar className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
                 <div style={{ textAlign: 'left' }}>
@@ -758,7 +743,7 @@ export default function ValorantTrackerHub() {
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-50px' }}
             variants={stagger}
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6"
           >
             {[
               { label: 'Playable Agents', value: contentLoading ? '—' : agents.length, icon: <Users className="w-5 h-5" />, color: '#ff4655' },
@@ -766,13 +751,10 @@ export default function ValorantTrackerHub() {
               { label: 'Competitive Ranks', value: contentLoading ? '—' : tiers.length, icon: <Crown className="w-5 h-5" />, color: '#7b46ff' },
               { label: 'Weapons Arsenal', value: contentLoading ? '—' : weapons.length, icon: <Crosshair className="w-5 h-5" />, color: '#ffb400' },
             ].map((stat, i) => (
-              <motion.div key={stat.label} variants={fadeUp} style={{
-                padding: '1.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem',
-                borderRight: i < 3 ? '1px solid var(--border-color)' : 'none',
-              }}>
+              <motion.div key={stat.label} variants={fadeUp} className="flex flex-col items-center justify-center p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] text-center gap-3">
                 <div style={{
                   width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: `${stat.color}10`, color: stat.color, border: `1px solid ${stat.color}20`,
+                  background: `${stat.color}10`, color: stat.color, border: `1px solid ${stat.color}20`, borderRadius: '50%'
                 }}>
                   {stat.icon}
                 </div>
@@ -783,7 +765,7 @@ export default function ValorantTrackerHub() {
                   }}>{stat.value}</div>
                   <div style={{
                     fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)',
-                    textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2,
+                    textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4,
                   }}>{stat.label}</div>
                 </div>
               </motion.div>
@@ -816,15 +798,13 @@ export default function ValorantTrackerHub() {
 
             {/* Agent Grid */}
             {contentLoading ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '0.75rem' }}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="skeleton" style={{ height: 200 }} />
                 ))}
               </div>
             ) : (
-              <motion.div variants={stagger} style={{
-                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '0.75rem',
-              }}>
+              <motion.div variants={stagger} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {agents.slice(0, 12).map(agent => (
                   <motion.div key={agent.uuid} variants={fadeUp}
                     style={{
@@ -903,8 +883,7 @@ export default function ValorantTrackerHub() {
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-50px' }}
             variants={stagger}
-            style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '1.5rem' }}
-            className="split-grid"
+            className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-6"
           >
             {/* LEADERBOARD PREVIEW */}
             <motion.div variants={fadeUp} style={{
@@ -1006,13 +985,13 @@ export default function ValorantTrackerHub() {
               </div>
 
               {contentLoading ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[...Array(4)].map((_, i) => (
                     <div key={i} className="skeleton" style={{ height: 120 }} />
                   ))}
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {playableMaps.slice(0, 6).map(map => (
                     <div key={map.uuid} style={{
                       position: 'relative', height: 120,
@@ -1081,15 +1060,13 @@ export default function ValorantTrackerHub() {
             </motion.div>
 
             {contentLoading ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {[...Array(4)].map((_, i) => (
                   <div key={i} className="skeleton" style={{ height: 100 }} />
                 ))}
               </div>
             ) : (
-              <motion.div variants={stagger} style={{
-                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem',
-              }}>
+              <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {featuredWeapons.map(weapon => (
                   <motion.div key={weapon.uuid} variants={fadeUp} style={{
                     background: 'var(--bg-card)', border: '1px solid var(--border-color)',
@@ -1242,16 +1219,6 @@ export default function ValorantTrackerHub() {
 
         .search-dropdown-row:hover {
           background: rgba(255, 255, 255, 0.05) !important;
-        }
-
-        .split-grid {
-          grid-template-columns: 1fr 1.4fr;
-        }
-
-        @media (max-width: 768px) {
-          .split-grid {
-            grid-template-columns: 1fr !important;
-          }
         }
       `}</style>
     </div>
