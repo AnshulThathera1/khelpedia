@@ -18,42 +18,44 @@ async function generateContentForEntity(type, entity) {
     if (type === 'player') {
         prompt = `
         You are an expert esports historian and journalist.
-        Write a 300-500 word highly engaging biography and playstyle analysis for the esports player: ${entity.ign} (${entity.name}).
+        Write a 400-600 word highly engaging biography and playstyle analysis for the esports player: ${entity.ign} (${entity.name}).
         They play for the team ${entity.teams?.name || 'Unknown'}.
         
-        Focus on:
-        - Career highlights and journey
-        - Unique playstyle, mechanics, or signature agent/role
-        - Impact on the competitive scene
+        You MUST include the following specific sections in your response (using <h3> tags for headers):
+        - <h3>Biography</h3>
+        - <h3>Career Timeline</h3>
+        - <h3>Signature Agents & Playstyle</h3>
+        - <h3>Achievements & Highlights</h3>
         
-        Format the output purely as HTML using <p>, <strong>, <ul>, and <li> tags. Do not include a title or <h1>/<h2> tags, just the body paragraphs. Do not wrap in markdown backticks.
+        Format the output purely as HTML using <h3>, <p>, <strong>, <ul>, and <li> tags. Do not include a main <h1> or <h2> tag. Do not wrap in markdown backticks.
         `;
     } else if (type === 'team') {
         prompt = `
         You are an expert esports historian.
-        Write a 300-500 word engaging organizational history and overview for the esports team: ${entity.name}.
+        Write a 400-600 word engaging organizational history and overview for the esports team: ${entity.name}.
         Region: ${entity.region || 'Global'}.
         
-        Focus on:
-        - When they were founded and their journey to tier 1
-        - Their biggest tournament achievements and iconic rosters
-        - Their traditional rivals
-        - Their signature playstyle as a team
+        You MUST include the following specific sections in your response (using <h3> tags for headers):
+        - <h3>Team History & Organization Background</h3>
+        - <h3>Major Achievements</h3>
+        - <h3>Recent Roster Changes</h3>
+        - <h3>Current Form & Playstyle</h3>
         
-        Format the output purely as HTML using <p>, <strong>, <ul>, and <li> tags. Do not include a title or <h1>/<h2> tags, just the body paragraphs. Do not wrap in markdown backticks.
+        Format the output purely as HTML using <h3>, <p>, <strong>, <ul>, and <li> tags. Do not include a main <h1> or <h2> tag. Do not wrap in markdown backticks.
         `;
     } else if (type === 'tournament') {
         prompt = `
         You are an expert esports analyst.
-        Write a 300-500 word exciting overview for the esports tournament: ${entity.name}.
+        Write a 400-600 word exciting overview for the esports tournament: ${entity.name}.
         Prize Pool: ${entity.prize_pool || 'TBA'} ${entity.currency || 'USD'}.
         
-        Focus on:
-        - The prestige and history of this specific tournament series
-        - What is at stake for the teams (prize money, championship points, pride)
-        - The general narrative or storylines surrounding this event
+        You MUST include the following specific sections in your response (using <h3> tags for headers):
+        - <h3>Tournament Overview</h3>
+        - <h3>Format & Schedule Explanation</h3>
+        - <h3>Teams to Watch</h3>
+        - <h3>Tournament Significance</h3>
         
-        Format the output purely as HTML using <p>, <strong>, <ul>, and <li> tags. Do not include a title or <h1>/<h2> tags, just the body paragraphs. Do not wrap in markdown backticks.
+        Format the output purely as HTML using <h3>, <p>, <strong>, <ul>, and <li> tags. Do not include a main <h1> or <h2> tag. Do not wrap in markdown backticks.
         `;
     }
 

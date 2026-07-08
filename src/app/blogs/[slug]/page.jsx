@@ -223,7 +223,7 @@ export default async function BlogPostPage({ params }) {
                     <div style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--accent-cyan)", marginBottom: "0.25rem" }}>Written by</div>
                     <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "1.1rem", marginBottom: "0.5rem" }}>KhelPediA Staff</div>
                     <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
-                        Esports writer and analyst covering competitive gaming across multiple titles. Follow our latest coverage on the{" "}
+                        Esports writer and analyst covering competitive gaming across multiple titles in accordance with our <Link href="/editorial-policy" style={{ color: "var(--accent-cyan)", textDecoration: "none" }}>Editorial Policy</Link>. Follow our latest coverage on the{" "}
                         <Link href="/blogs" style={{ color: "var(--accent-cyan)", textDecoration: "none" }}>KhelPediA News</Link> page.
                     </p>
                 </div>

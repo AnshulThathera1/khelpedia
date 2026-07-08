@@ -6,7 +6,12 @@ import Image from "next/image";
 
 export async function generateMetadata({ params }) {
     const { id } = await params;
-    const tournament = await getTournamentById(id);
+    const [tournament, teams, matches] = await Promise.all([
+        getTournamentById(id),
+        getTournamentTeams(id),
+        getTournamentMatches(id)
+    ]);
+    
     if (!tournament) return { title: "Tournament Not Found" };
 
     const gameName = tournament.games?.name || "Esports";
@@ -14,12 +19,15 @@ export async function generateMetadata({ params }) {
     const description = `Complete coverage of ${tournament.name}. Track participating teams, live match results, tournament brackets, prize pool, and format for this ${gameName} event on KhelPediA.`;
     const images = tournament.games?.icon_url ? [tournament.games.icon_url] : [];
 
+    const isThin = !tournament.editorial_content && teams.length === 0 && matches.length === 0;
+
     return { 
         title, 
         description,
         alternates: {
             canonical: `/tournaments/${id}`,
         },
+        robots: isThin ? { index: false, follow: true } : { index: true, follow: true },
         openGraph: {
             title,
             description,
@@ -155,22 +163,23 @@ export default async function TournamentDetailPage({ params }) {
                     ) : (
                         <>
                             <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
-                                {tournament.name} is {tournament.status === 'live' ? 'an ongoing' : tournament.status === 'upcoming' ? 'an upcoming' : 'a completed'}{' '}
-                                {gameName} tournament{tournament.region ? ` in the ${tournament.region} region` : ''}.
-                                {tournament.prize_pool ? ` With a prize pool of ${formatPrize(tournament.prize_pool, tournament.currency)}, it attracts some of the best professional teams in the ${gameName} competitive scene.` : ''}
+                                <strong>{tournament.name}</strong> is a premier <strong>{gameName}</strong> tournament {tournament.region ? `held in the ${tournament.region} region` : 'hosted internationally'}. 
+                                The competition features elite teams competing for regional supremacy, ranking points, and {tournament.prize_pool ? `a share of the ${formatPrize(tournament.prize_pool, tournament.currency)} prize pool` : 'championship glory'}. 
+                                This event serves as a critical battleground for teams looking to establish their dominance in the {gameName} competitive ecosystem.
                             </p>
                             <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
-                                {teams.length > 0
-                                    ? `${teams.length} team${teams.length > 1 ? 's' : ''} ${tournament.status === 'completed' ? 'competed' : tournament.status === 'live' ? 'are competing' : 'are set to compete'} in this event, battling for glory and ranking points.`
-                                    : 'Teams for this tournament have not yet been announced.'
-                                }
-                                {matches.length > 0
-                                    ? ` So far, ${matches.length} match${matches.length > 1 ? 'es have' : ' has'} been played.`
-                                    : ''
-                                }
+                                {teams.length > 0 
+                                    ? `This stage of the tournament features ${teams.length} top-tier organizations. These teams have prepared extensively, refining their map pools and strategies to adapt to the current ${gameName} meta.`
+                                    : 'Participating teams are currently being finalized through open qualifiers and direct invitations.'}
+                                {matches.length > 0 
+                                    ? ` With ${matches.length} matches tracked so far, the competition has already delivered intense tactical gameplay and high-stakes moments.`
+                                    : ' Matches are scheduled to begin shortly, promising intense tactical gameplay and high-stakes moments.'}
+                            </p>
+                            <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
+                                Fans and analysts can follow live match results, tournament brackets, team standings, and roster performances directly on this page. Our live data integration ensures you never miss a pivotal moment in the <strong>{tournament.name}</strong>.
                             </p>
                             {gameSlug && (
-                                <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", lineHeight: 1.7 }}>
+                                <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", lineHeight: 1.7, marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
                                     Looking for more {gameName} tournaments?{' '}
                                     <Link href={`/games/${gameSlug}`} style={{ color: "var(--accent-cyan)", textDecoration: "none", fontWeight: 600 }}>
                                         Browse all {gameName} events →

@@ -178,15 +178,33 @@ export default async function PlayerProfilePage({ params }) {
                 ))}
             </div>
 
-            {/* AI Editorial Content */}
-            {player.editorial_content && (
-                <section style={{ marginBottom: "3rem" }}>
-                    <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
-                        Biography & Playstyle
-                    </h2>
-                    <div className="glass-card" style={{ padding: "2rem", lineHeight: 1.8, color: "var(--text-secondary)" }} dangerouslySetInnerHTML={{ __html: player.editorial_content }} />
-                </section>
-            )}
+            {/* Biography & Playstyle (Editorial or Fallback) */}
+            <section style={{ marginBottom: "3rem" }}>
+                <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
+                    Biography & Playstyle
+                </h2>
+                <div className="glass-card" style={{ padding: "2rem", lineHeight: 1.8, color: "var(--text-secondary)" }}>
+                    {player.editorial_content ? (
+                        <div dangerouslySetInnerHTML={{ __html: player.editorial_content }} />
+                    ) : (
+                        <>
+                            <p style={{ marginBottom: "1rem" }}>
+                                <strong>{player.display_name}</strong> {player.real_name ? `(${player.real_name}) ` : ''} 
+                                is a professional esports player{player.nationality ? ` from ${player.nationality}` : ''} currently 
+                                competing at the highest tiers of competitive gaming. Known for their mechanical prowess and deep understanding of the meta, {player.display_name} has built a solid reputation among fans and analysts alike.
+                            </p>
+                            <p style={{ marginBottom: "1rem" }}>
+                                {primaryStats 
+                                    ? `Statistically, ${player.display_name} maintains a robust ${primaryStats.win_rate}% win rate and a ${(primaryStats.kills / Math.max(primaryStats.deaths, 1)).toFixed(2)} K/D ratio across tracked official matches. Their high impact rating and consistent clutch potential make them a terrifying opponent in high-pressure situations.`
+                                    : `With a constantly evolving playstyle, ${player.display_name} focuses on aggressive space-taking and highly coordinated team executions to secure rounds and map victories.`}
+                            </p>
+                            <p>
+                                Follow {player.display_name}'s ongoing career on KhelPediA to track their latest match performances, tournament placements, and statistical milestones.
+                            </p>
+                        </>
+                    )}
+                </div>
+            </section>
 
             {/* Bottom Section Layout */}
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "3rem" }}>

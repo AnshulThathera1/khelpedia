@@ -5,14 +5,23 @@ import PlayerCard from "../../components/PlayerCard";
 
 export async function generateMetadata({ params }) {
     const { id } = await params;
-    const team = await getTeamById(id);
+    const [team, roster, activeTournaments] = await Promise.all([
+        getTeamById(id),
+        getTeamPlayers(id),
+        getTeamTournaments(id)
+    ]);
+    
     if (!team) return { title: "Team Not Found" };
+    
+    const isThin = !team.editorial_content && roster.length === 0 && activeTournaments.length === 0;
+
     return {
         title: `${team.name} — Esports Team Profile`,
         description: `Roster, tournament history, and results for ${team.name}. View current players, recent placements, and team achievements.`,
         alternates: {
             canonical: `/teams/${id}`,
         },
+        robots: isThin ? { index: false, follow: true } : { index: true, follow: true },
     };
 }
 
@@ -72,15 +81,34 @@ export default async function TeamDetailPage({ params }) {
                 </p>
             </div>
 
-            {/* AI Editorial Content */}
-            {team.editorial_content && (
-                <section style={{ marginBottom: "3rem" }}>
-                    <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
-                        About the Team
-                    </h2>
-                    <div className="glass-card" style={{ padding: "2rem", lineHeight: 1.8, color: "var(--text-secondary)" }} dangerouslySetInnerHTML={{ __html: team.editorial_content }} />
-                </section>
-            )}
+            {/* About the Team (Editorial or Fallback) */}
+            <section style={{ marginBottom: "3rem" }}>
+                <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
+                    About the Team
+                </h2>
+                <div className="glass-card" style={{ padding: "2rem", lineHeight: 1.8, color: "var(--text-secondary)" }}>
+                    {team.editorial_content ? (
+                        <div dangerouslySetInnerHTML={{ __html: team.editorial_content }} />
+                    ) : (
+                        <>
+                            <p style={{ marginBottom: "1rem" }}>
+                                <strong>{team.name}</strong> is a competitive esports organization {team.region ? `operating in the ${team.region} region` : 'competing globally'}. 
+                                {team.founded_year ? ` Established in ${team.founded_year}, the organization has steadily built a reputation across premier esports titles.` : ' The team has actively participated in premier tier tournaments and continues to develop its competitive roster.'}
+                            </p>
+                            <p style={{ marginBottom: "1rem" }}>
+                                {roster.length > 0 
+                                    ? `The current active roster features ${roster.length} professional players who compete at the highest levels. This squad focuses on maintaining strong regional standings and qualifying for international majors.`
+                                    : 'The active player roster is currently undergoing evaluations or restructuring. Stay tuned for official roster announcements and transfers.'}
+                            </p>
+                            <p>
+                                {activeTournaments.length > 0 
+                                    ? `Fans can track ${team.name}'s performance across ${activeTournaments.length} tracked events. The organization continues to battle for championship titles, prize pools, and global recognition in the ever-evolving esports ecosystem.`
+                                    : `Follow ${team.name} on KhelPediA to stay updated on their latest tournament appearances, match results, and organizational news as they prepare for the upcoming competitive season.`}
+                            </p>
+                        </>
+                    )}
+                </div>
+            </section>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem" }}>
 

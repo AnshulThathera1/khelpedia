@@ -17,13 +17,13 @@ export default async function HomePage() {
         getSiteStats(),
     ]);
 
-    // Fetch latest blog posts
+    // Fetch latest blog posts for News and Editor's Picks
     const { data: latestBlogs } = await supabase
         .from("blogs")
         .select("id, title, slug, excerpt, cover_image_url, created_at, author_id")
         .eq("is_published", true)
         .order("created_at", { ascending: false })
-        .limit(3);
+        .limit(6);
 
     let blogs = latestBlogs || [];
     if (blogs.length > 0) {
@@ -148,20 +148,40 @@ export default async function HomePage() {
                     )}
                 </section>
 
-                {/* Latest News — editorial content section */}
+                {/* Featured Tournaments */}
+                {upcomingTournaments.length > 0 && (
+                    <section style={{ marginBottom: "5rem" }}>
+                        <div className="section-header">
+                            <div>
+                                <h2 className="section-title">Featured Tournaments</h2>
+                                <p className="section-subtitle">Upcoming major events to watch</p>
+                            </div>
+                            <Link href="/tournaments?status=upcoming" style={{ color: "var(--accent-red)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>
+                                All Upcoming
+                            </Link>
+                        </div>
+                        <div className="grid-auto">
+                            {upcomingTournaments.slice(0, 4).map(t => (
+                                <TournamentCard key={t.id} tournament={t} />
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Latest News & Analysis */}
                 {blogs.length > 0 && (
                     <section style={{ marginBottom: "5rem" }}>
                         <div className="section-header">
                             <div>
-                                <h2 className="section-title">Latest News</h2>
-                                <p className="section-subtitle">Original analysis and esports coverage</p>
+                                <h2 className="section-title">Latest Esports News & Analysis</h2>
+                                <p className="section-subtitle">Original editorial coverage from our experts</p>
                             </div>
                             <Link href="/blogs" style={{ color: "var(--accent-red)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>
                                 All Articles
                             </Link>
                         </div>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1.5rem" }}>
-                            {blogs.map(blog => (
+                            {blogs.slice(0, 3).map(blog => (
                                 <Link href={`/blogs/${blog.slug}`} key={blog.id} style={{ textDecoration: "none" }}>
                                     <div className="card" style={{ padding: 0, overflow: "hidden", height: "100%", display: "flex", flexDirection: "column" }}>
                                         <div style={{ height: "160px", width: "100%", background: "var(--bg-secondary)", position: "relative" }}>
@@ -184,10 +204,41 @@ export default async function HomePage() {
                                             <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.5, flex: 1 }}>
                                                 {blog.excerpt}
                                             </p>
-                                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border-color)" }}>
-                                                By KhelPediA Staff
+                                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                                <div style={{ width: "20px", height: "20px", borderRadius: "50%", background: "var(--accent-cyan)", display: "inline-block" }}></div>
+                                                By {blog.profiles?.display_name || "KhelPediA Editorial Team"}
                                             </div>
                                         </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Editor's Picks */}
+                {blogs.length > 3 && (
+                    <section style={{ marginBottom: "5rem" }}>
+                        <div className="section-header">
+                            <div>
+                                <h2 className="section-title">Editor's Picks</h2>
+                                <p className="section-subtitle">Deep dives and curated content</p>
+                            </div>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1.5rem" }}>
+                            {blogs.slice(3, 6).map(blog => (
+                                <Link href={`/blogs/${blog.slug}`} key={blog.id} style={{ textDecoration: "none" }}>
+                                    <div className="card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem", borderLeft: "3px solid var(--accent-purple)" }}>
+                                        <span style={{ color: "var(--accent-purple)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>FEATURED</span>
+                                        <h3 style={{ color: "var(--text-primary)", fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.3, fontFamily: '"Rajdhani", sans-serif' }}>
+                                            {blog.title}
+                                        </h3>
+                                        <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.5, margin: "0.5rem 0" }}>
+                                            {blog.excerpt}
+                                        </p>
+                                        <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: "auto" }}>
+                                            {new Date(blog.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </span>
                                     </div>
                                 </Link>
                             ))}

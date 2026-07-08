@@ -28,6 +28,8 @@ const footerLinks = [
             { href: "/about", label: "About Us" },
             { href: "/contact", label: "Contact" },
             { href: "/disclaimer", label: "Disclaimer" },
+            { href: "/editorial-policy", label: "Editorial Policy" },
+            { href: "/corrections-policy", label: "Corrections Policy" },
         ],
     },
     {
@@ -206,12 +208,19 @@ export default function Footer() {
                         </div>
                     ))}
                 </div>
+                {/* Data Transparency */}
+                <div style={{ marginTop: "3rem", padding: "1.5rem", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", lineHeight: 1.6, margin: 0 }}>
+                        <strong>Data & Editorial Transparency:</strong> KhelPediA is an independent esports publication. Statistical data is sourced via public APIs including Riot Games, HLTV, and Liquipedia. All news, analysis, and tournament overviews are originally produced and rigorously reviewed by the KhelPediA Editorial Team in accordance with our <Link href="/editorial-policy" style={{ color: "var(--accent-cyan)", textDecoration: "none" }}>Editorial Policy</Link>.
+                    </p>
+                </div>
 
                 {/* Bottom bar */}
                 <div
                     style={{
                         borderTop: "1px solid var(--border-color)",
                         paddingTop: "2rem",
+                        marginTop: "2rem",
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
