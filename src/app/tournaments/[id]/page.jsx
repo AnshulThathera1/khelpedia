@@ -7,16 +7,19 @@ import Image from "next/image";
 export async function generateMetadata({ params }) {
     const { id } = await params;
     const tournament = await getTournamentById(id);
-    if (!tournament) return { title: "Tournament Not Found | KhelPediA" };
+    if (!tournament) return { title: "Tournament Not Found" };
 
     const gameName = tournament.games?.name || "Esports";
-    const title = `${tournament.name} — ${gameName} Tournament | KhelPediA`;
+    const title = `${tournament.name} — ${gameName} Tournament`;
     const description = `Complete coverage of ${tournament.name}. Track participating teams, live match results, tournament brackets, prize pool, and format for this ${gameName} event on KhelPediA.`;
     const images = tournament.games?.icon_url ? [tournament.games.icon_url] : [];
 
     return { 
         title, 
         description,
+        alternates: {
+            canonical: `/tournaments/${id}`,
+        },
         openGraph: {
             title,
             description,

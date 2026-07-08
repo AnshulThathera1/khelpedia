@@ -5,10 +5,13 @@ import { createClient } from "@/utils/supabase/server";
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-    title: "Esports News, Analysis & Guides | KhelPediA",
+    title: "Esports News, Analysis & Guides",
     description: "Read the latest esports news, tournament previews, match analyses, meta guides, and in-depth team profiles. Original editorial content by the KhelPediA team.",
+    alternates: {
+        canonical: "/blogs",
+    },
     openGraph: {
-        title: "Esports News & Analysis | KhelPediA",
+        title: "Esports News & Analysis",
         description: "Original esports journalism — tournament coverage, player profiles, patch analysis, and competitive gaming insights.",
     },
 };

@@ -6,8 +6,9 @@ import { Trophy, Medal, ChevronLeft, Target } from 'lucide-react';
 export const revalidate = 3600; // Cache leaderboard for 1 hour
 
 export const metadata = {
-  title: 'Valorant Regional Leaderboard - KhelPediA',
+  title: 'Valorant Regional Leaderboard',
   description: 'View the top 100 Radiant and Immortal players in Valorant for the current act.',
+  alternates: { canonical: '/valorant/leaderboard' },
 };
 
 export default async function ValorantLeaderboardPage() {

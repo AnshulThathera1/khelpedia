@@ -7,10 +7,13 @@ import GameDashboardClient from "./GameDashboardClient";
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const game = await getGameBySlug(slug);
-  if (!game) return { title: "Game Not Found | KhelPediA" };
+  if (!game) return { title: "Game Not Found" };
   return { 
-    title: `${game.name} Esports, Live Matches & Stats | KhelPediA`, 
-    description: `Track live ${game.name} tournaments, recent match results, upcoming schedules, roster transfers, and player stats.` 
+    title: `${game.name} Esports — Live Matches & Stats`, 
+    description: `Track live ${game.name} tournaments, recent match results, upcoming schedules, roster transfers, and player stats.`,
+    alternates: {
+      canonical: `/games/${slug}`,
+    },
   };
 }
 

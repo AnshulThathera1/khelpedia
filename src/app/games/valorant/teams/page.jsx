@@ -1,7 +1,7 @@
 import { getTeams } from "@/lib/queries";
 import Link from "next/link";
 
-export const metadata = { title: "Valorant Teams Portal | KhelPediA" };
+export const metadata = { title: "Valorant Teams Portal", alternates: { canonical: "/games/valorant/teams" } };
 
 export default async function TeamsPortalPage() {
   const allTeams = await getTeams();

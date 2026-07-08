@@ -1,11 +1,14 @@
 import Link from "next/link";
 
 export const metadata = {
-    title: "Disclaimer | KhelPediA",
+    title: "Disclaimer",
     description:
         "Read the KhelPediA disclaimer regarding data accuracy, third-party affiliations, and intellectual property. KhelPediA is an independent esports data platform.",
+    alternates: {
+        canonical: "/disclaimer",
+    },
     openGraph: {
-        title: "Disclaimer | KhelPediA",
+        title: "Disclaimer",
         description:
             "Important disclaimers regarding KhelPediA's data sources, affiliations, and intellectual property.",
     },

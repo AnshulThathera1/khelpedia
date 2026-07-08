@@ -1,11 +1,14 @@
 import Link from "next/link";
 
 export const metadata = {
-    title: "Cookie Policy | KhelPediA",
+    title: "Cookie Policy",
     description:
         "Learn about the cookies KhelPediA uses, including analytics, advertising, and preference cookies, and how you can manage them.",
+    alternates: {
+        canonical: "/cookies",
+    },
     openGraph: {
-        title: "Cookie Policy | KhelPediA",
+        title: "Cookie Policy",
         description:
             "Understand how KhelPediA uses cookies to improve your browsing experience.",
     },

@@ -2,7 +2,7 @@ import { getPlayers } from "@/lib/queries";
 import Link from "next/link";
 import { Search, User, Trophy } from "lucide-react";
 
-export const metadata = { title: "Valorant Players Portal | KhelPediA" };
+export const metadata = { title: "Valorant Players Portal", alternates: { canonical: "/games/valorant/players" } };
 
 export default async function PlayersPortalPage() {
   const allPlayers = await getPlayers();

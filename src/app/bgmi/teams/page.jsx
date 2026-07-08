@@ -2,8 +2,9 @@ import { getBGMITeams } from "@/lib/esportsamaze";
 import { Users, ShieldCheck, MapPin } from "lucide-react";
 
 export const metadata = {
-  title: "Top BGMI Teams | KhelPediA",
+  title: "Top BGMI Teams",
   description: "Browse the top Battlegrounds Mobile India esports teams and organizations.",
+  alternates: { canonical: "/bgmi/teams" },
 };
 
 export default async function BGMITeamsPage() {

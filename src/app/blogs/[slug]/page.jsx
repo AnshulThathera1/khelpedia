@@ -25,8 +25,11 @@ export async function generateMetadata({ params }) {
     const images = blog.cover_image_url ? [blog.cover_image_url] : [];
 
     return {
-        title: `${blog.title} | KhelPediA News`,
+        title: blog.title,
         description: blog.excerpt,
+        alternates: {
+            canonical: `/blogs/${resolvedParams.slug}`,
+        },
         openGraph: {
             title: blog.title,
             description: blog.excerpt,

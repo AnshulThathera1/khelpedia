@@ -1,9 +1,12 @@
 import Link from "next/link";
 
 export const metadata = {
-    title: "Contact Us | KhelPediA",
+    title: "Contact Us",
     description:
         "Get in touch with the KhelPediA team. Whether you have feedback, partnership inquiries, content corrections, or just want to say hello — we'd love to hear from you.",
+    alternates: {
+        canonical: "/contact",
+    },
     openGraph: {
         title: "Contact KhelPediA",
         description:

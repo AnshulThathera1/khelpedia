@@ -6,8 +6,14 @@ import PlayerCard from "../../components/PlayerCard";
 export async function generateMetadata({ params }) {
     const { id } = await params;
     const team = await getTeamById(id);
-    if (!team) return { title: "Team Not Found | KhelPediA" };
-    return { title: `${team.name} Esports | KhelPediA`, description: `Roster and results for ${team.name}.` };
+    if (!team) return { title: "Team Not Found" };
+    return {
+        title: `${team.name} — Esports Team Profile`,
+        description: `Roster, tournament history, and results for ${team.name}. View current players, recent placements, and team achievements.`,
+        alternates: {
+            canonical: `/teams/${id}`,
+        },
+    };
 }
 
 export default async function TeamDetailPage({ params }) {

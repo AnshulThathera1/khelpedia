@@ -52,9 +52,7 @@ export const metadata = {
     description:
       "Track live esports tournaments worldwide. Player stats, team rankings, match results.",
   },
-  alternates: {
-    canonical: "/",
-  },
+  alternates: {},
   verification: {
     google: "dJx1z7y3he6vo1cqT3IwvJ9hoHdlEZmsc-3fLJG9IJw",
   },

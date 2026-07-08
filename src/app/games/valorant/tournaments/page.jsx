@@ -2,7 +2,7 @@ import { getTournaments, getGameBySlug } from "@/lib/queries";
 import Link from "next/link";
 import { Trophy, Calendar, Coins, Globe } from "lucide-react";
 
-export const metadata = { title: "Valorant Tournaments Portal | KhelPediA" };
+export const metadata = { title: "Valorant Tournaments Portal", alternates: { canonical: "/games/valorant/tournaments" } };
 
 const TIER_COLORS = {
   S: { bg: "rgba(255,70,85,0.15)", text: "#ff4655", border: "rgba(255,70,85,0.3)" },

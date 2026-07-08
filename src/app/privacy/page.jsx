@@ -1,11 +1,14 @@
 import Link from "next/link";
 
 export const metadata = {
-    title: "Privacy Policy | KhelPediA",
+    title: "Privacy Policy",
     description:
         "Read KhelPediA's Privacy Policy. Learn how we collect, use, store, and protect your personal information across our esports data platform.",
+    alternates: {
+        canonical: "/privacy",
+    },
     openGraph: {
-        title: "Privacy Policy | KhelPediA",
+        title: "Privacy Policy",
         description:
             "Understand how KhelPediA handles your personal data, including Riot Games API data, analytics, and advertising.",
     },

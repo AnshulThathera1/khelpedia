@@ -18,11 +18,14 @@ export async function generateMetadata({ params }) {
         .eq("slug", resolvedParams.slug)
         .single();
 
-    if (!player) return { title: "Player Not Found | KhelPediA" };
+    if (!player) return { title: "Player Not Found" };
 
     return {
-        title: `${player.ign} (${player.name}) | KhelPediA Pro Profiles`,
-        description: `View detailed esports statistics, match history, and team information for ${player.ign}.`,
+        title: `${player.ign} (${player.name}) — Pro Player Profile`,
+        description: `View detailed esports statistics, career history, and team information for ${player.ign}.`,
+        alternates: {
+            canonical: `/players/${resolvedParams.slug}`,
+        },
     };
 }
 
@@ -195,23 +198,11 @@ export default async function PlayerProfilePage({ params }) {
                         Recent Matches
                     </h3>
 
-                    {/* Placeholder Matches */}
+                    {/* Match History — show real data or empty state */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                        {[...Array(3)].map((_, i) => (
-                            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem", background: "rgba(10, 14, 23, 0.4)", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: i === 0 ? "#10b981" : "var(--text-muted)" }} />
-                                    <div>
-                                        <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>VCT Masters • {i === 0 ? "Grand Finals" : "Playoffs"}</div>
-                                        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Vs. Optic Gaming</div>
-                                    </div>
-                                </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                                    <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", fontFamily: "monospace" }}>+24 / -12 / 8</div>
-                                    <div style={{ fontWeight: 700, color: i % 2 === 0 ? "#10b981" : "#ef4444" }}>{i % 2 === 0 ? "WIN" : "LOSS"}</div>
-                                </div>
-                            </div>
-                        ))}
+                        <div style={{ padding: "2rem", textAlign: "center", background: "rgba(10, 14, 23, 0.4)", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                            <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Match history data is being compiled. Check back soon for detailed performance tracking.</p>
+                        </div>
                     </div>
                 </div>
 

@@ -2,7 +2,7 @@ import { getTeams, getPlayers, getTournaments, getGameBySlug } from "@/lib/queri
 import { AGENTS, MAPS } from "@/lib/valorantData";
 import { Users, Trophy, Swords, Map, Shield, BarChart3, DollarSign } from "lucide-react";
 
-export const metadata = { title: "Valorant Statistics Portal | KhelPediA" };
+export const metadata = { title: "Valorant Statistics Portal", alternates: { canonical: "/games/valorant/statistics" } };
 
 export default async function StatisticsPortalPage() {
   const game = await getGameBySlug("valorant");

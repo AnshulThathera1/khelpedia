@@ -1,11 +1,14 @@
 import Link from "next/link";
 
 export const metadata = {
-    title: "Terms of Service | KhelPediA",
+    title: "Terms of Service",
     description:
         "Read KhelPediA's Terms of Service. By using our esports data platform, you agree to these terms governing your access, conduct, and use of our services.",
+    alternates: {
+        canonical: "/terms",
+    },
     openGraph: {
-        title: "Terms of Service | KhelPediA",
+        title: "Terms of Service",
         description:
             "Terms governing your use of KhelPediA, including user conduct, intellectual property, and Riot Games API compliance.",
     },

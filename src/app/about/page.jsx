@@ -1,9 +1,12 @@
 import Link from "next/link";
 
 export const metadata = {
-    title: "About Us | KhelPediA",
+    title: "About Us",
     description:
         "Learn about KhelPediA — the ultimate esports encyclopedia. Our mission, the team behind the platform, and how we deliver real-time tournament tracking, player analytics, and team insights.",
+    alternates: {
+        canonical: "/about",
+    },
     openGraph: {
         title: "About KhelPediA — The Esports Encyclopedia",
         description:

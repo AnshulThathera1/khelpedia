@@ -2,8 +2,11 @@ import { getTeams } from "@/lib/queries";
 import TeamCard from "../components/TeamCard";
 
 export const metadata = {
-    title: "Teams | KhelPediA",
-    description: "Esports teams and organizations.",
+    title: "Esports Teams & Organizations",
+    description: "Browse professional esports teams and organizations competing in Valorant, CS2, BGMI, Dota 2, and more. View rosters, tournament history, and achievements.",
+    alternates: {
+        canonical: "/teams",
+    },
 };
 
 export default async function TeamsPage() {

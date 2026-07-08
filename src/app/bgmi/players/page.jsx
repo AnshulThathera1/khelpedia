@@ -2,8 +2,9 @@ import { getBGMIPlayers } from "@/lib/esportsamaze";
 import { Target, Shield, Crosshair } from "lucide-react";
 
 export const metadata = {
-  title: "BGMI Players & Leaderboard | KhelPediA",
+  title: "BGMI Players & Leaderboard",
   description: "Explore profiles and statistics of the top Battlegrounds Mobile India players.",
+  alternates: { canonical: "/bgmi/players" },
 };
 
 export default async function BGMIPlayersPage() {

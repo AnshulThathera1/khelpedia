@@ -3,8 +3,9 @@ import { Trophy, CalendarDays, MapPin } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
-  title: "BGMI Tournaments | KhelPediA",
+  title: "BGMI Tournaments",
   description: "Comprehensive list of all major BGMI tournaments and their prize pools.",
+  alternates: { canonical: "/bgmi/tournaments" },
 };
 
 export default async function BGMITournamentsPage() {

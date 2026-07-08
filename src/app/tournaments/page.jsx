@@ -3,10 +3,27 @@ import TournamentCard from "../components/TournamentCard";
 import Pagination from "../components/Pagination";
 import Link from "next/link";
 
-export const metadata = {
-    title: "Tournaments | KhelPediA",
-    description: "Live, upcoming, and completed esports tournaments.",
-};
+export async function generateMetadata({ searchParams: searchParamsPromise }) {
+    const searchParams = await searchParamsPromise;
+    const page = parseInt(searchParams.page) || 1;
+    const status = searchParams.status || null;
+    const tier = searchParams.tier || null;
+    const isFiltered = page > 1 || status || tier;
+
+    return {
+        title: "Esports Tournaments — Live, Upcoming & Completed",
+        description: "Browse live, upcoming, and completed esports tournaments across Valorant, CS2, BGMI, Dota 2, and more. Track brackets, teams, match results, and prize pools on KhelPediA.",
+        alternates: {
+            canonical: "/tournaments",
+        },
+        ...(isFiltered ? {
+            robots: {
+                index: false,
+                follow: true,
+            },
+        } : {}),
+    };
+}
 
 export default async function TournamentsPage({ searchParams: searchParamsPromise }) {
     const searchParams = await searchParamsPromise;

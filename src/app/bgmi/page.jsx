@@ -3,8 +3,11 @@ import Link from "next/link";
 import { ChevronRight, Trophy, Users, Crosshair } from "lucide-react";
 
 export const metadata = {
-  title: "BGMI Esports | KhelPediA",
+  title: "BGMI Esports — Tournaments, Teams & Players",
   description: "Track live BGMI tournaments, recent match results, upcoming schedules, roster transfers, and player stats.",
+  alternates: {
+      canonical: "/bgmi",
+  },
 };
 
 export default async function BGMIPage() {
