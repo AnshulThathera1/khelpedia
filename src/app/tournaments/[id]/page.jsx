@@ -19,7 +19,12 @@ export async function generateMetadata({ params }) {
     const description = `Complete coverage of ${tournament.name}. Track participating teams, live match results, tournament brackets, prize pool, and format for this ${gameName} event on KhelPediA.`;
     const images = tournament.games?.icon_url ? [tournament.games.icon_url] : [];
 
-    const isThin = !tournament.editorial_content && teams.length === 0 && matches.length === 0;
+    const hasEditorial = tournament.editorial_content && tournament.editorial_content.trim().length > 50;
+    const hasTeams = teams.length > 0;
+    const hasMatches = matches.length > 0;
+    
+    // Only index pages that have a meaningful description OR both teams and schedule/results
+    const isThin = !(hasEditorial || (hasTeams && hasMatches));
 
     return { 
         title, 

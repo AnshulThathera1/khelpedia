@@ -13,7 +13,12 @@ export async function generateMetadata({ params }) {
     
     if (!team) return { title: "Team Not Found" };
     
-    const isThin = !team.editorial_content && roster.length === 0 && activeTournaments.length === 0;
+    const hasEditorial = team.editorial_content && team.editorial_content.trim().length > 50;
+    const hasRoster = roster.length > 0;
+    const hasTournaments = activeTournaments.length > 0;
+    
+    // Only index pages that have a meaningful description OR both active roster and recent tournaments
+    const isThin = !(hasEditorial || (hasRoster && hasTournaments));
 
     return {
         title: `${team.name} — Esports Team Profile`,
