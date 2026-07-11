@@ -95,7 +95,7 @@ export default async function BlogPostPage({ params }) {
         dateModified: blog.updated_at || blog.created_at,
         author: [{
             '@type': 'Person',
-            name: "KhelPediA Staff",
+            name: blog.profiles?.display_name || "KhelPediA Staff",
             url: `https://khelpedia.org`
         }],
         publisher: {
@@ -176,10 +176,14 @@ export default async function BlogPostPage({ params }) {
                 {/* Author Info */}
                 <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                     <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--bg-secondary)", overflow: "hidden", border: "2px solid var(--border-color)", position: "relative" }}>
-                        <div style={{ width: "100%", height: "100%", background: "var(--gradient-primary)" }} />
+                        {blog.profiles?.avatar_url ? (
+                            <Image src={blog.profiles.avatar_url} alt={blog.profiles.display_name || "Author"} fill style={{ objectFit: "cover" }} />
+                        ) : (
+                            <div style={{ width: "100%", height: "100%", background: "var(--gradient-primary)" }} />
+                        )}
                     </div>
                     <div>
-                        <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>KhelPediA Staff</div>
+                        <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{blog.profiles?.display_name || "KhelPediA Staff"}</div>
                         <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Esports Writer & Analyst</div>
                     </div>
                 </div>
@@ -217,11 +221,15 @@ export default async function BlogPostPage({ params }) {
                 alignItems: "flex-start",
             }}>
                 <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--bg-secondary)", overflow: "hidden", border: "2px solid var(--border-color)", flexShrink: 0, position: "relative" }}>
-                    <div style={{ width: "100%", height: "100%", background: "var(--gradient-primary)" }} />
+                    {blog.profiles?.avatar_url ? (
+                        <Image src={blog.profiles.avatar_url} alt={blog.profiles.display_name || "Author"} fill style={{ objectFit: "cover" }} />
+                    ) : (
+                        <div style={{ width: "100%", height: "100%", background: "var(--gradient-primary)" }} />
+                    )}
                 </div>
                 <div>
                     <div style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--accent-cyan)", marginBottom: "0.25rem" }}>Written by</div>
-                    <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "1.1rem", marginBottom: "0.5rem" }}>KhelPediA Staff</div>
+                    <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "1.1rem", marginBottom: "0.5rem" }}>{blog.profiles?.display_name || "KhelPediA Staff"}</div>
                     <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
                         Esports writer and analyst covering competitive gaming across multiple titles in accordance with our <Link href="/editorial-policy" style={{ color: "var(--accent-cyan)", textDecoration: "none" }}>Editorial Policy</Link>. Follow our latest coverage on the{" "}
                         <Link href="/blogs" style={{ color: "var(--accent-cyan)", textDecoration: "none" }}>KhelPediA News</Link> page.

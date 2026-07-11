@@ -5,8 +5,8 @@ import { NextResponse } from 'next/server'
 export async function middleware(request) {
   const hostname = request.headers.get('host') || '';
 
-  // If the request is coming from the Vercel domain, redirect to the .org domain
-  if (hostname.includes('khelpedia.vercel.app')) {
+  // If the request is coming from the Vercel domain or www, redirect to the .org domain
+  if (hostname.includes('khelpedia.vercel.app') || hostname === 'www.khelpedia.org') {
     const url = request.nextUrl.clone();
     url.host = 'khelpedia.org';
     url.port = ''; // Ensure no port is attached
