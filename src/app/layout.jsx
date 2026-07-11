@@ -30,6 +30,10 @@ export const metadata = {
     default: "KhelPediA — Esports Tournaments, Stats & Rankings",
     template: "%s | KhelPediA",
   },
+  applicationName: "KhelPediA",
+  appleWebApp: {
+    title: "KhelPediA",
+  },
   description:
     "Your ultimate esports hub. Track live tournaments, player stats, team rankings across Valorant, CS2, BGMI, PUBG Mobile, Free Fire, Dota 2 and more.",
   keywords: [
@@ -144,6 +148,7 @@ export default async function RootLayout({ children }) {
               '@context': 'https://schema.org',
               '@type': 'WebSite',
               name: 'KhelPediA',
+              alternateName: ['KhelPedia', 'khelpedia.org', 'Khel Pedia'],
               url: 'https://khelpedia.org',
             }),
           }}
