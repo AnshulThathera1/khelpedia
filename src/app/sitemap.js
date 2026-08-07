@@ -10,20 +10,23 @@ export default async function sitemap() {
     .select("slug, updated_at")
     .eq("is_published", true);
 
-  // Get dynamic tournaments
+  // Get dynamic tournaments — only include those with real data
   const { data: tournaments } = await supabase
     .from("tournaments")
-    .select("id, updated_at");
+    .select("id, updated_at, prize_pool, start_date, end_date")
+    .not("prize_pool", "is", null)
+    .gt("prize_pool", 0);
 
   // Get dynamic games
   const { data: games } = await supabase
     .from("games")
     .select("slug");
 
-  // Get dynamic players
+  // Get dynamic players — only include those that have stats (non-empty profiles)
   const { data: players } = await supabase
     .from("players")
-    .select("id, slug, updated_at")
+    .select("id, slug, updated_at, ign, player_stats(id)")
+    .not("ign", "is", null)
     .limit(500);
 
   // Get dynamic teams
@@ -53,12 +56,15 @@ export default async function sitemap() {
     priority: 0.8,
   }));
 
-  const playerUrls = (players || []).map((player) => ({
-    url: `${baseUrl}/players/${player.slug || player.id}`,
-    lastModified: player.updated_at ? new Date(player.updated_at) : new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.6,
-  }));
+  // Only include players that have at least one stats record
+  const playerUrls = (players || [])
+    .filter((player) => player.player_stats && player.player_stats.length > 0)
+    .map((player) => ({
+      url: `${baseUrl}/players/${player.slug || player.id}`,
+      lastModified: player.updated_at ? new Date(player.updated_at) : new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    }));
 
   const teamUrls = (teams || []).map((team) => ({
     url: `${baseUrl}/teams/${team.id}`,
@@ -67,7 +73,7 @@ export default async function sitemap() {
     priority: 0.6,
   }));
 
-  // Static routes — includes all new trust pages
+  // Static routes — includes all trust/policy pages
   const routes = [
     '',
     '/tournaments',
@@ -82,6 +88,8 @@ export default async function sitemap() {
     '/terms',
     '/cookies',
     '/disclaimer',
+    '/editorial-policy',
+    '/corrections-policy',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
@@ -91,3 +99,4 @@ export default async function sitemap() {
 
   return [...routes, ...blogUrls, ...tournamentUrls, ...gameUrls, ...playerUrls, ...teamUrls];
 }
+

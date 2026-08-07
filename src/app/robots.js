@@ -3,7 +3,7 @@ export default function robots() {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/dashboard/'],
+      disallow: ['/admin/', '/dashboard/', '/debug-blogs/', '/login/', '/auth/'],
     },
     sitemap: 'https://khelpedia.org/sitemap.xml',
   }

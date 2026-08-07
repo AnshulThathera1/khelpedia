@@ -18,8 +18,54 @@ export async function generateAIBlog() {
         throw new Error("No news items found in RSS feed.");
     }
 
-    // Pick the top recent article that we haven't processed (for simplicity, we take the newest)
-    const topStory = feed.items[0];
+    // Initialize Supabase early so we can check for duplicates
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Pick the first RSS item that we haven't already covered
+    let topStory = null;
+    for (const item of feed.items) {
+        let alreadyCovered = false;
+
+        // First try to match by source_url (if the column exists)
+        try {
+            const { data: existing } = await supabase
+                .from('blogs')
+                .select('id')
+                .eq('source_url', item.link)
+                .limit(1);
+            if (existing && existing.length > 0) {
+                alreadyCovered = true;
+            }
+        } catch {
+            // source_url column may not exist yet — skip this check
+        }
+
+        // Also check for very similar titles (first 40 chars match)
+        if (!alreadyCovered) {
+            const titlePrefix = item.title.substring(0, 40).toLowerCase();
+            const { data: similarTitle } = await supabase
+                .from('blogs')
+                .select('id, title')
+                .ilike('title', `${titlePrefix}%`)
+                .limit(1);
+
+            if (similarTitle && similarTitle.length > 0) {
+                alreadyCovered = true;
+            }
+        }
+
+        if (!alreadyCovered) {
+            topStory = item;
+            break;
+        }
+    }
+
+    if (!topStory) {
+        console.log('All recent RSS stories have already been covered. Skipping.');
+        return { slug: null, category: null, skipped: true };
+    }
 
     // Use Gemini to rewrite the article with much higher quality
     const prompt = `
@@ -70,11 +116,7 @@ export async function generateAIBlog() {
     // Generate URL slug
     const slug = generatedData.title.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "") + "-" + Date.now().toString().slice(-4);
 
-    // Save to Supabase
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    // We use service role key to bypass RLS policies for server-side insertions
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Save to Supabase (client already initialized above)
 
     // Fetch the first available user to assign as the author (requires service_role key)
     const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
@@ -90,6 +132,7 @@ export async function generateAIBlog() {
         content: generatedData.content,
         author_id: authorId,
         is_published: true,
+        source_url: topStory.link, // Track source to prevent duplicate generation
     };
 
     // Add category if the column exists (gracefully handle if it doesn't)
@@ -100,8 +143,9 @@ export async function generateAIBlog() {
     const { data, error } = await supabase.from('blogs').insert([insertData]);
 
     if (error) {
-        // If category column doesn't exist, retry without it
-        if (error.message && error.message.includes('category')) {
+        // If source_url or category column doesn't exist, retry without them
+        if (error.message && (error.message.includes('source_url') || error.message.includes('category'))) {
+            delete insertData.source_url;
             delete insertData.category;
             const { error: retryError } = await supabase.from('blogs').insert([insertData]);
             if (retryError) throw retryError;

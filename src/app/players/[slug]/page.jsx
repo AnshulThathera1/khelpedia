@@ -64,13 +64,21 @@ export default async function PlayerProfilePage({ params }) {
         notFound();
     }
 
-    // Determine primary stats (if available) or render placeholders
+    // Determine primary stats (if available)
     const primaryStats = player.player_stats?.[0] || null;
+    const hasStats = primaryStats && (primaryStats.kills > 0 || primaryStats.matches_played > 0);
+
+    // Determine the player's display name safely — never render undefined
+    const playerDisplayName = player.ign || player.name || 'Unknown Player';
+    const playerRealName = player.name || null;
+
+    // Determine main game from stats relation
+    const mainGame = primaryStats?.games?.name || null;
 
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'Person',
-        name: player.name || player.ign,
+        name: playerRealName || playerDisplayName,
         alternateName: player.ign,
         jobTitle: 'Esports Player',
         image: player.image_url || '',
@@ -104,7 +112,7 @@ export default async function PlayerProfilePage({ params }) {
                 {/* Player Avatar */}
                 <div style={{ width: 160, height: 160, borderRadius: "50%", background: "var(--bg-secondary)", border: "4px solid rgba(14, 165, 233, 0.3)", overflow: "hidden", position: "relative", zIndex: 1, boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
                     {player.image_url ? (
-                        <img src={player.image_url} alt={player.ign} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img src={player.image_url} alt={playerDisplayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
                         <div style={{ width: "100%", height: "100%", background: "var(--gradient-primary)" }} />
                     )}
@@ -114,9 +122,9 @@ export default async function PlayerProfilePage({ params }) {
                 <div style={{ flex: 1, minWidth: "300px", position: "relative", zIndex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.5rem" }}>
                         <h1 style={{ fontSize: "3.5rem", fontWeight: 800, color: "var(--text-primary)", margin: 0, lineHeight: 1, fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase" }}>
-                            {player.ign}
+                            {playerDisplayName}
                         </h1>
-                        {/* Country Flag (Simple emoji mapping for common regions) */}
+                        {/* Country Flag */}
                         {player.country && (
                             <div style={{ background: "rgba(255,255,255,0.1)", padding: "0.2rem 0.6rem", borderRadius: "12px", fontSize: "1.2rem", fontWeight: 700, border: "1px solid rgba(255,255,255,0.1)" }}>
                                 {player.country.toUpperCase()}
@@ -124,11 +132,13 @@ export default async function PlayerProfilePage({ params }) {
                         )}
                     </div>
 
-                    <div style={{ color: "var(--text-muted)", fontSize: "1.25rem", marginBottom: "1.5rem", fontWeight: 500 }}>
-                        {player.name}
-                    </div>
+                    {playerRealName && (
+                        <div style={{ color: "var(--text-muted)", fontSize: "1.25rem", marginBottom: "1.5rem", fontWeight: 500 }}>
+                            {playerRealName}
+                        </div>
+                    )}
 
-                    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: playerRealName ? 0 : "1.5rem" }}>
                         {/* Role Badge */}
                         {player.role && (
                             <div style={{ background: "rgba(139, 92, 246, 0.1)", color: "var(--accent-purple)", padding: "0.4rem 1rem", borderRadius: "20px", fontSize: "0.9rem", fontWeight: 600, border: "1px solid rgba(139, 92, 246, 0.2)" }}>
@@ -150,77 +160,78 @@ export default async function PlayerProfilePage({ params }) {
                                 Free Agent
                             </div>
                         )}
-                        {/* Earnings */}
-                        <div style={{ background: "rgba(16, 185, 129, 0.1)", color: "#10b981", padding: "0.4rem 1rem", borderRadius: "20px", fontSize: "0.9rem", fontWeight: 600, border: "1px solid rgba(16, 185, 129, 0.2)" }}>
-                            ${player.earnings?.toLocaleString() || "0"}
-                        </div>
+                        {/* Earnings — only show if non-zero */}
+                        {player.earnings > 0 && (
+                            <div style={{ background: "rgba(16, 185, 129, 0.1)", color: "#10b981", padding: "0.4rem 1rem", borderRadius: "20px", fontSize: "0.9rem", fontWeight: 600, border: "1px solid rgba(16, 185, 129, 0.2)" }}>
+                                ${player.earnings.toLocaleString()}
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
 
-            {/* Statistics Grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "3rem" }}>
-                {[
-                    { label: "K/D Ratio", value: primaryStats ? (primaryStats.kills / Math.max(primaryStats.deaths, 1)).toFixed(2) : "1.14", icon: "⚔️", color: "var(--accent-cyan)" },
-                    { label: "Win Rate", value: primaryStats ? `${primaryStats.win_rate}%` : "58.5%", icon: "🏆", color: "#10b981" },
-                    { label: "Headshot %", value: primaryStats ? `${primaryStats.headshot_pct}%` : "42.0%", icon: "🎯", color: "var(--accent-purple)" },
-                    { label: "Avg Damage", value: primaryStats ? primaryStats.avg_damage : "154", icon: "💥", color: "#ef4444" },
-                ].map((stat, i) => (
-                    <div key={i} className="glass-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ color: "var(--text-muted)", fontSize: "0.9rem", fontWeight: 600, textTransform: "uppercase" }}>{stat.label}</span>
-                            <span style={{ fontSize: "1.2rem", opacity: 0.8 }}>{stat.icon}</span>
+            {/* Statistics Grid — only show if we have real stats data */}
+            {hasStats && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "3rem" }}>
+                    {[
+                        { label: "K/D Ratio", value: (primaryStats.kills / Math.max(primaryStats.deaths, 1)).toFixed(2), icon: "⚔️", show: primaryStats.kills > 0 },
+                        { label: "Win Rate", value: `${primaryStats.win_rate}%`, icon: "🏆", show: primaryStats.win_rate != null && primaryStats.win_rate > 0 },
+                        { label: "Headshot %", value: `${primaryStats.headshot_pct}%`, icon: "🎯", show: primaryStats.headshot_pct != null && primaryStats.headshot_pct > 0 },
+                        { label: "Avg Damage", value: primaryStats.avg_damage, icon: "💥", show: primaryStats.avg_damage != null && primaryStats.avg_damage > 0 },
+                    ].filter(stat => stat.show).map((stat, i) => (
+                        <div key={i} className="glass-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ color: "var(--text-muted)", fontSize: "0.9rem", fontWeight: 600, textTransform: "uppercase" }}>{stat.label}</span>
+                                <span style={{ fontSize: "1.2rem", opacity: 0.8 }}>{stat.icon}</span>
+                            </div>
+                            <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: '"Rajdhani", sans-serif' }}>
+                                {stat.value}
+                            </div>
                         </div>
-                        <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: '"Rajdhani", sans-serif' }}>
-                            {stat.value}
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Biography & Playstyle (Editorial or Fallback) */}
-            <section style={{ marginBottom: "3rem" }}>
-                <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
-                    Biography & Playstyle
-                </h2>
-                <div className="glass-card" style={{ padding: "2rem", lineHeight: 1.8, color: "var(--text-secondary)" }}>
-                    {player.editorial_content ? (
-                        <div dangerouslySetInnerHTML={{ __html: player.editorial_content }} />
-                    ) : (
-                        <>
-                            <p style={{ marginBottom: "1rem" }}>
-                                <strong>{player.display_name}</strong> {player.real_name ? `(${player.real_name}) ` : ''} 
-                                is a professional esports player{player.nationality ? ` from ${player.nationality}` : ''} currently 
-                                competing at the highest tiers of competitive gaming. Known for their mechanical prowess and deep understanding of the meta, {player.display_name} has built a solid reputation among fans and analysts alike.
-                            </p>
-                            <p style={{ marginBottom: "1rem" }}>
-                                {primaryStats 
-                                    ? `Statistically, ${player.display_name} maintains a robust ${primaryStats.win_rate}% win rate and a ${(primaryStats.kills / Math.max(primaryStats.deaths, 1)).toFixed(2)} K/D ratio across tracked official matches. Their high impact rating and consistent clutch potential make them a terrifying opponent in high-pressure situations.`
-                                    : `With a constantly evolving playstyle, ${player.display_name} focuses on aggressive space-taking and highly coordinated team executions to secure rounds and map victories.`}
-                            </p>
-                            <p>
-                                Follow {player.display_name}'s ongoing career on KhelPediA to track their latest match performances, tournament placements, and statistical milestones.
-                            </p>
-                        </>
-                    )}
+                    ))}
                 </div>
-            </section>
+            )}
+
+            {/* Biography & Playstyle — only show editorial content, never auto-generated filler */}
+            {player.editorial_content && (
+                <section style={{ marginBottom: "3rem" }}>
+                    <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
+                        Biography & Playstyle
+                    </h2>
+                    <div className="glass-card" style={{ padding: "2rem", lineHeight: 1.8, color: "var(--text-secondary)" }}>
+                        <div dangerouslySetInnerHTML={{ __html: player.editorial_content }} />
+                    </div>
+                </section>
+            )}
 
             {/* Bottom Section Layout */}
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "3rem" }}>
 
-                {/* Recent Matches */}
+                {/* Career Overview — replaces the empty "Recent Matches" placeholder */}
                 <div className="glass-card" style={{ padding: "2rem" }}>
                     <h3 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "1.5rem", fontFamily: '"Rajdhani", sans-serif', display: "flex", alignItems: "center", gap: "0.75rem" }}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><path d="m10 13 4 4" /><path d="m14 13-4 4" /></svg>
-                        Recent Matches
+                        Career Overview
                     </h3>
 
-                    {/* Match History — show real data or empty state */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                        <div style={{ padding: "2rem", textAlign: "center", background: "rgba(10, 14, 23, 0.4)", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                            <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Match history data is being compiled. Check back soon for detailed performance tracking.</p>
-                        </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem", color: "var(--text-secondary)", lineHeight: 1.8 }}>
+                        <p>
+                            <strong style={{ color: "var(--text-primary)" }}>{playerDisplayName}</strong>
+                            {playerRealName && playerRealName !== playerDisplayName ? ` (${playerRealName})` : ''}
+                            {player.teams ? ` currently competes for ${player.teams.name}` : ' is currently a free agent'}
+                            {mainGame ? ` in professional ${mainGame} esports.` : ' in professional esports.'}
+                        </p>
+                        {hasStats && (
+                            <p>
+                                Across {primaryStats.matches_played} tracked matches,
+                                {playerDisplayName} holds a {(primaryStats.kills / Math.max(primaryStats.deaths, 1)).toFixed(2)} K/D ratio
+                                {primaryStats.win_rate > 0 ? ` with a ${primaryStats.win_rate}% win rate` : ''}.
+                            </p>
+                        )}
+                        <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontStyle: "italic" }}>
+                            Player data is sourced from official APIs and updated periodically. 
+                            For corrections, <Link href="/contact" style={{ color: "var(--accent-cyan)", textDecoration: "none" }}>contact our editorial team</Link>.
+                        </p>
                     </div>
                 </div>
 
@@ -234,20 +245,24 @@ export default async function PlayerProfilePage({ params }) {
                             <span style={{ color: "var(--text-muted)" }}>Status</span>
                             <span style={{ color: "#10b981", fontWeight: 600 }}>Active</span>
                         </li>
-                        <li style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem" }}>
-                            <span style={{ color: "var(--text-muted)" }}>Main Game</span>
-                            <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>Valorant</span>
-                        </li>
-                        <li style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem" }}>
-                            <span style={{ color: "var(--text-muted)" }}>Total Maps</span>
-                            <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{primaryStats?.matches_played || 142}</span>
-                        </li>
-                        <li style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem", alignItems: "center", gap: "0.5rem" }}>
-                            <span style={{ color: "var(--text-muted)" }}>Profile ID</span>
-                            <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontFamily: "monospace", opacity: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {player.id}
-                            </span>
-                        </li>
+                        {mainGame && (
+                            <li style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Main Game</span>
+                                <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{mainGame}</span>
+                            </li>
+                        )}
+                        {hasStats && primaryStats.matches_played > 0 && (
+                            <li style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Total Maps</span>
+                                <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{primaryStats.matches_played}</span>
+                            </li>
+                        )}
+                        {player.teams?.region && (
+                            <li style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Region</span>
+                                <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{player.teams.region}</span>
+                            </li>
+                        )}
                     </ul>
                 </div>
 
