@@ -5,6 +5,7 @@ import PlayerCard from "./components/PlayerCard";
 import GameCard from "./components/GameCard";
 import Link from "next/link";
 import HomeHero from "./components/HomeHero";
+import BlogCarousel from "./components/BlogCarousel";
 
 export default async function HomePage() {
     const supabase = await createClient();
@@ -23,7 +24,7 @@ export default async function HomePage() {
         .select("id, title, slug, excerpt, cover_image_url, created_at, author_id")
         .eq("is_published", true)
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(10);
 
     let blogs = latestBlogs || [];
     if (blogs.length > 0) {
@@ -180,39 +181,7 @@ export default async function HomePage() {
                                 All Articles
                             </Link>
                         </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1.5rem" }}>
-                            {blogs.slice(0, 3).map(blog => (
-                                <Link href={`/blogs/${blog.slug}`} key={blog.id} style={{ textDecoration: "none" }}>
-                                    <div className="card" style={{ padding: 0, overflow: "hidden", height: "100%", display: "flex", flexDirection: "column" }}>
-                                        <div style={{ height: "160px", width: "100%", background: "var(--bg-secondary)", position: "relative" }}>
-                                            {blog.cover_image_url ? (
-                                                <img src={blog.cover_image_url} alt={blog.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                            ) : (
-                                                <div style={{ width: "100%", height: "100%", background: "linear-gradient(45deg, rgba(255,70,85,0.1), rgba(139,92,246,0.1))", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                                    <span style={{ fontSize: "2rem" }}>📰</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div style={{ padding: "1.25rem", flex: 1, display: "flex", flexDirection: "column" }}>
-                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", fontSize: "0.75rem" }}>
-                                                <span style={{ color: "var(--accent-cyan)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em" }}>NEWS</span>
-                                                <span style={{ color: "var(--text-muted)" }}>{new Date(blog.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
-                                            </div>
-                                            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem", lineHeight: 1.3 }}>
-                                                {blog.title}
-                                            </h3>
-                                            <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.5, flex: 1 }}>
-                                                {blog.excerpt}
-                                            </p>
-                                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                                <div style={{ width: "20px", height: "20px", borderRadius: "50%", background: "var(--accent-cyan)", display: "inline-block" }}></div>
-                                                By {blog.profiles?.display_name || "KhelPediA Editorial Team"}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
+                        <BlogCarousel blogs={blogs.slice(0, 5)} variant="news" />
                     </section>
                 )}
 
@@ -225,24 +194,7 @@ export default async function HomePage() {
                                 <p className="section-subtitle">Deep dives and curated content</p>
                             </div>
                         </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1.5rem" }}>
-                            {blogs.slice(3, 6).map(blog => (
-                                <Link href={`/blogs/${blog.slug}`} key={blog.id} style={{ textDecoration: "none" }}>
-                                    <div className="card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem", borderLeft: "3px solid var(--accent-purple)" }}>
-                                        <span style={{ color: "var(--accent-purple)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>FEATURED</span>
-                                        <h3 style={{ color: "var(--text-primary)", fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.3, fontFamily: '"Rajdhani", sans-serif' }}>
-                                            {blog.title}
-                                        </h3>
-                                        <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.5, margin: "0.5rem 0" }}>
-                                            {blog.excerpt}
-                                        </p>
-                                        <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: "auto" }}>
-                                            {new Date(blog.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </span>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
+                        <BlogCarousel blogs={blogs.slice(5, 10)} variant="featured" />
                     </section>
                 )}
 

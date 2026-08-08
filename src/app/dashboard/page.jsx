@@ -10,7 +10,9 @@ export default function DashboardPage() {
     const [profile, setProfile] = useState(null);
     const [riotAccount, setRiotAccount] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [pushStatus, setPushStatus] = useState("idle"); // idle, registering, success, error
+    const [pushStatus, setPushStatus] = useState("idle");
+    const [linkForm, setLinkForm] = useState({ gameName: "", tagLine: "", region: "kr" });
+    const [linkStatus, setLinkStatus] = useState({ loading: false, error: null, success: false });
     const router = useRouter();
 
     useEffect(() => {
@@ -27,7 +29,7 @@ export default function DashboardPage() {
                 // Fetch Profile and Riot Account in parallel
                 const [profileRes, riotRes] = await Promise.all([
                     supabase.from("profiles").select("*").eq("id", user.id).single(),
-                    supabase.from("valorant_accounts").select("*").eq("user_id", user.id).single()
+                    supabase.from("user_linked_accounts").select("*").eq("user_id", user.id).eq("provider", "riot").single()
                 ]);
 
                 if (profileRes.error && profileRes.error.code !== "PGRST116") {
@@ -66,6 +68,36 @@ export default function DashboardPage() {
             setProfile({ ...profile, push_notifications: true });
         } else {
             setPushStatus("error");
+        }
+    };
+
+    const handleLinkAccount = async (e) => {
+        e.preventDefault();
+        setLinkStatus({ loading: true, error: null, success: false });
+        
+        if (!linkForm.gameName || !linkForm.tagLine) {
+            setLinkStatus({ loading: false, error: "Game Name and Tag Line are required", success: false });
+            return;
+        }
+
+        const { data, error } = await supabase
+            .from("user_linked_accounts")
+            .insert({
+                user_id: user.id,
+                provider: "riot",
+                game_name: linkForm.gameName,
+                tag_line: linkForm.tagLine,
+                region: linkForm.region
+            })
+            .select()
+            .single();
+
+        if (error) {
+            setLinkStatus({ loading: false, error: error.message, success: false });
+        } else {
+            setRiotAccount(data);
+            setLinkStatus({ loading: false, error: null, success: true });
+            setLinkForm({ gameName: "", tagLine: "", region: "kr" });
         }
     };
 
@@ -210,30 +242,78 @@ export default function DashboardPage() {
                             </div>
                             
                             {riotAccount ? (
-                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                    <p style={{ margin: 0, fontSize: "1rem", fontWeight: 600, color: "#fff" }}>
-                                        {riotAccount.game_name}<span style={{ opacity: 0.5 }}>#{riotAccount.tag_line}</span>
-                                    </p>
+                                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                        <p style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#fff" }}>
+                                            {riotAccount.game_name}<span style={{ opacity: 0.5 }}>#{riotAccount.tag_line}</span>
+                                        </p>
+                                    </div>
+                                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", background: "rgba(0,0,0,0.2)", padding: "0.4rem 0.8rem", borderRadius: "var(--radius-md)" }}>
+                                        Region: <span style={{ color: "#fff", textTransform: "uppercase" }}>{riotAccount.region}</span>
+                                    </div>
                                 </div>
                             ) : (
-                                <div style={{ marginTop: "1rem" }}>
+                                <form onSubmit={handleLinkAccount} style={{ marginTop: "1rem" }}>
                                     <p style={{ margin: "0 0 1rem 0", fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.4 }}>
-                                        Verify your identity via Riot Sign On to enable detailed stat tracking and opt-in to public rankings.
+                                        Link your Riot account to unlock your unified KhelPediA Esports Passport for League of Legends and VALORANT.
                                     </p>
+                                    
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                                        <div>
+                                            <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>Game Name</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Faker"
+                                                value={linkForm.gameName}
+                                                onChange={e => setLinkForm({...linkForm, gameName: e.target.value})}
+                                                style={{ width: "100%", padding: "0.6rem", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "var(--radius-sm)", color: "#fff" }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>Tag Line</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="KR1"
+                                                value={linkForm.tagLine}
+                                                onChange={e => setLinkForm({...linkForm, tagLine: e.target.value})}
+                                                style={{ width: "100%", padding: "0.6rem", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "var(--radius-sm)", color: "#fff" }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div style={{ marginBottom: "1rem" }}>
+                                        <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>Primary League of Legends Region</label>
+                                        <select 
+                                            value={linkForm.region}
+                                            onChange={e => setLinkForm({...linkForm, region: e.target.value})}
+                                            style={{ width: "100%", padding: "0.6rem", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "var(--radius-sm)", color: "#fff" }}
+                                        >
+                                            <option value="na1">North America (NA)</option>
+                                            <option value="euw1">Europe West (EUW)</option>
+                                            <option value="kr">Korea (KR)</option>
+                                            <option value="ap">Asia Pacific (AP)</option>
+                                        </select>
+                                    </div>
+
+                                    {linkStatus.error && (
+                                        <div style={{ fontSize: "0.8rem", color: "#f87171", marginBottom: "1rem" }}>{linkStatus.error}</div>
+                                    )}
+
                                     <button 
-                                        onClick={() => window.location.href = '/api/auth/riot/login'}
+                                        type="submit"
+                                        disabled={linkStatus.loading}
                                         className="btn btn-primary" 
                                         style={{ 
                                             width: "100%", 
                                             background: "#ff4655", 
                                             borderColor: "#ff4655",
                                             fontSize: "0.85rem",
-                                            padding: "0.6rem"
+                                            padding: "0.6rem",
+                                            opacity: linkStatus.loading ? 0.7 : 1
                                         }}
                                     >
-                                        Verify with Riot
+                                        {linkStatus.loading ? "Linking..." : "Link Riot Account"}
                                     </button>
-                                </div>
+                                </form>
                             )}
                         </div>
 
