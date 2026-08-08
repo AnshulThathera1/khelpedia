@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { registerPushNotifications } from "@/lib/push";
 
 export default function DashboardPage() {
@@ -108,9 +109,26 @@ export default function DashboardPage() {
         <div className="page-container">
             <div className="page-header" style={{ textAlign: "center", marginBottom: "4rem" }}>
                 <h1 className="page-title" style={{ fontSize: "3.5rem", fontWeight: 900, fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Commander Dashboard</h1>
-                <p className="page-description" style={{ fontSize: "1.1rem", color: "var(--text-secondary)", maxWidth: "800px", margin: "0 auto" }}>
+                <p className="page-description" style={{ fontSize: "1.1rem", color: "var(--text-secondary)", maxWidth: "800px", margin: "0 auto 1.5rem" }}>
                     Welcome back. Your central command for connected accounts and personal stats.
                 </p>
+                <Link 
+                    href={`/passport/${user.id}`} 
+                    className="btn btn-primary"
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        padding: "0.75rem 1.5rem",
+                        fontSize: "1rem",
+                        fontWeight: 700,
+                        background: "linear-gradient(90deg, var(--accent-purple), var(--accent-cyan))",
+                        borderColor: "transparent"
+                    }}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    View My Esports Passport
+                </Link>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
