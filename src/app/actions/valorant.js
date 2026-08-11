@@ -297,61 +297,182 @@ export async function getMatchHistoryIds(puuid) {
   }
 }
 
-/**
- * Trims massive unneeded coordinate arrays from the Riot API JSON to save 80% DB space
- */
-function trimMatchData(data) {
-  if (!data || !data.roundResults) return data;
-  
-  // Clone to avoid mutating original reference
-  const trimmed = JSON.parse(JSON.stringify(data));
+function reconstructMatchJson(dbMatch) {
+  if (!dbMatch) return null;
+  const matchInfo = {
+    matchId: dbMatch.match_id,
+    mapId: dbMatch.map_id,
+    region: dbMatch.region,
+    queueId: dbMatch.queue_id,
+    seasonId: dbMatch.season_id,
+    gameStartMillis: dbMatch.game_start_millis,
+    gameLengthMillis: dbMatch.game_length_millis
+  };
 
-  // Root-level bloat
-  delete trimmed.coaches;
-  if (trimmed.matchInfo) {
-    delete trimmed.matchInfo.premierMatchInfo;
-    delete trimmed.matchInfo.provisioningFlowId;
-    delete trimmed.matchInfo.gameVersion;
-    delete trimmed.matchInfo.isCompleted;
-    delete trimmed.matchInfo.customGameName;
-  }
-  
-  trimmed.roundResults.forEach(round => {
-    // Round-level bloat
-    delete round.playerLocations;
-    delete round.locations;
-    delete round.plantSite;
-    delete round.bombDefuser;
-    delete round.bombPlanter;
-    
-    if (round.playerStats) {
-      round.playerStats.forEach(ps => {
-        // Player-round bloat
-        delete ps.score;
-        delete ps.ability;
-        
-        if (ps.economy) {
-          ps.economy = { weapon: ps.economy.weapon }; // Keep only weapon
-        }
-        
-        if (ps.kills) {
-          ps.kills.forEach(k => {
-            // Kill event bloat
-            delete k.playerLocations; 
-            delete k.victimLocation;
-            delete k.finishingDamage;
-            delete k.timeSinceGameStartMillis;
-          });
-        }
-      });
+  const teams = (dbMatch.match_teams || []).map(t => ({
+    teamId: t.team_id,
+    won: t.won,
+    roundsWon: t.rounds_won,
+    roundsPlayed: t.rounds_played,
+    numPoints: t.num_points
+  }));
+
+  const players = (dbMatch.match_players || []).map(p => ({
+    puuid: p.puuid,
+    teamId: p.team_id,
+    characterId: p.character_id,
+    competitiveTier: p.competitive_tier,
+    playerCard: p.player_card,
+    partyId: p.party_id,
+    stats: {
+      kills: p.kills,
+      deaths: p.deaths,
+      assists: p.assists,
+      score: p.score,
+      roundsPlayed: p.rounds_played
     }
+  }));
+
+  const roundResults = (dbMatch.match_rounds || []).map(r => {
+    const roundStats = (dbMatch.match_round_player_stats || []).filter(s => s.round_num === r.round_num);
+    const roundKills = (dbMatch.match_round_kills || []).filter(k => k.round_num === r.round_num);
+    const roundDamage = (dbMatch.match_round_damage || []).filter(d => d.round_num === r.round_num);
+
+    const playerStats = roundStats.map(ps => {
+      const pKills = roundKills.filter(k => k.killer_puuid === ps.puuid).map(k => ({
+        killer: k.killer_puuid,
+        victim: k.victim_puuid,
+        timeSinceRoundStartMillis: k.time_in_round_millis,
+        assistants: k.assistants || []
+      }));
+      const pDamage = roundDamage.filter(d => d.attacker_puuid === ps.puuid).map(d => ({
+        receiver: d.receiver_puuid,
+        damage: d.damage,
+        headshots: d.headshots,
+        bodyshots: d.bodyshots,
+        legshots: d.legshots
+      }));
+      return {
+        puuid: ps.puuid,
+        economy: { weapon: ps.weapon_id },
+        kills: pKills,
+        damage: pDamage
+      };
+    });
+
+    return {
+      roundNum: r.round_num,
+      winningTeam: r.winning_team,
+      playerStats
+    };
   });
-  
-  return trimmed;
+
+  return { matchInfo, teams, players, roundResults };
+}
+
+async function insertMatchRelational(supabase, data) {
+  const matchId = data.matchInfo.matchId;
+
+  const { error: mErr } = await supabase.from('valorant_matches').upsert({
+    match_id: matchId,
+    map_id: data.matchInfo.mapId,
+    region: data.matchInfo.region || 'ap',
+    queue_id: data.matchInfo.queueId,
+    season_id: data.matchInfo.seasonId,
+    game_start_millis: data.matchInfo.gameStartMillis,
+    game_length_millis: data.matchInfo.gameLengthMillis
+  }, { onConflict: 'match_id' });
+  if (mErr) { console.error('insert match error', mErr); return; }
+
+  if (data.teams && data.teams.length > 0) {
+    const teams = data.teams.map(t => ({
+      match_id: matchId,
+      team_id: t.teamId,
+      won: t.won,
+      rounds_won: t.roundsWon,
+      rounds_played: t.roundsPlayed,
+      num_points: t.numPoints
+    }));
+    await supabase.from('match_teams').upsert(teams, { onConflict: 'match_id, team_id' });
+  }
+
+  if (data.players && data.players.length > 0) {
+    const players = data.players.map(p => ({
+      match_id: matchId,
+      puuid: p.puuid,
+      team_id: p.teamId,
+      character_id: p.characterId,
+      competitive_tier: p.competitiveTier,
+      player_card: p.playerCard,
+      party_id: p.partyId,
+      kills: p.stats.kills,
+      deaths: p.stats.deaths,
+      assists: p.stats.assists,
+      score: p.stats.score,
+      rounds_played: p.stats.roundsPlayed
+    }));
+    await supabase.from('match_players').upsert(players, { onConflict: 'match_id, puuid' });
+  }
+
+  if (data.roundResults && data.roundResults.length > 0) {
+    const rounds = [];
+    const pstats = [];
+    const pkills = [];
+    const pdamage = [];
+
+    data.roundResults.forEach(r => {
+      rounds.push({
+        match_id: matchId,
+        round_num: r.roundNum,
+        winning_team: r.winningTeam
+      });
+      if (r.playerStats) {
+        r.playerStats.forEach(ps => {
+          pstats.push({
+            match_id: matchId,
+            round_num: r.roundNum,
+            puuid: ps.puuid,
+            weapon_id: ps.economy ? ps.economy.weapon : null
+          });
+          if (ps.kills) {
+            ps.kills.forEach(k => {
+              pkills.push({
+                match_id: matchId,
+                round_num: r.roundNum,
+                killer_puuid: k.killer,
+                victim_puuid: k.victim,
+                time_in_round_millis: k.timeSinceRoundStartMillis,
+                assistants: k.assistants || []
+              });
+            });
+          }
+          if (ps.damage) {
+            ps.damage.forEach(d => {
+              pdamage.push({
+                match_id: matchId,
+                round_num: r.roundNum,
+                attacker_puuid: ps.puuid,
+                receiver_puuid: d.receiver,
+                damage: d.damage,
+                headshots: d.headshots,
+                bodyshots: d.bodyshots,
+                legshots: d.legshots
+              });
+            });
+          }
+        });
+      }
+    });
+
+    await supabase.from('match_rounds').upsert(rounds, { onConflict: 'match_id, round_num' });
+    if (pstats.length > 0) await supabase.from('match_round_player_stats').upsert(pstats, { onConflict: 'match_id, round_num, puuid' });
+    if (pkills.length > 0) await supabase.from('match_round_kills').insert(pkills);
+    if (pdamage.length > 0) await supabase.from('match_round_damage').insert(pdamage);
+  }
 }
 
 /**
- * Fetch Match Details (with Caching)
+ * Fetch Match Details (with Relational Caching)
  */
 export async function getMatchDetails(matchId, puuid, region = REGION) {
   const supabase = await createClient();
@@ -359,12 +480,20 @@ export async function getMatchDetails(matchId, puuid, region = REGION) {
   // 1. Check DB Cache
   const { data: cachedMatch } = await supabase
     .from('valorant_matches')
-    .select('match_info_json')
+    .select(`
+      *,
+      match_teams (*),
+      match_players (*),
+      match_rounds (*),
+      match_round_player_stats (*),
+      match_round_kills (*),
+      match_round_damage (*)
+    `)
     .eq('match_id', matchId)
     .single();
 
   if (cachedMatch) {
-    return { data: cachedMatch.match_info_json, source: 'cache' };
+    return { data: reconstructMatchJson(cachedMatch), source: 'cache' };
   }
 
   if (!process.env.RIOT_API_KEY) return { error: 'RIOT_API_KEY is missing' };
@@ -384,23 +513,10 @@ export async function getMatchDetails(matchId, puuid, region = REGION) {
 
     const matchData = await res.json();
     
-    // Trim the massive JSON payload before saving to DB
-    const trimmedData = trimMatchData(matchData);
+    // 3. Save to Relational DB Cache
+    await insertMatchRelational(supabase, matchData);
 
-    // 3. Save to DB Cache
-    const { error: insertError } = await supabase
-      .from('valorant_matches')
-      .upsert({
-        match_id: matchId,
-        puuid: puuid,
-        match_info_json: trimmedData
-      }, { onConflict: 'match_id' });
-
-    if (insertError) {
-      console.error('Error caching match:', insertError);
-    }
-
-    return { data: trimmedData, source: 'api' };
+    return { data: matchData, source: 'api' };
   } catch (error) {
     console.error('Error fetching match details:', error);
     return { error: 'Internal server error' };
