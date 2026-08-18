@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import ValorantPromoPopup from "./ValorantPromoPopup";
-import { Target, Trophy, ChevronRight, Swords, Shield, Zap } from "lucide-react";
+import { Target, Trophy, ChevronRight, Swords, Shield, Zap, Terminal } from "lucide-react";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -37,6 +37,36 @@ const FEATURES = [
         description: "Analyze agent performance, match history, headshot percentages, and competitive leaderboards.",
         icon: <Target className="w-8 h-8 text-red-500" />,
         link: "/valorant",
+        color: "#ff4655",
+        bg: "rgba(255, 70, 85, 0.1)"
+    },
+    {
+        id: "passport",
+        title: "Esports Passport",
+        badge: "EXCLUSIVE",
+        description: "Your ultimate gamer card. Link your game accounts and showcase your unified stats across multiple titles.",
+        icon: <Shield className="w-8 h-8 text-[#a855f7]" />,
+        link: "/dashboard",
+        color: "#a855f7",
+        bg: "rgba(168, 85, 247, 0.1)"
+    },
+    {
+        id: "fantasy",
+        title: "Pick'Ems Draft",
+        badge: "HOT",
+        description: "Scout real players and build your ultimate cross-game organization. Compete on global leaderboards.",
+        icon: <Zap className="w-8 h-8 text-[#06b6d4]" />,
+        link: "/fantasy",
+        color: "#06b6d4",
+        bg: "rgba(6, 182, 212, 0.1)"
+    },
+    {
+        id: "ai-assistant",
+        title: "KhelPediA AI",
+        badge: "NEW",
+        description: "Your personal esports expert. Ask anything about tournaments, metas, or player stats instantly.",
+        icon: <Terminal className="w-8 h-8 text-[#ff4655]" />,
+        link: "#",
         color: "#ff4655",
         bg: "rgba(255, 70, 85, 0.1)"
     }

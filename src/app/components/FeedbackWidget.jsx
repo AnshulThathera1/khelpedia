@@ -71,7 +71,7 @@ export default function FeedbackWidget({ user }) {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-gradient-to-r from-[#D7FC70] to-[#b8f522] text-black px-4 py-3 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(215,252,112,0.3)] font-semibold font-rajdhani tracking-wide group transition-all"
+        className="fixed bottom-6 left-6 z-50 flex items-center gap-2 bg-gradient-to-r from-[#D7FC70] to-[#b8f522] text-black px-4 py-3 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(215,252,112,0.3)] font-semibold font-rajdhani tracking-wide group transition-all"
         style={{
           boxShadow: isOpen ? "none" : "",
         }}

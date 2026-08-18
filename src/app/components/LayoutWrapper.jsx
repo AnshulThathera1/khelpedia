@@ -7,6 +7,7 @@ import AdminNavbar from "./AdminNavbar";
 import Footer from "./footer";
 import ThemeProvider from "./ThemeProvider";
 import FeedbackWidget from "./FeedbackWidget";
+import AIChatBot from "./AIChatBot";
 
 export default function LayoutWrapper({ user, children }) {
   const pathname = usePathname();
@@ -40,6 +41,7 @@ export default function LayoutWrapper({ user, children }) {
       </main>
       {!isAdminPage && <Footer />}
       {!isAdminPage && <FeedbackWidget user={user} />}
+      {!isAdminPage && <AIChatBot />}
     </ThemeProvider>
   );
 }
