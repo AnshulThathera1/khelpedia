@@ -40,7 +40,8 @@ def supabase_request(method, endpoint, payload=None):
             response = requests.post(url, headers=headers, json=payload)
         
         if response.status_code >= 400:
-            print(f"Supabase Error: {response.text}")
+            err_msg = response.text[:200].replace('\n', ' ')
+            print(f"Supabase Error ({response.status_code}): {err_msg}")
             return None
             
         return response.json()

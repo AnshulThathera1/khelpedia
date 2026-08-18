@@ -14,13 +14,39 @@ sb_headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
 
 GAMES = ['valorant', 'csgo', 'dota-2']
 
+def supabase_request(method, endpoint, payload=None):
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("❌ Supabase credentials missing.")
+        return None
+        
+    url = f"{SUPABASE_URL}/rest/v1/{endpoint}"
+    try:
+        if method == "GET":
+            response = requests.get(url, headers=sb_headers)
+        elif method == "POST":
+            response = requests.post(url, headers=sb_headers, json=payload)
+        
+        if response.status_code >= 400:
+            err_msg = response.text[:200].replace('\n', ' ')
+            print(f"Supabase API Error ({response.status_code}): {err_msg}")
+            return None
+            
+        return response.json() if response.text else []
+    except Exception as e:
+        print(f"Request Error: {e}")
+        return None
+
 def fetch_and_sync_matches():
     print("Starting PandaScore Engine...")
     
     # 1. Map our database game IDs
     print("Fetching Game IDs from Supabase...")
-    res = requests.get(f"{SUPABASE_URL}/rest/v1/games?select=id,slug", headers=sb_headers)
-    db_games = {g['slug'].replace('cs2', 'csgo'): g['id'] for g in res.json()}
+    games_data = supabase_request("GET", "games?select=id,slug")
+    if games_data is None:
+        print("❌ Could not fetch games from Supabase. Exiting.")
+        return
+        
+    db_games = {g['slug'].replace('cs2', 'csgo'): g['id'] for g in games_data}
     print(db_games)
 
     for game in GAMES:
@@ -58,11 +84,9 @@ def fetch_and_sync_matches():
                 "status": "upcoming"
             }
             
-            t_res = requests.post(f"{SUPABASE_URL}/rest/v1/tournaments?on_conflict=slug", headers=sb_headers, json=tourney_data)
-            t_record = t_res.json() if t_res.text else []
+            t_record = supabase_request("POST", "tournaments?on_conflict=slug", payload=tourney_data)
             if not t_record:
-                t_res = requests.get(f"{SUPABASE_URL}/rest/v1/tournaments?slug=eq.{tourney_data['slug']}&select=id", headers=sb_headers)
-                t_record = t_res.json() if t_res.text else []
+                t_record = supabase_request("GET", f"tournaments?slug=eq.{tourney_data['slug']}&select=id")
                 
             if not t_record or (isinstance(t_record, list) and len(t_record) == 0):
                 print(f"⚠️ Could not find or create tournament: {tourney_data['name']}")
@@ -84,17 +108,16 @@ def fetch_and_sync_matches():
                     "logo_url": team.get('image_url')
                 }
                 # Upsert team
-                requests.post(f"{SUPABASE_URL}/rest/v1/teams?on_conflict=slug", headers=sb_headers, json=team_data)
+                supabase_request("POST", "teams?on_conflict=slug", payload=team_data)
                 
                 # Get local team ID
-                tm_res = requests.get(f"{SUPABASE_URL}/rest/v1/teams?slug=eq.{team['slug']}&select=id", headers=sb_headers)
-                t_json = tm_res.json() if tm_res.text else []
+                t_json = supabase_request("GET", f"teams?slug=eq.{team['slug']}&select=id")
                 if t_json and len(t_json) > 0:
                     local_team_id = t_json[0]['id']
                     team_ids.append(local_team_id)
                     
                     # Add team to tournament participants
-                    requests.post(f"{SUPABASE_URL}/rest/v1/tournament_teams?on_conflict=tournament_id,team_id", headers=sb_headers, json={"tournament_id": tourney_id, "team_id": local_team_id})
+                    supabase_request("POST", "tournament_teams?on_conflict=tournament_id,team_id", payload={"tournament_id": tourney_id, "team_id": local_team_id})
                 else:
                     print(f"⚠️ Could not find or create team: {team['name']}")
 
@@ -119,7 +142,7 @@ def fetch_and_sync_matches():
             
             # Upsert match (we don't have a great unique key here easily, so we just append for now or match on team1/team2/tourney)
             # In a real scenario you'd add a remote_id column to matches to do true upsert
-            requests.post(f"{SUPABASE_URL}/rest/v1/matches", headers=sb_headers, json=match_data)
+            supabase_request("POST", "matches", payload=match_data)
             print(f"Added Match: {match['name']}")
 
     print("\nPandaScore Sync Complete!")
