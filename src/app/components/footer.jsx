@@ -28,6 +28,7 @@ const footerLinks = [
             { href: "/about", label: "About Us" },
             { href: "/contact", label: "Contact" },
             { href: "/disclaimer", label: "Disclaimer" },
+            { href: "/sitemap", label: "HTML Sitemap" },
             { href: "/editorial-policy", label: "Editorial Policy" },
             { href: "/corrections-policy", label: "Corrections Policy" },
         ],

@@ -8,6 +8,7 @@ import Footer from "./footer";
 import ThemeProvider from "./ThemeProvider";
 import FeedbackWidget from "./FeedbackWidget";
 import AIChatBot from "./AIChatBot";
+import CookieConsent from "./CookieConsent";
 
 export default function LayoutWrapper({ user, children }) {
   const pathname = usePathname();
@@ -42,6 +43,7 @@ export default function LayoutWrapper({ user, children }) {
       {!isAdminPage && <Footer />}
       {!isAdminPage && <FeedbackWidget user={user} />}
       {!isAdminPage && <AIChatBot />}
+      {!isAdminPage && <CookieConsent />}
     </ThemeProvider>
   );
 }
