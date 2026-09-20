@@ -174,19 +174,6 @@ export default function AdminNavbar() {
                 )}
             </AnimatePresence>
 
-            <style jsx global>{`
-                @media (max-width: 1024px) {
-                    .admin-links-desktop, .exit-admin-desktop {
-                        display: none !important;
-                    }
-                    .admin-mobile-toggle {
-                        display: block !important;
-                    }
-                    .admin-title {
-                        display: none;
-                    }
-                }
-            `}</style>
         </nav>
     );
 }

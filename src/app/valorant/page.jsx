@@ -1183,44 +1183,6 @@ export default function ValorantTrackerHub() {
           </div>
         </div>
       </section>
-
-      {/* ═══════ INLINE STYLES ═══════ */}
-      <style jsx global>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        .agent-card-hover:hover {
-          border-color: var(--accent-red) !important;
-          transform: translateY(-3px);
-          box-shadow: 0 8px 24px rgba(255, 70, 85, 0.1);
-        }
-
-        .map-card-hover:hover {
-          border-color: var(--accent-cyan) !important;
-        }
-        .map-card-hover:hover .map-img {
-          transform: scale(1.08);
-        }
-
-        .weapon-card-hover:hover {
-          border-color: rgba(255, 180, 0, 0.4) !important;
-          background: var(--bg-card-hover) !important;
-        }
-
-        .feature-card-hover:hover {
-          border-color: var(--accent-red) !important;
-          transform: translateY(-2px);
-        }
-
-        .leaderboard-row:hover {
-          background: rgba(255, 255, 255, 0.02);
-        }
-
-        .search-dropdown-row:hover {
-          background: rgba(255, 255, 255, 0.05) !important;
-        }
-      `}</style>
     </div>
   );
 }

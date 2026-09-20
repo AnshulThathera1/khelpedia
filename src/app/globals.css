@@ -607,3 +607,101 @@ main {
     padding: 0 1rem;
   }
 }
+
+/* ============================================
+   NAVBAR & RESPONSIVE LAYOUT STYLES
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-toggle {
+    display: flex !important;
+  }
+}
+
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.2s;
+  position: relative;
+  font-family: var(--font-rajdhani), "Rajdhani", sans-serif;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--text-primary);
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent-red);
+}
+
+.search-result-item:hover {
+  background: rgba(255, 70, 85, 0.05);
+  border-left: 2px solid var(--accent-red) !important;
+}
+
+@media (max-width: 1024px) {
+  .admin-links-desktop, .exit-admin-desktop {
+    display: none !important;
+  }
+  .admin-mobile-toggle {
+    display: block !important;
+  }
+  .admin-title {
+    display: none;
+  }
+}
+
+/* ============================================
+   VALORANT PAGE & HOVER ANIMATIONS
+   ============================================ */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.agent-card-hover:hover {
+  border-color: var(--accent-red) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(255, 70, 85, 0.1);
+}
+
+.map-card-hover:hover {
+  border-color: var(--accent-cyan) !important;
+}
+
+.map-card-hover:hover .map-img {
+  transform: scale(1.08);
+}
+
+.weapon-card-hover:hover {
+  border-color: rgba(255, 180, 0, 0.4) !important;
+  background: var(--bg-card-hover) !important;
+}
+
+.feature-card-hover:hover {
+  border-color: var(--accent-red) !important;
+  transform: translateY(-2px);
+}
+
+.leaderboard-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.search-dropdown-row:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+

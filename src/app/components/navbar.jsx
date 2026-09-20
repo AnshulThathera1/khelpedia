@@ -415,45 +415,6 @@ export default function AppNavbar({ user }) {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
       />
-
-      <style jsx global>{`
-        @media (max-width: 1024px) {
-          .desktop-only {
-            display: none !important;
-          }
-          .mobile-toggle {
-            display: flex !important;
-          }
-        }
-
-        .nav-link {
-          color: var(--text-secondary);
-          text-decoration: none;
-          font-weight: 700;
-          font-size: 0.85rem;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          transition: all 0.2s;
-          position: relative;
-          font-family: "Rajdhani", sans-serif;
-        }
-        .nav-link:hover, .nav-link.active {
-          color: var(--text-primary);
-        }
-        .nav-link.active::after {
-          content: '';
-          position: absolute;
-          bottom: -4px;
-          left: 0;
-          width: 100%;
-          height: 2px;
-          background: var(--accent-red);
-        }
-        .search-result-item:hover {
-          background: rgba(255, 70, 85, 0.05);
-          border-left: 2px solid var(--accent-red) !important;
-        }
-      `}</style>
     </>
   );
 }
