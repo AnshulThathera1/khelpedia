@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { query } from "@/lib/db";
 import { getValorantProfile } from "@/app/actions/valorant";
 import { getAccountByRiotId, getSummonerByPuuid, getLeagueEntriesBySummonerId } from "@/app/actions/lol";
 import Link from "next/link";
@@ -6,17 +6,18 @@ import { Shield, Target, Trophy, Swords, Calendar } from "lucide-react";
 
 export default async function PassportPage({ params }) {
     const { id } = await params;
-    const supabase = await createClient();
 
     // 1. Fetch User Profile
-    const { data: profile } = await supabase.from("profiles").select("*").eq("id", id).single();
+    const profileRes = await query("SELECT * FROM profiles WHERE id = $1 LIMIT 1", [id]);
+    const profile = profileRes.rows[0];
     if (!profile) {
         return <div className="page-container text-center py-20 text-xl font-bold">Passport Not Found</div>;
     }
 
     // 2. Fetch Linked Accounts
-    const { data: linkedAccounts } = await supabase.from("user_linked_accounts").select("*").eq("user_id", id);
-    const riotAccount = linkedAccounts?.find(acc => acc.provider === "riot");
+    const linkedRes = await query("SELECT * FROM user_linked_accounts WHERE user_id = $1", [id]);
+    const linkedAccounts = linkedRes.rows || [];
+    const riotAccount = linkedAccounts.find(acc => acc.provider === "riot");
 
     // 3. Concurrently fetch Valorant and LoL stats if Riot account exists
     let valData = null;

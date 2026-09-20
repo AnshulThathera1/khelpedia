@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { registerPushNotifications } from "@/lib/push";
+import { getUserDashboardData, toggleUserNotificationAction, linkRiotAccountAction } from "@/app/actions/user";
 
 export default function DashboardPage() {
     const supabase = createClient();
@@ -19,28 +20,15 @@ export default function DashboardPage() {
     useEffect(() => {
         async function loadData() {
             try {
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
-                if (userError || !user) {
-                    console.error("Dashboard: No user session found", userError);
+                const res = await getUserDashboardData();
+                if (res.error || !res.user) {
+                    console.error("Dashboard: No user session found", res.error);
                     router.push("/login");
                     return;
                 }
-                setUser(user);
-
-                // Fetch Profile and Riot Account in parallel
-                const [profileRes, riotRes] = await Promise.all([
-                    supabase.from("profiles").select("*").eq("id", user.id).single(),
-                    supabase.from("user_linked_accounts").select("*").eq("user_id", user.id).eq("provider", "riot").single()
-                ]);
-
-                if (profileRes.error && profileRes.error.code !== "PGRST116") {
-                    console.error("Dashboard: Profile fetch error", profileRes.error);
-                }
-                setProfile(profileRes.data);
-
-                if (riotRes.data) {
-                    setRiotAccount(riotRes.data);
-                }
+                setUser(res.user);
+                setProfile(res.profile);
+                setRiotAccount(res.riotAccount);
             } catch (err) {
                 console.error("Dashboard: Unexpected error", err);
             } finally {
@@ -51,12 +39,8 @@ export default function DashboardPage() {
     }, [router]);
 
     const toggleNotification = async (field, value) => {
-        const { error } = await supabase
-            .from("profiles")
-            .update({ [field]: value })
-            .eq("id", user.id);
-
-        if (!error) {
+        const res = await toggleUserNotificationAction(field, value);
+        if (!res.error) {
             setProfile({ ...profile, [field]: value });
         }
     };
@@ -66,6 +50,7 @@ export default function DashboardPage() {
         const sub = await registerPushNotifications();
         if (sub) {
             setPushStatus("success");
+            await toggleUserNotificationAction('push_notifications', true);
             setProfile({ ...profile, push_notifications: true });
         } else {
             setPushStatus("error");
@@ -81,22 +66,12 @@ export default function DashboardPage() {
             return;
         }
 
-        const { data, error } = await supabase
-            .from("user_linked_accounts")
-            .insert({
-                user_id: user.id,
-                provider: "riot",
-                game_name: linkForm.gameName,
-                tag_line: linkForm.tagLine,
-                region: linkForm.region
-            })
-            .select()
-            .single();
+        const res = await linkRiotAccountAction(linkForm);
 
-        if (error) {
-            setLinkStatus({ loading: false, error: error.message, success: false });
+        if (res.error) {
+            setLinkStatus({ loading: false, error: res.error, success: false });
         } else {
-            setRiotAccount(data);
+            setRiotAccount(res.data);
             setLinkStatus({ loading: false, error: null, success: true });
             setLinkForm({ gameName: "", tagLine: "", region: "kr" });
         }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
+import { query } from '@/lib/db';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -74,7 +75,7 @@ export async function GET(request) {
       // LINKING FLOW: User is already logged in, link the Riot account to current session
       userId = session.user.id;
       
-      // Update user metadata
+      // Update user metadata in Supabase Auth
       await adminClient.auth.admin.updateUserById(userId, { 
         user_metadata: {
           ...session.user.user_metadata,
@@ -84,11 +85,11 @@ export async function GET(request) {
         }
       });
     } else {
-      // LOGIN FLOW: User is not logged in, create/login as Riot user
+      // LOGIN FLOW: User is not logged in, create/login as Riot user in Supabase Auth
       const email = `${puuid.toLowerCase()}@riot.khelpedia.com`;
       const tempPassword = crypto.randomUUID() + crypto.randomUUID(); 
       
-      // Check if user exists (with pagination support in case of >50 users)
+      // Check if user exists (with pagination support)
       let user = null;
       let page = 1;
       while (true) {
@@ -102,7 +103,7 @@ export async function GET(request) {
       }
 
       if (!user) {
-        // Create a new user mapping to the Riot PUUID
+        // Create a new user mapping to the Riot PUUID in Supabase Auth
         const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
           email: email,
           password: tempPassword,
@@ -117,7 +118,7 @@ export async function GET(request) {
         if (createError) throw createError;
         user = newUser.user;
       } else {
-        // User exists, update password so we can sign in right now
+        // User exists, update password in Supabase Auth
         const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, { 
           password: tempPassword,
           user_metadata: {
@@ -140,18 +141,19 @@ export async function GET(request) {
       if (signInError) throw signInError;
     }
 
-    // 4. Link the valorant_accounts table to the user
-    // We use adminClient to bypass RLS and ensure the account is updated/inserted correctly
-    const { error: dbError } = await adminClient.from('valorant_accounts').upsert({
-      puuid: puuid,
-      game_name: gameName,
-      tag_line: tagLine,
-      user_id: userId,
-      last_updated: new Date().toISOString()
-    }, { onConflict: 'game_name, tag_line' });
-
-    if (dbError) {
-      console.error('Failed to link valorant_accounts:', dbError);
+    // 4. Link the valorant_accounts table to the user in local PostgreSQL
+    try {
+      await query(
+        `INSERT INTO valorant_accounts (puuid, game_name, tag_line, user_id, last_updated)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (game_name, tag_line) DO UPDATE SET
+           puuid = EXCLUDED.puuid,
+           user_id = EXCLUDED.user_id,
+           last_updated = EXCLUDED.last_updated`,
+        [puuid, gameName, tagLine, userId, new Date().toISOString()]
+      );
+    } catch (dbError) {
+      console.error('Failed to link valorant_accounts in PostgreSQL:', dbError);
     }
 
     // 5. Redirect to Dashboard
@@ -159,7 +161,6 @@ export async function GET(request) {
 
   } catch (err) {
     console.error('RSO flow exception:', err);
-    // Append the error message to the URL to help debugging (truncate to 100 chars)
     const errMsg = encodeURIComponent(err?.message?.substring(0, 100) || 'unknown');
     return NextResponse.redirect(`${origin}/login?error=rso_exception&details=${errMsg}`);
   }

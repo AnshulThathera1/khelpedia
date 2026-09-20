@@ -1,22 +1,13 @@
-import { createClient } from "@/utils/supabase/server";
+import { query } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
 // Dynamically set page metadata for SEO
 export async function generateMetadata({ params }) {
-    const supabase = await createClient();
     const resolvedParams = await params;
 
-    // Attempt to match by id or slug if possible, but the route is [id]/page.jsx, wait. 
-    // Is the route players/[id] or [slug]? Our Phase 3 tasks say [id]. Let's match by UUID first, or slug if the param is a string.
-    // Actually our links on the players page use ID. Let's make this page robust.
-
-    // Match by slug for SEO-friendly URLs
-    const { data: player } = await supabase
-        .from("players")
-        .select("ign, name")
-        .eq("slug", resolvedParams.slug)
-        .single();
+    const res = await query("SELECT ign, name FROM players WHERE slug = $1 LIMIT 1", [resolvedParams.slug]);
+    const player = res.rows[0];
 
     if (!player) return { title: "Player Not Found" };
 
@@ -30,37 +21,39 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function PlayerProfilePage({ params }) {
-    const supabase = await createClient();
     const resolvedParams = await params;
 
-    // Fetch the player and deeply join their Team and Stats
-    const { data: player, error } = await supabase
-        .from("players")
-        .select(`
-            *,
-            teams (
-                id,
-                name,
-                logo_url,
-                region
-            ),
-            player_stats (
-                id,
-                kills,
-                deaths,
-                assists,
-                win_rate,
-                matches_played,
-                headshot_pct,
-                avg_damage,
-                rating,
-                games ( name, icon_url )
-            )
-        `)
-        .eq("slug", resolvedParams.slug)
-        .single();
+    const sql = `
+        SELECT p.*,
+          CASE WHEN tm.id IS NOT NULL THEN json_build_object('id', tm.id, 'name', tm.name, 'logo_url', tm.logo_url, 'region', tm.region) ELSE NULL END AS teams,
+          (
+            SELECT COALESCE(json_agg(
+              json_build_object(
+                'id', ps.id,
+                'kills', ps.kills,
+                'deaths', ps.deaths,
+                'assists', ps.assists,
+                'win_rate', ps.win_rate,
+                'matches_played', ps.matches_played,
+                'headshot_pct', ps.headshot_pct,
+                'avg_damage', ps.avg_damage,
+                'rating', ps.rating,
+                'games', json_build_object('name', g.name, 'icon_url', g.icon_url)
+              )
+            ), '[]'::json)
+            FROM player_stats ps
+            LEFT JOIN games g ON ps.game_id = g.id
+            WHERE ps.player_id = p.id
+          ) AS player_stats
+        FROM players p
+        LEFT JOIN teams tm ON p.team_id = tm.id
+        WHERE p.slug = $1
+        LIMIT 1
+    `;
+    const res = await query(sql, [resolvedParams.slug]);
+    const player = res.rows[0];
 
-    if (error || !player) {
+    if (!player) {
         notFound();
     }
 

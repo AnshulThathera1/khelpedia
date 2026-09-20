@@ -4,11 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { createClient } from "@/utils/supabase/client";
-import { searchAll } from "@/lib/queries";
 import LoginModal from "./LoginModal";
 import ThemeToggle from "./ThemeToggle";
 import { useTheme } from "./ThemeProvider";
+import { createClient } from "@/utils/supabase/client";
 
 export default function AppNavbar({ user }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -53,9 +52,15 @@ export default function AppNavbar({ user }) {
 
     const timer = setTimeout(async () => {
       setIsSearching(true);
-      const res = await searchAll(searchQuery);
-      setResults(res);
-      setIsSearching(false);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+        const json = await res.json();
+        setResults(json.results || { players: [], teams: [], news: [] });
+      } catch (err) {
+        console.error("Search error:", err);
+      } finally {
+        setIsSearching(false);
+      }
     }, 300);
 
     return () => clearTimeout(timer);

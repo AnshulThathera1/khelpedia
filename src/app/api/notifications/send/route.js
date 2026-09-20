@@ -2,21 +2,30 @@ import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import webpush from "web-push";
+import { query } from "@/lib/db";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-webpush.setVapidDetails(
-    'mailto:support@khelpedia.com',
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-);
+if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+        'mailto:support@khelpedia.com',
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        process.env.VAPID_PRIVATE_KEY
+    );
+}
 
 export async function POST(request) {
     const supabase = await createClient();
     
-    // 1. Verify Admin Status
+    // 1. Verify Authentication via Supabase Auth
     const { data: { user } } = await supabase.auth.getUser();
-    const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user?.id).single();
+    if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 2. Verify Admin Status in PostgreSQL profiles table
+    const profileRes = await query("SELECT is_admin FROM profiles WHERE id = $1 LIMIT 1", [user.id]);
+    const profile = profileRes.rows[0];
 
     if (!profile?.is_admin) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,18 +34,20 @@ export async function POST(request) {
     try {
         const { title, body, url, type, target } = await request.json(); // type: 'email' | 'push' | 'both'
 
-        // 2. Fetch Target Users
-        let query = supabase.from("profiles").select("id, email, email_notifications, push_notifications");
-        if (target === 'admins') query = query.eq("is_admin", true);
+        // 3. Fetch Target Users from PostgreSQL
+        const sql = target === 'admins'
+            ? "SELECT id, email, email_notifications, push_notifications FROM profiles WHERE is_admin = true"
+            : "SELECT id, email, email_notifications, push_notifications FROM profiles";
         
-        const { data: users } = await query;
+        const usersRes = await query(sql);
+        const users = usersRes.rows || [];
 
         const results = { email: 0, push: 0, errors: [] };
-        if (!users) return NextResponse.json({ success: true, results });
+        if (users.length === 0) return NextResponse.json({ success: true, results });
 
-        // 3. Send Emails via Resend
+        // 4. Send Emails via Resend
         if (type === 'email' || type === 'both') {
-            const emailTargets = users.filter(u => u.email_notifications).map(u => u.email);
+            const emailTargets = users.filter(u => u.email_notifications && u.email).map(u => u.email);
             if (emailTargets.length > 0) {
                 const { error } = await resend.emails.send({
                     from: "KhelPediA <notifications@khelpedia.com>",
@@ -55,15 +66,16 @@ export async function POST(request) {
             }
         }
 
-        // 4. Send Push Notifications via Web-Push
+        // 5. Send Push Notifications via Web-Push
         if (type === 'push' || type === 'both') {
             const userIds = users.filter(u => u.push_notifications).map(u => u.id);
-            const { data: subscriptions } = await supabase
-                .from("push_subscriptions")
-                .select("*")
-                .in("user_id", userIds);
+            if (userIds.length > 0) {
+                const subRes = await query(
+                    "SELECT * FROM push_subscriptions WHERE user_id = ANY($1)",
+                    [userIds]
+                );
+                const subscriptions = subRes.rows || [];
 
-            if (subscriptions) {
                 const pushPromises = subscriptions.map(sub => {
                     const pushSubscription = {
                         endpoint: sub.endpoint,
@@ -78,7 +90,6 @@ export async function POST(request) {
                         JSON.stringify({ title, body, url: url || '/' })
                     ).catch(err => {
                         console.error("Push delivery failed for", sub.endpoint, err);
-                        // Optional: remove stale subscription if status === 410
                     });
                 });
 

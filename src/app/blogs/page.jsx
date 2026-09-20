@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/utils/supabase/server";
+import { query } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
@@ -17,38 +17,19 @@ export const metadata = {
 };
 
 export default async function BlogsIndexPage() {
-    const supabase = await createClient();
-
-    const { data: blogsData, error } = await supabase
-        .from("blogs")
-        .select(`
-            id, title, slug, excerpt, cover_image_url, created_at, author_id
-        `)
-        .eq("is_published", true)
-        .order("created_at", { ascending: false });
-
-    if (error) {
+    let blogs = [];
+    try {
+        const blogsRes = await query(`
+            SELECT b.id, b.title, b.slug, b.excerpt, b.cover_image_url, b.created_at, b.author_id,
+              CASE WHEN p.id IS NOT NULL THEN json_build_object('id', p.id, 'display_name', p.display_name, 'avatar_url', p.avatar_url) ELSE NULL END AS profiles
+            FROM blogs b
+            LEFT JOIN profiles p ON b.author_id = p.id
+            WHERE b.is_published = true
+            ORDER BY b.created_at DESC
+        `);
+        blogs = blogsRes.rows || [];
+    } catch (error) {
         console.error("Error fetching blogs:", error);
-    }
-
-    let blogs = blogsData || [];
-
-    if (blogs.length > 0) {
-        const authorIds = [...new Set(blogs.map(b => b.author_id))];
-        const { data: profiles } = await supabase
-            .from("profiles")
-            .select("id, display_name, avatar_url")
-            .in("id", authorIds);
-
-        const profileMap = (profiles || []).reduce((acc, p) => {
-            acc[p.id] = p;
-            return acc;
-        }, {});
-
-        blogs = blogs.map(blog => ({
-            ...blog,
-            profiles: profileMap[blog.author_id] || null
-        }));
     }
 
     const featuredBlog = blogs.length > 0 ? blogs[0] : null;

@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { query } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,15 +10,13 @@ import ViewTracker from "@/app/components/ViewTracker";
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }) {
-    const supabase = await createClient();
     const resolvedParams = await params;
 
-    const { data: blog } = await supabase
-        .from("blogs")
-        .select("title, excerpt, cover_image_url, created_at, updated_at")
-        .eq("slug", resolvedParams.slug)
-        .eq("is_published", true)
-        .single();
+    const res = await query(
+        "SELECT title, excerpt, cover_image_url, created_at, updated_at FROM blogs WHERE slug = $1 AND is_published = true LIMIT 1",
+        [resolvedParams.slug]
+    );
+    const blog = res.rows[0];
 
     if (!blog) return { title: "Article Not Found | KhelPediA" };
 
@@ -56,28 +54,21 @@ function getReadingTime(htmlContent) {
 }
 
 export default async function BlogPostPage({ params }) {
-    const supabase = await createClient();
     const resolvedParams = await params;
 
-    const { data: blog, error } = await supabase
-        .from("blogs")
-        .select(`*`)
-        .eq("slug", resolvedParams.slug)
-        .eq("is_published", true)
-        .single();
+    const sql = `
+        SELECT b.*,
+          CASE WHEN p.id IS NOT NULL THEN json_build_object('display_name', p.display_name, 'avatar_url', p.avatar_url) ELSE NULL END AS profiles
+        FROM blogs b
+        LEFT JOIN profiles p ON b.author_id = p.id
+        WHERE b.slug = $1 AND b.is_published = true
+        LIMIT 1
+    `;
+    const res = await query(sql, [resolvedParams.slug]);
+    const blog = res.rows[0];
 
-    if (error || !blog) {
+    if (!blog) {
         notFound();
-    }
-
-    // Fetch profile separately
-    if (blog.author_id) {
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("display_name, avatar_url")
-            .eq("id", blog.author_id)
-            .single();
-        blog.profiles = profile || null;
     }
 
     const readingTime = getReadingTime(blog.content);

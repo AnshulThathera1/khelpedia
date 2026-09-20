@@ -1,12 +1,13 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { query } from "@/lib/db";
 
 export async function submitReviewAction(formData) {
   try {
     const supabase = await createClient();
     
-    // Get current user if any
+    // Get current user if any via Supabase Auth
     const { data: { user } } = await supabase.auth.getUser();
 
     const rating = parseInt(formData.get("rating"), 10);
@@ -18,21 +19,17 @@ export async function submitReviewAction(formData) {
       return { success: false, error: "Invalid rating. Must be between 1 and 5." };
     }
 
-    const reviewData = {
-      rating,
-      feedback_text,
-      name,
-      email,
-      user_type: user ? "registered" : "guest",
-      user_id: user ? user.id : null,
-    };
+    const userType = user ? "registered" : "guest";
+    const userId = user ? user.id : null;
 
-    const { error } = await supabase
-      .from("site_reviews")
-      .insert(reviewData);
-
-    if (error) {
-      console.error("Error inserting review:", error);
+    try {
+      await query(
+        `INSERT INTO site_reviews (rating, feedback_text, name, email, user_type, user_id)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [rating, feedback_text, name, email, userType, userId]
+      );
+    } catch (insertError) {
+      console.error("Error inserting review:", insertError);
       return { success: false, error: "Failed to submit review. Please try again later." };
     }
 
@@ -44,10 +41,10 @@ export async function submitReviewAction(formData) {
         let description = `**Rating:** ${rating}/5 ${stars}\n\n`;
         if (feedback_text) description += `**Feedback:**\n> ${feedback_text}\n\n`;
         
-        description += `**User Type:** ${reviewData.user_type}\n`;
+        description += `**User Type:** ${userType}\n`;
         if (name) description += `**Name:** ${name}\n`;
         if (email) description += `**Email:** ${email}\n`;
-        if (reviewData.user_id) description += `**User ID:** ${reviewData.user_id}\n`;
+        if (userId) description += `**User ID:** ${userId}\n`;
 
         const payload = {
           content: null,

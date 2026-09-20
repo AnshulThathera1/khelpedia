@@ -1,198 +1,318 @@
-import { supabase } from "./supabase";
+import { query } from "./db";
 
 // ======================== GAMES ========================
 export async function getGames() {
-  const { data, error } = await supabase
-    .from("games")
-    .select("*")
-    .order("name");
-  if (error) console.error("Error fetching games:", error);
-  return data || [];
+  try {
+    const res = await query('SELECT * FROM games ORDER BY name ASC');
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching games:", error);
+    return [];
+  }
 }
 
 export async function getGameBySlug(slug) {
-  const { data, error } = await supabase
-    .from("games")
-    .select("*")
-    .eq("slug", slug)
-    .single();
-  if (error) console.error("Error fetching game:", error);
-  return data;
+  try {
+    const res = await query('SELECT * FROM games WHERE slug = $1 LIMIT 1', [slug]);
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching game:", error);
+    return null;
+  }
 }
 
 // ======================== TOURNAMENTS ========================
 export async function getTournaments(filters = {}) {
   const { page = 1, limit = 20, status, gameId, region, tier, paginate = false } = filters;
   
-  let query = supabase
-    .from("tournaments")
-    .select("*, games(name, slug, icon_url)", { count: "exact" })
-    .order("start_date", { ascending: false });
+  try {
+    const whereConditions = [];
+    const params = [];
+    let paramIndex = 1;
 
-  if (status) query = query.eq("status", status);
-  if (gameId) query = query.eq("game_id", gameId);
-  if (region) query = query.eq("region", region);
-  if (tier) query = query.eq("tier", tier);
+    if (status) {
+      whereConditions.push(`t.status = $${paramIndex++}`);
+      params.push(status);
+    }
+    if (gameId) {
+      whereConditions.push(`t.game_id = $${paramIndex++}`);
+      params.push(gameId);
+    }
+    if (region) {
+      whereConditions.push(`t.region = $${paramIndex++}`);
+      params.push(region);
+    }
+    if (tier) {
+      whereConditions.push(`t.tier = $${paramIndex++}`);
+      params.push(tier);
+    }
 
-  if (paginate) {
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
-    query = query.range(from, to);
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+    if (paginate) {
+      const countRes = await query(`SELECT COUNT(*) FROM tournaments t ${whereClause}`, params);
+      const totalCount = parseInt(countRes.rows[0].count, 10) || 0;
+
+      const offset = (page - 1) * limit;
+      const sql = `
+        SELECT t.*, 
+          json_build_object('name', g.name, 'slug', g.slug, 'icon_url', g.icon_url) AS games
+        FROM tournaments t
+        LEFT JOIN games g ON t.game_id = g.id
+        ${whereClause}
+        ORDER BY t.start_date DESC NULLS LAST
+        LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+      `;
+      const dataRes = await query(sql, [...params, limit, offset]);
+
+      return { tournaments: dataRes.rows || [], count: totalCount };
+    }
+
+    const sql = `
+      SELECT t.*, 
+        json_build_object('name', g.name, 'slug', g.slug, 'icon_url', g.icon_url) AS games
+      FROM tournaments t
+      LEFT JOIN games g ON t.game_id = g.id
+      ${whereClause}
+      ORDER BY t.start_date DESC NULLS LAST
+    `;
+    const res = await query(sql, params);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching tournaments:", error);
+    if (paginate) return { tournaments: [], count: 0 };
+    return [];
   }
-
-  const { data, count, error } = await query;
-  if (error) console.error("Error fetching tournaments:", error);
-  
-  if (paginate) {
-    return { tournaments: data || [], count: count || 0 };
-  }
-  return data || [];
 }
 
 export async function getTournamentById(id) {
-  const { data, error } = await supabase
-    .from("tournaments")
-    .select("*, games(name, slug, icon_url)")
-    .eq("id", id)
-    .single();
-  if (error) console.error("Error fetching tournament:", error);
-  return data;
+  try {
+    const sql = `
+      SELECT t.*, 
+        json_build_object('name', g.name, 'slug', g.slug, 'icon_url', g.icon_url) AS games
+      FROM tournaments t
+      LEFT JOIN games g ON t.game_id = g.id
+      WHERE t.id = $1
+      LIMIT 1
+    `;
+    const res = await query(sql, [id]);
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching tournament:", error);
+    return null;
+  }
 }
 
 export async function getTournamentTeams(tournamentId) {
-  const { data, error } = await supabase
-    .from("tournament_teams")
-    .select("*, teams(name, slug, logo_url, region, country)")
-    .eq("tournament_id", tournamentId)
-    .order("placement", { ascending: true, nullsFirst: false });
-  if (error) console.error("Error fetching tournament teams:", error);
-  return data || [];
+  try {
+    const sql = `
+      SELECT tt.*, 
+        json_build_object('name', tm.name, 'slug', tm.slug, 'logo_url', tm.logo_url, 'region', tm.region, 'country', tm.country) AS teams
+      FROM tournament_teams tt
+      LEFT JOIN teams tm ON tt.team_id = tm.id
+      WHERE tt.tournament_id = $1
+      ORDER BY tt.placement ASC NULLS LAST
+    `;
+    const res = await query(sql, [tournamentId]);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching tournament teams:", error);
+    return [];
+  }
 }
 
 export async function getTournamentMatches(tournamentId) {
-  const { data, error } = await supabase
-    .from("matches")
-    .select(
-      `*, 
-      team1:teams!matches_team1_id_fkey(name, slug, logo_url),
-      team2:teams!matches_team2_id_fkey(name, slug, logo_url),
-      winner:teams!matches_winner_id_fkey(name, slug)`
-    )
-    .eq("tournament_id", tournamentId)
-    .order("played_at", { ascending: false });
-  if (error) console.error("Error fetching matches:", error);
-  return data || [];
+  try {
+    const sql = `
+      SELECT m.*,
+        json_build_object('name', t1.name, 'slug', t1.slug, 'logo_url', t1.logo_url) AS team1,
+        json_build_object('name', t2.name, 'slug', t2.slug, 'logo_url', t2.logo_url) AS team2,
+        CASE WHEN w.id IS NOT NULL THEN json_build_object('name', w.name, 'slug', w.slug) ELSE NULL END AS winner
+      FROM matches m
+      LEFT JOIN teams t1 ON m.team1_id = t1.id
+      LEFT JOIN teams t2 ON m.team2_id = t2.id
+      LEFT JOIN teams w ON m.winner_id = w.id
+      WHERE m.tournament_id = $1
+      ORDER BY m.played_at DESC NULLS LAST
+    `;
+    const res = await query(sql, [tournamentId]);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching matches:", error);
+    return [];
+  }
 }
 
 export async function getMatchesByGame(gameId, limit = 20) {
-  const { data: tournaments, error: tError } = await supabase
-    .from("tournaments")
-    .select("id")
-    .eq("game_id", gameId)
-    .order("start_date", { ascending: false })
-    .limit(50);
-    
-  if (tError || !tournaments || tournaments.length === 0) {
+  try {
+    const sql = `
+      SELECT m.*,
+        json_build_object('name', tr.name, 'slug', tr.slug, 'tier', tr.tier) AS tournament,
+        json_build_object('name', t1.name, 'slug', t1.slug, 'logo_url', t1.logo_url) AS team1,
+        json_build_object('name', t2.name, 'slug', t2.slug, 'logo_url', t2.logo_url) AS team2,
+        CASE WHEN w.id IS NOT NULL THEN json_build_object('name', w.name, 'slug', w.slug) ELSE NULL END AS winner
+      FROM matches m
+      JOIN tournaments tr ON m.tournament_id = tr.id
+      LEFT JOIN teams t1 ON m.team1_id = t1.id
+      LEFT JOIN teams t2 ON m.team2_id = t2.id
+      LEFT JOIN teams w ON m.winner_id = w.id
+      WHERE tr.game_id = $1
+      ORDER BY m.played_at DESC NULLS LAST
+      LIMIT $2
+    `;
+    const res = await query(sql, [gameId, limit]);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching matches by game:", error);
     return [];
   }
-  
-  const tournamentIds = tournaments.map(t => t.id);
-  
-  const { data, error } = await supabase
-    .from("matches")
-    .select(
-      `*, 
-      tournament:tournaments(name, slug, tier),
-      team1:teams!matches_team1_id_fkey(name, slug, logo_url),
-      team2:teams!matches_team2_id_fkey(name, slug, logo_url),
-      winner:teams!matches_winner_id_fkey(name, slug)`
-    )
-    .in("tournament_id", tournamentIds)
-    .order("played_at", { ascending: false })
-    .limit(limit);
-    
-  if (error) console.error("Error fetching matches by game:", error);
-  return data || [];
 }
 
 // ======================== PLAYERS ========================
 export async function getPlayers(filters = {}) {
-  let query = supabase
-    .from("players")
-    .select("*, teams(name, slug, logo_url)")
-    .order("earnings", { ascending: false });
+  try {
+    const whereConditions = [];
+    const params = [];
+    let paramIndex = 1;
 
-  if (filters.teamId) query = query.eq("team_id", filters.teamId);
-  if (filters.country) query = query.eq("country", filters.country);
-  if (filters.search)
-    query = query.or(
-      `ign.ilike.%${filters.search}%,name.ilike.%${filters.search}%`
-    );
+    if (filters.teamId) {
+      whereConditions.push(`p.team_id = $${paramIndex++}`);
+      params.push(filters.teamId);
+    }
+    if (filters.country) {
+      whereConditions.push(`p.country = $${paramIndex++}`);
+      params.push(filters.country);
+    }
+    if (filters.search) {
+      whereConditions.push(`(p.ign ILIKE $${paramIndex} OR p.name ILIKE $${paramIndex})`);
+      params.push(`%${filters.search}%`);
+      paramIndex++;
+    }
 
-  const { data, error } = await query;
-  if (error) console.error("Error fetching players:", error);
-  return data || [];
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+    const sql = `
+      SELECT p.*,
+        CASE WHEN tm.id IS NOT NULL THEN json_build_object('name', tm.name, 'slug', tm.slug, 'logo_url', tm.logo_url) ELSE NULL END AS teams
+      FROM players p
+      LEFT JOIN teams tm ON p.team_id = tm.id
+      ${whereClause}
+      ORDER BY p.earnings DESC NULLS LAST
+    `;
+    const res = await query(sql, params);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching players:", error);
+    return [];
+  }
 }
 
 export async function getPlayerById(id) {
-  const { data, error } = await supabase
-    .from("players")
-    .select("*, teams(name, slug, logo_url, region)")
-    .eq("id", id)
-    .single();
-  if (error) console.error("Error fetching player:", error);
-  return data;
+  try {
+    const sql = `
+      SELECT p.*,
+        CASE WHEN tm.id IS NOT NULL THEN json_build_object('name', tm.name, 'slug', tm.slug, 'logo_url', tm.logo_url, 'region', tm.region) ELSE NULL END AS teams
+      FROM players p
+      LEFT JOIN teams tm ON p.team_id = tm.id
+      WHERE p.id = $1
+      LIMIT 1
+    `;
+    const res = await query(sql, [id]);
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching player:", error);
+    return null;
+  }
 }
 
 export async function getPlayerStats(playerId) {
-  const { data, error } = await supabase
-    .from("player_stats")
-    .select("*, games(name, slug, icon_url)")
-    .eq("player_id", playerId);
-  if (error) console.error("Error fetching player stats:", error);
-  return data || [];
+  try {
+    const sql = `
+      SELECT ps.*,
+        json_build_object('name', g.name, 'slug', g.slug, 'icon_url', g.icon_url) AS games
+      FROM player_stats ps
+      LEFT JOIN games g ON ps.game_id = g.id
+      WHERE ps.player_id = $1
+    `;
+    const res = await query(sql, [playerId]);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching player stats:", error);
+    return [];
+  }
 }
 
 // ======================== TEAMS ========================
 export async function getTeams(filters = {}) {
-  let query = supabase.from("teams").select("*").order("name");
+  try {
+    const whereConditions = [];
+    const params = [];
+    let paramIndex = 1;
 
-  if (filters.region) query = query.eq("region", filters.region);
-  if (filters.search) query = query.ilike("name", `%${filters.search}%`);
+    if (filters.region) {
+      whereConditions.push(`region = $${paramIndex++}`);
+      params.push(filters.region);
+    }
+    if (filters.search) {
+      whereConditions.push(`name ILIKE $${paramIndex++}`);
+      params.push(`%${filters.search}%`);
+    }
 
-  const { data, error } = await query;
-  if (error) console.error("Error fetching teams:", error);
-  return data || [];
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+    const sql = `SELECT * FROM teams ${whereClause} ORDER BY name ASC`;
+    const res = await query(sql, params);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching teams:", error);
+    return [];
+  }
 }
 
 export async function getTeamById(id) {
-  const { data, error } = await supabase
-    .from("teams")
-    .select("*")
-    .eq("id", id)
-    .single();
-  if (error) console.error("Error fetching team:", error);
-  return data;
+  try {
+    const res = await query('SELECT * FROM teams WHERE id = $1 LIMIT 1', [id]);
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching team:", error);
+    return null;
+  }
 }
 
 export async function getTeamPlayers(teamId) {
-  const { data, error } = await supabase
-    .from("players")
-    .select("*")
-    .eq("team_id", teamId)
-    .order("ign");
-  if (error) console.error("Error fetching team players:", error);
-  return data || [];
+  try {
+    const res = await query('SELECT * FROM players WHERE team_id = $1 ORDER BY ign ASC', [teamId]);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching team players:", error);
+    return [];
+  }
 }
 
 export async function getTeamTournaments(teamId) {
-  const { data, error } = await supabase
-    .from("tournament_teams")
-    .select("*, tournaments(name, slug, status, prize_pool, start_date, end_date, games(name, slug))")
-    .eq("team_id", teamId)
-    .order("placement", { ascending: true, nullsFirst: false });
-  if (error) console.error("Error fetching team tournaments:", error);
-  return data || [];
+  try {
+    const sql = `
+      SELECT tt.*,
+        json_build_object(
+          'name', tr.name,
+          'slug', tr.slug,
+          'status', tr.status,
+          'prize_pool', tr.prize_pool,
+          'start_date', tr.start_date,
+          'end_date', tr.end_date,
+          'games', json_build_object('name', g.name, 'slug', g.slug)
+        ) AS tournaments
+      FROM tournament_teams tt
+      LEFT JOIN tournaments tr ON tt.tournament_id = tr.id
+      LEFT JOIN games g ON tr.game_id = g.id
+      WHERE tt.team_id = $1
+      ORDER BY tt.placement ASC NULLS LAST
+    `;
+    const res = await query(sql, [teamId]);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching team tournaments:", error);
+    return [];
+  }
 }
 
 // ======================== STATS / COUNTS ========================
@@ -205,49 +325,66 @@ export async function getUpcomingTournaments() {
 }
 
 export async function getTopPlayers(limit = 10) {
-  const { data, error } = await supabase
-    .from("players")
-    .select("*, teams(name, slug, logo_url)")
-    .order("earnings", { ascending: false })
-    .limit(limit);
-  if (error) console.error("Error fetching top players:", error);
-  return data || [];
+  try {
+    const sql = `
+      SELECT p.*,
+        CASE WHEN tm.id IS NOT NULL THEN json_build_object('name', tm.name, 'slug', tm.slug, 'logo_url', tm.logo_url) ELSE NULL END AS teams
+      FROM players p
+      LEFT JOIN teams tm ON p.team_id = tm.id
+      ORDER BY p.earnings DESC NULLS LAST
+      LIMIT $1
+    `;
+    const res = await query(sql, [limit]);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching top players:", error);
+    return [];
+  }
 }
 
 export async function getSiteStats() {
-  const [games, tournaments, players, teams] = await Promise.all([
-    supabase.from("games").select("id", { count: "exact", head: true }),
-    supabase.from("tournaments").select("id", { count: "exact", head: true }),
-    supabase.from("players").select("id", { count: "exact", head: true }),
-    supabase.from("teams").select("id", { count: "exact", head: true }),
-  ]);
-  return {
-    games: games.count || 0,
-    tournaments: tournaments.count || 0,
-    players: players.count || 0,
-    teams: teams.count || 0,
-  };
+  try {
+    const [games, tournaments, players, teams] = await Promise.all([
+      query('SELECT COUNT(*)::int AS count FROM games'),
+      query('SELECT COUNT(*)::int AS count FROM tournaments'),
+      query('SELECT COUNT(*)::int AS count FROM players'),
+      query('SELECT COUNT(*)::int AS count FROM teams'),
+    ]);
+    return {
+      games: games.rows[0]?.count || 0,
+      tournaments: tournaments.rows[0]?.count || 0,
+      players: players.rows[0]?.count || 0,
+      teams: teams.rows[0]?.count || 0,
+    };
+  } catch (error) {
+    console.error("Error fetching site stats:", error);
+    return { games: 0, tournaments: 0, players: 0, teams: 0 };
+  }
 }
 
-export async function searchAll(query) {
-  if (!query) return { players: [], teams: [], news: [] };
+export async function searchAll(queryStr) {
+  if (!queryStr) return { players: [], teams: [], news: [] };
   
-  const [players, teams] = await Promise.all([
-    supabase
-      .from("players")
-      .select("id, ign, name, image_url")
-      .or(`ign.ilike.%${query}%,name.ilike.%${query}%`)
-      .limit(5),
-    supabase
-      .from("teams")
-      .select("id, name, logo_url")
-      .ilike("name", `%${query}%`)
-      .limit(5)
-  ]);
+  try {
+    const searchTerm = `%${queryStr}%`;
+    const [playersRes, teamsRes] = await Promise.all([
+      query(
+        'SELECT id, ign, name, image_url FROM players WHERE ign ILIKE $1 OR name ILIKE $1 LIMIT 5',
+        [searchTerm]
+      ),
+      query(
+        'SELECT id, name, logo_url FROM teams WHERE name ILIKE $1 LIMIT 5',
+        [searchTerm]
+      )
+    ]);
 
-  return {
-    players: players.data || [],
-    teams: teams.data || [],
-    news: [] // Add news search here later if needed
-  };
+    return {
+      players: playersRes.rows || [],
+      teams: teamsRes.rows || [],
+      news: []
+    };
+  } catch (error) {
+    console.error("Error in searchAll:", error);
+    return { players: [], teams: [], news: [] };
+  }
 }

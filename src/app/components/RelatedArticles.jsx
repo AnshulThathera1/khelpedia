@@ -1,19 +1,20 @@
-import { createClient } from "@/utils/supabase/server";
+import { query } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
 
 export default async function RelatedArticles({ currentSlug }) {
-  const supabase = await createClient();
+  let relatedBlogs = [];
+  try {
+    const res = await query(
+      "SELECT title, slug, cover_image_url, created_at FROM blogs WHERE is_published = true AND slug != $1 ORDER BY created_at DESC LIMIT 3",
+      [currentSlug]
+    );
+    relatedBlogs = res.rows || [];
+  } catch (error) {
+    console.error("RelatedArticles query error:", error);
+  }
 
-  const { data: relatedBlogs } = await supabase
-    .from("blogs")
-    .select("title, slug, cover_image_url, created_at")
-    .eq("is_published", true)
-    .neq("slug", currentSlug)
-    .order("created_at", { ascending: false })
-    .limit(3);
-
-  if (!relatedBlogs || relatedBlogs.length === 0) return null;
+  if (relatedBlogs.length === 0) return null;
 
   return (
     <div style={{ marginTop: "4rem", borderTop: "1px solid var(--border-color)", paddingTop: "3rem" }}>

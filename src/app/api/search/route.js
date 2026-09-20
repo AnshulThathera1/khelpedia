@@ -1,43 +1,40 @@
-import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
+import { query } from "@/lib/db";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q");
+  const searchStr = searchParams.get("q");
 
-  if (!query || query.length < 2) {
+  if (!searchStr || searchStr.length < 2) {
     return NextResponse.json({ results: { players: [], teams: [], blogs: [] } });
   }
 
-  const supabase = await createClient();
+  try {
+    const searchTerm = `%${searchStr}%`;
+    const [playersRes, teamsRes, blogsRes] = await Promise.all([
+      query(
+        "SELECT id, ign, name, slug, image_url FROM players WHERE ign ILIKE $1 OR name ILIKE $1 LIMIT 5",
+        [searchTerm]
+      ),
+      query(
+        "SELECT id, name, slug, logo_url FROM teams WHERE name ILIKE $1 LIMIT 5",
+        [searchTerm]
+      ),
+      query(
+        "SELECT id, title, slug, cover_image_url FROM blogs WHERE title ILIKE $1 AND is_published = true LIMIT 5",
+        [searchTerm]
+      )
+    ]);
 
-  // Search Players
-  const { data: players } = await supabase
-    .from("players")
-    .select("id, ign, name, slug, image_url")
-    .or(`ign.ilike.%${query}%,name.ilike.%${query}%`)
-    .limit(5);
-
-  // Search Teams
-  const { data: teams } = await supabase
-    .from("teams")
-    .select("id, name, slug, logo_url")
-    .ilike("name", `%${query}%`)
-    .limit(5);
-
-  // Search Blogs
-  const { data: blogs } = await supabase
-    .from("blogs")
-    .select("id, title, slug, cover_image_url")
-    .ilike("title", `%${query}%`)
-    .eq("is_published", true)
-    .limit(5);
-
-  return NextResponse.json({
-    results: {
-      players: players || [],
-      teams: teams || [],
-      blogs: blogs || [],
-    },
-  });
+    return NextResponse.json({
+      results: {
+        players: playersRes.rows || [],
+        teams: teamsRes.rows || [],
+        blogs: blogsRes.rows || [],
+      },
+    });
+  } catch (error) {
+    console.error("Search API Error:", error);
+    return NextResponse.json({ results: { players: [], teams: [], blogs: [] } }, { status: 500 });
+  }
 }

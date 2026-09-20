@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { cache } from 'react';
+import { query } from '@/lib/db';
 
 // Read process.env.RIOT_API_KEY dynamically
 
@@ -370,104 +371,120 @@ function reconstructMatchJson(dbMatch) {
   return { matchInfo, teams, players, roundResults };
 }
 
-async function insertMatchRelational(supabase, data) {
+async function insertMatchRelational(data) {
   const matchId = data.matchInfo.matchId;
 
-  const { error: mErr } = await supabase.from('valorant_matches').upsert({
-    match_id: matchId,
-    map_id: data.matchInfo.mapId,
-    region: data.matchInfo.region || 'ap',
-    queue_id: data.matchInfo.queueId,
-    season_id: data.matchInfo.seasonId,
-    game_start_millis: data.matchInfo.gameStartMillis,
-    game_length_millis: data.matchInfo.gameLengthMillis
-  }, { onConflict: 'match_id' });
-  if (mErr) { console.error('insert match error', mErr); return; }
+  try {
+    await query(
+      `INSERT INTO valorant_matches (match_id, map_id, region, queue_id, season_id, game_start_millis, game_length_millis)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (match_id) DO UPDATE SET
+         map_id = EXCLUDED.map_id,
+         region = EXCLUDED.region,
+         queue_id = EXCLUDED.queue_id,
+         season_id = EXCLUDED.season_id,
+         game_start_millis = EXCLUDED.game_start_millis,
+         game_length_millis = EXCLUDED.game_length_millis`,
+      [
+        matchId,
+        data.matchInfo.mapId,
+        data.matchInfo.region || 'ap',
+        data.matchInfo.queueId,
+        data.matchInfo.seasonId,
+        data.matchInfo.gameStartMillis,
+        data.matchInfo.gameLengthMillis
+      ]
+    );
 
-  if (data.teams && data.teams.length > 0) {
-    const teams = data.teams.map(t => ({
-      match_id: matchId,
-      team_id: t.teamId,
-      won: t.won,
-      rounds_won: t.roundsWon,
-      rounds_played: t.roundsPlayed,
-      num_points: t.numPoints
-    }));
-    await supabase.from('match_teams').upsert(teams, { onConflict: 'match_id, team_id' });
-  }
-
-  if (data.players && data.players.length > 0) {
-    const players = data.players.map(p => ({
-      match_id: matchId,
-      puuid: p.puuid,
-      team_id: p.teamId,
-      character_id: p.characterId,
-      competitive_tier: p.competitiveTier,
-      player_card: p.playerCard,
-      party_id: p.partyId,
-      kills: p.stats.kills,
-      deaths: p.stats.deaths,
-      assists: p.stats.assists,
-      score: p.stats.score,
-      rounds_played: p.stats.roundsPlayed
-    }));
-    await supabase.from('match_players').upsert(players, { onConflict: 'match_id, puuid' });
-  }
-
-  if (data.roundResults && data.roundResults.length > 0) {
-    const rounds = [];
-    const pstats = [];
-    const pkills = [];
-    const pdamage = [];
-
-    data.roundResults.forEach(r => {
-      rounds.push({
-        match_id: matchId,
-        round_num: r.roundNum,
-        winning_team: r.winningTeam
-      });
-      if (r.playerStats) {
-        r.playerStats.forEach(ps => {
-          pstats.push({
-            match_id: matchId,
-            round_num: r.roundNum,
-            puuid: ps.puuid,
-            weapon_id: ps.economy ? ps.economy.weapon : null
-          });
-          if (ps.kills) {
-            ps.kills.forEach(k => {
-              pkills.push({
-                match_id: matchId,
-                round_num: r.roundNum,
-                killer_puuid: k.killer,
-                victim_puuid: k.victim,
-                time_in_round_millis: k.timeSinceRoundStartMillis,
-                assistants: k.assistants || []
-              });
-            });
-          }
-          if (ps.damage) {
-            ps.damage.forEach(d => {
-              pdamage.push({
-                match_id: matchId,
-                round_num: r.roundNum,
-                attacker_puuid: ps.puuid,
-                receiver_puuid: d.receiver,
-                damage: d.damage,
-                headshots: d.headshots,
-                bodyshots: d.bodyshots,
-                legshots: d.legshots
-              });
-            });
-          }
-        });
+    if (data.teams && data.teams.length > 0) {
+      for (const t of data.teams) {
+        await query(
+          `INSERT INTO match_teams (match_id, team_id, won, rounds_won, rounds_played, num_points)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (match_id, team_id) DO UPDATE SET
+             won = EXCLUDED.won,
+             rounds_won = EXCLUDED.rounds_won,
+             rounds_played = EXCLUDED.rounds_played,
+             num_points = EXCLUDED.num_points`,
+          [matchId, t.teamId, t.won, t.roundsWon, t.roundsPlayed, t.numPoints]
+        );
       }
-    });
+    }
 
-    await supabase.from('match_rounds').upsert(rounds, { onConflict: 'match_id, round_num' });
-    if (pstats.length > 0) await supabase.from('match_round_player_stats').upsert(pstats, { onConflict: 'match_id, round_num, puuid' });
-    if (pkills.length > 0) await supabase.from('match_round_kills').insert(pkills);
-    if (pdamage.length > 0) await supabase.from('match_round_damage').insert(pdamage);
+    if (data.players && data.players.length > 0) {
+      for (const p of data.players) {
+        await query(
+          `INSERT INTO match_players (match_id, puuid, team_id, character_id, competitive_tier, player_card, party_id, kills, deaths, assists, score, rounds_played)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+           ON CONFLICT (match_id, puuid) DO UPDATE SET
+             team_id = EXCLUDED.team_id,
+             character_id = EXCLUDED.character_id,
+             competitive_tier = EXCLUDED.competitive_tier,
+             player_card = EXCLUDED.player_card,
+             party_id = EXCLUDED.party_id,
+             kills = EXCLUDED.kills,
+             deaths = EXCLUDED.deaths,
+             assists = EXCLUDED.assists,
+             score = EXCLUDED.score,
+             rounds_played = EXCLUDED.rounds_played`,
+          [
+            matchId,
+            p.puuid,
+            p.teamId,
+            p.characterId,
+            p.competitiveTier,
+            p.playerCard,
+            p.partyId,
+            p.stats.kills,
+            p.stats.deaths,
+            p.stats.assists,
+            p.stats.score,
+            p.stats.roundsPlayed
+          ]
+        );
+      }
+    }
+
+    if (data.roundResults && data.roundResults.length > 0) {
+      for (const r of data.roundResults) {
+        await query(
+          `INSERT INTO match_rounds (match_id, round_num, winning_team)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (match_id, round_num) DO UPDATE SET winning_team = EXCLUDED.winning_team`,
+          [matchId, r.roundNum, r.winningTeam]
+        );
+        if (r.playerStats) {
+          for (const ps of r.playerStats) {
+            await query(
+              `INSERT INTO match_round_player_stats (match_id, round_num, puuid, weapon_id)
+               VALUES ($1, $2, $3, $4)
+               ON CONFLICT (match_id, round_num, puuid) DO UPDATE SET weapon_id = EXCLUDED.weapon_id`,
+              [matchId, r.roundNum, ps.puuid, ps.economy ? ps.economy.weapon : null]
+            );
+            if (ps.kills) {
+              for (const k of ps.kills) {
+                await query(
+                  `INSERT INTO match_round_kills (match_id, round_num, killer_puuid, victim_puuid, time_in_round_millis, assistants)
+                   VALUES ($1, $2, $3, $4, $5, $6)`,
+                  [matchId, r.roundNum, k.killer, k.victim, k.timeSinceRoundStartMillis, k.assistants || []]
+                );
+              }
+            }
+            if (ps.damage) {
+              for (const d of ps.damage) {
+                await query(
+                  `INSERT INTO match_round_damage (match_id, round_num, attacker_puuid, receiver_puuid, damage, headshots, bodyshots, legshots)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                  [matchId, r.roundNum, ps.puuid, d.receiver, d.damage, d.headshots, d.bodyshots, d.legshots]
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('insert match error', err);
   }
 }
 
@@ -475,25 +492,28 @@ async function insertMatchRelational(supabase, data) {
  * Fetch Match Details (with Relational Caching)
  */
 export async function getMatchDetails(matchId, puuid, region = REGION) {
-  const supabase = await createClient();
-
   // 1. Check DB Cache
-  const { data: cachedMatch } = await supabase
-    .from('valorant_matches')
-    .select(`
-      *,
-      match_teams (*),
-      match_players (*),
-      match_rounds (*),
-      match_round_player_stats (*),
-      match_round_kills (*),
-      match_round_damage (*)
-    `)
-    .eq('match_id', matchId)
-    .single();
+  try {
+    const cacheSql = `
+      SELECT vm.*,
+        (SELECT COALESCE(json_agg(mt.*), '[]'::json) FROM match_teams mt WHERE mt.match_id = vm.match_id) AS match_teams,
+        (SELECT COALESCE(json_agg(mp.*), '[]'::json) FROM match_players mp WHERE mp.match_id = vm.match_id) AS match_players,
+        (SELECT COALESCE(json_agg(mr.*), '[]'::json) FROM match_rounds mr WHERE mr.match_id = vm.match_id) AS match_rounds,
+        (SELECT COALESCE(json_agg(mrps.*), '[]'::json) FROM match_round_player_stats mrps WHERE mrps.match_id = vm.match_id) AS match_round_player_stats,
+        (SELECT COALESCE(json_agg(mrk.*), '[]'::json) FROM match_round_kills mrk WHERE mrk.match_id = vm.match_id) AS match_round_kills,
+        (SELECT COALESCE(json_agg(mrd.*), '[]'::json) FROM match_round_damage mrd WHERE mrd.match_id = vm.match_id) AS match_round_damage
+      FROM valorant_matches vm
+      WHERE vm.match_id = $1
+      LIMIT 1
+    `;
+    const cacheRes = await query(cacheSql, [matchId]);
+    const cachedMatch = cacheRes.rows[0];
 
-  if (cachedMatch) {
-    return { data: reconstructMatchJson(cachedMatch), source: 'cache' };
+    if (cachedMatch) {
+      return { data: reconstructMatchJson(cachedMatch), source: 'cache' };
+    }
+  } catch (err) {
+    console.error('Cache lookup error:', err);
   }
 
   if (!process.env.RIOT_API_KEY) return { error: 'RIOT_API_KEY is missing' };
@@ -514,7 +534,7 @@ export async function getMatchDetails(matchId, puuid, region = REGION) {
     const matchData = await res.json();
     
     // 3. Save to Relational DB Cache
-    await insertMatchRelational(supabase, matchData);
+    await insertMatchRelational(matchData);
 
     return { data: matchData, source: 'api' };
   } catch (error) {
@@ -931,41 +951,36 @@ export async function getValorantContent(locale, region = REGION) {
 /**
  * Search Cached Valorant Accounts by partial name
  */
-export async function searchValorantAccounts(query) {
-  if (!query || query.trim().length < 2) return { data: [] };
+export async function searchValorantAccounts(queryStr) {
+  if (!queryStr || queryStr.trim().length < 2) return { data: [] };
 
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from('valorant_accounts')
-    .select('puuid, game_name, tag_line, last_updated')
-    .ilike('game_name', `%${query.trim()}%`)
-    .order('last_updated', { ascending: false })
-    .limit(8);
-
-  if (error) {
+  try {
+    const res = await query(
+      `SELECT puuid, game_name, tag_line, last_updated
+       FROM valorant_accounts
+       WHERE game_name ILIKE $1
+       ORDER BY last_updated DESC NULLS LAST
+       LIMIT 8`,
+      [`%${queryStr.trim()}%`]
+    );
+    return { data: res.rows || [] };
+  } catch (error) {
     console.error('Error searching accounts:', error);
     return { data: [] };
   }
-
-  return { data: data || [] };
 }
 
 /**
  * Get Global Stats (Total Players Tracked & Season End Time)
  */
 export async function getValorantGlobalStats() {
-  const supabase = await createClient();
   let playersTracked = 0;
   let seasonEndTime = null;
 
   try {
     // 1. Get total players tracked
-    const { count, error } = await supabase
-      .from('valorant_accounts')
-      .select('*', { count: 'exact', head: true });
-    
-    if (!error) playersTracked = count || 0;
+    const countRes = await query('SELECT COUNT(*)::int AS count FROM valorant_accounts');
+    playersTracked = countRes.rows[0]?.count || 0;
 
     // 2. Get season end time
     const res = await fetch('https://valorant-api.com/v1/seasons', { next: { revalidate: 86400 } });

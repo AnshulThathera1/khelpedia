@@ -1,5 +1,5 @@
 import { getLiveTournaments, getUpcomingTournaments, getTopPlayers, getGames, getSiteStats } from "@/lib/queries";
-import { createClient } from "@/utils/supabase/server";
+import { query } from "@/lib/db";
 import TournamentCard from "./components/TournamentCard";
 import PlayerCard from "./components/PlayerCard";
 import GameCard from "./components/GameCard";
@@ -8,40 +8,24 @@ import HomeHero from "./components/HomeHero";
 import BlogCarousel from "./components/BlogCarousel";
 
 export default async function HomePage() {
-    const supabase = await createClient();
-
-    const [live, upcoming, players, gms, stats] = await Promise.all([
+    const [live, upcoming, players, gms, stats, blogsRes] = await Promise.all([
         getLiveTournaments(),
         getUpcomingTournaments(),
         getTopPlayers(5),
         getGames(),
         getSiteStats(),
+        query(`
+            SELECT b.id, b.title, b.slug, b.excerpt, b.cover_image_url, b.created_at, b.author_id,
+              CASE WHEN p.id IS NOT NULL THEN json_build_object('id', p.id, 'display_name', p.display_name) ELSE NULL END AS profiles
+            FROM blogs b
+            LEFT JOIN profiles p ON b.author_id = p.id
+            WHERE b.is_published = true
+            ORDER BY b.created_at DESC
+            LIMIT 10
+        `).catch(() => ({ rows: [] }))
     ]);
 
-    // Fetch latest blog posts for News and Editor's Picks
-    const { data: latestBlogs } = await supabase
-        .from("blogs")
-        .select("id, title, slug, excerpt, cover_image_url, created_at, author_id")
-        .eq("is_published", true)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-    let blogs = latestBlogs || [];
-    if (blogs.length > 0) {
-        const authorIds = [...new Set(blogs.map(b => b.author_id))];
-        const { data: profiles } = await supabase
-            .from("profiles")
-            .select("id, display_name")
-            .in("id", authorIds);
-        const profileMap = (profiles || []).reduce((acc, p) => {
-            acc[p.id] = p;
-            return acc;
-        }, {});
-        blogs = blogs.map(blog => ({
-            ...blog,
-            profiles: profileMap[blog.author_id] || null,
-        }));
-    }
+    const blogs = blogsRes.rows || [];
 
     const liveTournaments = live || [];
     const upcomingTournaments = upcoming || [];

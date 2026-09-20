@@ -1,6 +1,7 @@
 import Parser from 'rss-parser';
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
+import { query } from './db';
 
 export async function generateAIBlog() {
     // Initialize API clients
@@ -18,7 +19,7 @@ export async function generateAIBlog() {
         throw new Error("No news items found in RSS feed.");
     }
 
-    // Initialize Supabase early so we can check for duplicates
+    // Initialize Supabase Auth client for fetching users
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -30,12 +31,11 @@ export async function generateAIBlog() {
 
         // First try to match by source_url (if the column exists)
         try {
-            const { data: existing } = await supabase
-                .from('blogs')
-                .select('id')
-                .eq('source_url', item.link)
-                .limit(1);
-            if (existing && existing.length > 0) {
+            const existingRes = await query(
+                'SELECT id FROM blogs WHERE source_url = $1 LIMIT 1',
+                [item.link]
+            );
+            if (existingRes.rows && existingRes.rows.length > 0) {
                 alreadyCovered = true;
             }
         } catch {
@@ -45,14 +45,16 @@ export async function generateAIBlog() {
         // Also check for very similar titles (first 40 chars match)
         if (!alreadyCovered) {
             const titlePrefix = item.title.substring(0, 40).toLowerCase();
-            const { data: similarTitle } = await supabase
-                .from('blogs')
-                .select('id, title')
-                .ilike('title', `${titlePrefix}%`)
-                .limit(1);
-
-            if (similarTitle && similarTitle.length > 0) {
-                alreadyCovered = true;
+            try {
+                const similarRes = await query(
+                    'SELECT id, title FROM blogs WHERE title ILIKE $1 LIMIT 1',
+                    [`${titlePrefix}%`]
+                );
+                if (similarRes.rows && similarRes.rows.length > 0) {
+                    alreadyCovered = true;
+                }
+            } catch {
+                // Ignore error if check fails
             }
         }
 
@@ -116,42 +118,43 @@ export async function generateAIBlog() {
     // Generate URL slug
     const slug = generatedData.title.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "") + "-" + Date.now().toString().slice(-4);
 
-    // Save to Supabase (client already initialized above)
-
-    // Fetch the first available user to assign as the author (requires service_role key)
+    // Fetch the first available user from Supabase Auth to assign as author
     const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
     if (userError || !userData || !userData.users || userData.users.length === 0) {
         throw new Error("Failed to find a valid user to assign as the author. Make sure SUPABASE_SERVICE_ROLE_KEY is correct.");
     }
     const authorId = userData.users[0].id;
 
-    const insertData = {
-        title: generatedData.title,
-        slug: slug,
-        excerpt: generatedData.excerpt,
-        content: generatedData.content,
-        author_id: authorId,
-        is_published: true,
-        source_url: topStory.link, // Track source to prevent duplicate generation
-    };
-
-    // Add category if the column exists (gracefully handle if it doesn't)
-    if (generatedData.category) {
-        insertData.category = generatedData.category;
-    }
-
-    const { data, error } = await supabase.from('blogs').insert([insertData]);
-
-    if (error) {
-        // If source_url or category column doesn't exist, retry without them
-        if (error.message && (error.message.includes('source_url') || error.message.includes('category'))) {
-            delete insertData.source_url;
-            delete insertData.category;
-            const { error: retryError } = await supabase.from('blogs').insert([insertData]);
-            if (retryError) throw retryError;
-        } else {
-            throw error;
-        }
+    // Insert into PostgreSQL blogs table
+    try {
+        await query(
+            `INSERT INTO blogs (title, slug, excerpt, content, author_id, is_published, source_url, category) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [
+                generatedData.title,
+                slug,
+                generatedData.excerpt,
+                generatedData.content,
+                authorId,
+                true,
+                topStory.link,
+                generatedData.category || 'news'
+            ]
+        );
+    } catch (insertError) {
+        // Fallback retry without source_url and category if columns don't exist
+        await query(
+            `INSERT INTO blogs (title, slug, excerpt, content, author_id, is_published) 
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [
+                generatedData.title,
+                slug,
+                generatedData.excerpt,
+                generatedData.content,
+                authorId,
+                true
+            ]
+        );
     }
 
     // Send Discord Notification

@@ -1,18 +1,17 @@
-import { createClient } from "@/utils/supabase/server";
+import { query } from "@/lib/db";
 
 export default async function sitemap() {
-  const supabase = await createClient();
   const baseUrl = "https://khelpedia.org";
-
-  // Get dynamic games
-  const { data: games } = await supabase
-    .from("games")
-    .select("slug");
-
-  return (games || []).map((game) => ({
-    url: `${baseUrl}/games/${game.slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.8,
-  }));
+  try {
+    const res = await query("SELECT slug FROM games");
+    return (res.rows || []).map((game) => ({
+      url: `${baseUrl}/games/${game.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    }));
+  } catch (error) {
+    console.error("Games sitemap error:", error);
+    return [];
+  }
 }

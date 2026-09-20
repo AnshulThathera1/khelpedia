@@ -1,5 +1,5 @@
 import { getTournamentById, getTournamentTeams, getTournamentMatches } from "@/lib/queries";
-import { createClient } from "@/utils/supabase/server";
+import { query } from "@/lib/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -62,20 +62,20 @@ export default async function TournamentDetailPage({ params }) {
     }
 
     // Fetch related blog posts
-    const supabase = await createClient();
     const tournamentNameWords = tournament.name.split(/\s+/).filter(w => w.length > 3).slice(0, 3);
     let relatedBlogs = [];
     if (tournamentNameWords.length > 0) {
-        const searchPattern = tournamentNameWords.map(w => `%${w}%`);
-        const orConditions = searchPattern.map(p => `title.ilike.${p}`).join(',');
-        const { data } = await supabase
-            .from("blogs")
-            .select("title, slug, created_at")
-            .eq("is_published", true)
-            .or(orConditions)
-            .order("created_at", { ascending: false })
-            .limit(3);
-        relatedBlogs = data || [];
+        try {
+            const conditions = tournamentNameWords.map((_, i) => `title ILIKE $${i + 1}`).join(' OR ');
+            const params = tournamentNameWords.map(w => `%${w}%`);
+            const blogsRes = await query(
+                `SELECT title, slug, created_at FROM blogs WHERE is_published = true AND (${conditions}) ORDER BY created_at DESC LIMIT 3`,
+                params
+            );
+            relatedBlogs = blogsRes.rows || [];
+        } catch (err) {
+            console.error("Error fetching related blogs for tournament:", err);
+        }
     }
 
     const formatPrize = (amount, curr) => {
