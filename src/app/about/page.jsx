@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getSiteStats } from "@/lib/queries";
 
 export const metadata = {
     title: "About Us",
@@ -13,13 +14,6 @@ export const metadata = {
             "KhelPediA is the epicenter of global esports. Discover our mission, our team, and what makes us the most comprehensive esports data platform.",
     },
 };
-
-const stats = [
-    { label: "Games Tracked", value: "10+", icon: "🎮" },
-    { label: "Tournaments Monitored", value: "500+", icon: "🏆" },
-    { label: "Pro Players Profiled", value: "2,000+", icon: "👤" },
-    { label: "Teams Catalogued", value: "800+", icon: "⚔️" },
-];
 
 const values = [
     {
@@ -63,7 +57,16 @@ const dataSources = [
     },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+    const siteStats = await getSiteStats();
+
+    const stats = [
+        { label: "Games Tracked", value: siteStats.games > 0 ? siteStats.games.toLocaleString() : "10+", icon: "🎮" },
+        { label: "Tournaments Monitored", value: siteStats.tournaments > 0 ? siteStats.tournaments.toLocaleString() : "Thousands", icon: "🏆" },
+        { label: "Pro Players Profiled", value: siteStats.players > 0 ? siteStats.players.toLocaleString() : "Thousands", icon: "👤" },
+        { label: "Teams Catalogued", value: siteStats.teams > 0 ? siteStats.teams.toLocaleString() : "Hundreds", icon: "⚔️" },
+    ];
+
     return (
         <div className="page-container">
             {/* Page Header */}

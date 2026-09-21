@@ -10,7 +10,6 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals"),
   {
     ignores: [
       "node_modules/**",
@@ -20,6 +19,9 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  ...compat.config({
+    extends: ["next"],
+  }),
 ];
 
 export default eslintConfig;

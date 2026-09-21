@@ -321,10 +321,10 @@ export default function TermsOfServicePage() {
             <section style={sectionStyle}>
                 <h2 style={headingStyle}>10. Advertising</h2>
                 <p style={paragraphStyle}>
-                    KhelPediA displays advertisements through Google AdSense and may
-                    include other advertising partners in the future. By using the
-                    Platform, you acknowledge that advertisements will be displayed
-                    alongside content. These ads are served by third-party networks and
+                    KhelPediA may display advertisements through Google AdSense or other
+                    advertising partners once advertising services are enabled. By using the
+                    Platform, you acknowledge that advertisements may be displayed
+                    alongside content once advertising features are active. These ads are served by third-party networks and
                     are governed by their own terms and privacy policies.
                 </p>
             </section>

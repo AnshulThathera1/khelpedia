@@ -9,11 +9,15 @@ export async function generateMetadata({ params }) {
     const res = await query("SELECT ign, name FROM players WHERE slug = $1 LIMIT 1", [resolvedParams.slug]);
     const player = res.rows[0];
 
-    if (!player) return { title: "Player Not Found" };
+    if (!player) return { title: "Player Not Found | KhelPediA" };
+
+    const playerTitle = player.name && player.name !== player.ign 
+        ? `${player.ign} (${player.name}) — Player Profile & Stats`
+        : `${player.ign} — Player Profile & Stats`;
 
     return {
-        title: `${player.ign} (${player.name}) — Pro Player Profile`,
-        description: `View detailed esports statistics, career history, and team information for ${player.ign}.`,
+        title: playerTitle,
+        description: `View detailed esports statistics, career history, and team information for ${player.ign} on KhelPediA.`,
         alternates: {
             canonical: `/players/${resolvedParams.slug}`,
         },
