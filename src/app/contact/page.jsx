@@ -23,8 +23,8 @@ const contactMethods = [
             </svg>
         ),
         title: "Email Us",
-        detail: "contact@khelpedia.org",
-        href: "mailto:contact@khelpedia.org",
+        detail: "contact.khelpedia@gmail.com",
+        href: "mailto:contact.khelpedia@gmail.com",
         description: "For general inquiries, feedback, or content corrections.",
     },
     {
@@ -54,11 +54,11 @@ const contactMethods = [
 const faqItems = [
     {
         question: "How can I contribute articles to KhelPediA?",
-        answer: "We're always looking for passionate esports writers. Send us an email at contact@khelpedia.org with your writing samples and the titles you cover. We welcome tournament previews, match analyses, meta guides, and opinion pieces.",
+        answer: "We're always looking for passionate esports writers. Send us an email at contact.khelpedia@gmail.com with your writing samples and the titles you cover. We welcome tournament previews, match analyses, meta guides, and opinion pieces.",
     },
     {
         question: "I found incorrect data on a player or tournament page. How can I report it?",
-        answer: "Please email us at contact@khelpedia.org with the specific page URL and the correction. Our editorial team verifies all submissions and updates the data as quickly as possible.",
+        answer: "Please email us at contact.khelpedia@gmail.com with the specific page URL and the correction. Our editorial team verifies all submissions and updates the data as quickly as possible.",
     },
     {
         question: "Can I use KhelPediA data for my own content or research?",

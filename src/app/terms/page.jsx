@@ -184,10 +184,10 @@ export default function TermsOfServicePage() {
                     <p style={{ ...paragraphStyle, marginBottom: 0 }}>
                         You may revoke this authorization at any time by contacting us at{" "}
                         <a
-                            href="mailto:contact@khelpedia.org"
+                            href="mailto:contact.khelpedia@gmail.com"
                             style={{ color: "var(--accent-cyan)", textDecoration: "none" }}
                         >
-                            contact@khelpedia.org
+                            contact.khelpedia@gmail.com
                         </a>
                         .
                     </p>
@@ -376,10 +376,10 @@ export default function TermsOfServicePage() {
                     If you have any questions about these Terms of Service, please
                     contact us at{" "}
                     <a
-                        href="mailto:contact@khelpedia.org"
+                        href="mailto:contact.khelpedia@gmail.com"
                         style={{ color: "var(--accent-cyan)", textDecoration: "none" }}
                     >
-                        contact@khelpedia.org
+                        contact.khelpedia@gmail.com
                     </a>{" "}
                     or visit our{" "}
                     <Link

@@ -20,7 +20,7 @@ export default function CorrectionsPolicyPage() {
                     1. Reporting an Error
                 </h2>
                 <p style={{ marginBottom: "1.5rem" }}>
-                    If you spot an error—whether it's a factual inaccuracy in a news article, an incorrect match score, or an outdated team roster—we encourage our readers and the esports community to bring it to our attention. You can report errors by emailing us at <a href="mailto:contact@khelpedia.org" style={{ color: "var(--accent-cyan)", textDecoration: "none" }}>contact@khelpedia.org</a>. Please provide a link to the page and a brief description of the error.
+                    If you spot an error—whether it's a factual inaccuracy in a news article, an incorrect match score, or an outdated team roster—we encourage our readers and the esports community to bring it to our attention. You can report errors by emailing us at <a href="mailto:contact.khelpedia@gmail.com" style={{ color: "var(--accent-cyan)", textDecoration: "none" }}>contact.khelpedia@gmail.com</a>. Please provide a link to the page and a brief description of the error.
                 </p>
 
                 <h2 style={{ color: "var(--text-primary)", fontSize: "1.25rem", marginTop: "2rem", marginBottom: "1rem" }}>

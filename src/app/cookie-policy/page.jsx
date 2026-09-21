@@ -319,10 +319,10 @@ export default function CookiePolicyPage() {
                     </Link>{" "}
                     or email us at{" "}
                     <a
-                        href="mailto:contact@khelpedia.org"
+                        href="mailto:contact.khelpedia@gmail.com"
                         style={{ color: "var(--accent-cyan)", textDecoration: "none" }}
                     >
-                        contact@khelpedia.org
+                        contact.khelpedia@gmail.com
                     </a>
                     .
                 </p>

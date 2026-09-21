@@ -169,7 +169,7 @@ export default async function RootLayout({ children }) {
               description: 'The definitive esports encyclopedia — real-time tournament tracking, player analytics, team rankings, and original editorial content across all major competitive gaming titles.',
               contactPoint: {
                 '@type': 'ContactPoint',
-                email: 'contact@khelpedia.org',
+                email: 'contact.khelpedia@gmail.com',
                 contactType: 'customer service',
               },
               sameAs: [],

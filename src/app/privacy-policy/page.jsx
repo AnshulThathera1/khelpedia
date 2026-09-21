@@ -210,10 +210,10 @@ export default function PrivacyPolicyPage() {
                     <p style={{ ...paragraphStyle, marginBottom: 0 }}>
                         You can revoke this consent at any time by contacting us at{" "}
                         <a
-                            href="mailto:contact@khelpedia.org"
+                            href="mailto:contact.khelpedia@gmail.com"
                             style={{ color: "var(--accent-cyan)", textDecoration: "none" }}
                         >
-                            contact@khelpedia.org
+                            contact.khelpedia@gmail.com
                         </a>{" "}
                         or by disconnecting your Riot account from KhelPediA.
                     </p>
@@ -389,10 +389,10 @@ export default function PrivacyPolicyPage() {
                 <p style={paragraphStyle}>
                     To exercise any of these rights, please contact us at{" "}
                     <a
-                        href="mailto:contact@khelpedia.org"
+                        href="mailto:contact.khelpedia@gmail.com"
                         style={{ color: "var(--accent-cyan)", textDecoration: "none" }}
                     >
-                        contact@khelpedia.org
+                        contact.khelpedia@gmail.com
                     </a>
                     . We will respond to your request within 30 days.
                 </p>
@@ -444,10 +444,10 @@ export default function PrivacyPolicyPage() {
                     If you have any questions about this Privacy Policy, please contact
                     us at{" "}
                     <a
-                        href="mailto:contact@khelpedia.org"
+                        href="mailto:contact.khelpedia@gmail.com"
                         style={{ color: "var(--accent-cyan)", textDecoration: "none" }}
                     >
-                        contact@khelpedia.org
+                        contact.khelpedia@gmail.com
                     </a>{" "}
                     or visit our{" "}
                     <Link

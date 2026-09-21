@@ -291,10 +291,10 @@ export default function DisclaimerPage() {
                 <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: 1.7 }}>
                     If you have any questions or concerns, please reach out to us at{" "}
                     <a
-                        href="mailto:contact@khelpedia.org"
+                        href="mailto:contact.khelpedia@gmail.com"
                         style={{ color: "var(--accent-cyan)", textDecoration: "none" }}
                     >
-                        contact@khelpedia.org
+                        contact.khelpedia@gmail.com
                     </a>{" "}
                     or visit our{" "}
                     <Link
