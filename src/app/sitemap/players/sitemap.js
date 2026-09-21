@@ -5,7 +5,7 @@ export default async function sitemap() {
 
   try {
     const res = await query(`
-      SELECT p.id, p.slug, p.updated_at,
+      SELECT p.id, p.slug, p.created_at,
         (SELECT COUNT(*) FROM player_stats ps WHERE ps.player_id = p.id) AS stats_count
       FROM players p
       WHERE p.ign IS NOT NULL
@@ -16,7 +16,7 @@ export default async function sitemap() {
       .filter((player) => parseInt(player.stats_count, 10) > 0)
       .map((player) => ({
         url: `${baseUrl}/players/${player.slug || player.id}`,
-        lastModified: player.updated_at ? new Date(player.updated_at) : new Date(),
+        lastModified: player.created_at ? new Date(player.created_at) : new Date(),
         changeFrequency: 'weekly',
         priority: 0.6,
       }));

@@ -31,7 +31,14 @@ export async function fetchCargoData(tables, fields, options = {}) {
       throw new Error(`Failed to fetch from Cargo API: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // If server returned non-JSON HTML error/response
+      return [];
+    }
 
     if (data.error) {
       console.error("Cargo API Error:", data.error);
@@ -45,7 +52,7 @@ export async function fetchCargoData(tables, fields, options = {}) {
     // Map over results to extract 'title' object from each row
     return data.cargoquery.map(row => row.title);
   } catch (error) {
-    console.error("fetchCargoData error:", error);
+    console.error("fetchCargoData error:", error.message || error);
     return [];
   }
 }
