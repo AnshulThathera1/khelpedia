@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "data:ingest": "node scripts/run_ingestion.js",
+    "data:audit": "node scripts/data_audit.js"
   },
   "dependencies": {
     "@google/genai": "^2.7.0",
