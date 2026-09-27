@@ -126,9 +126,52 @@ RATE LIMIT ERRORS:    ${this.rateLimitErrors}
     }
   }
 
+  static info(source, message) {
+    console.log(`[INFO] [${source}] ${message}`);
+  }
+
+  static warn(source, message) {
+    console.warn(`[WARN] [${source}] ${message}`);
+  }
+
+  static error(source, message) {
+    console.error(`[ERROR] [${source}] ${message}`);
+  }
+
+  static async dispatchDiscordReport(data) {
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+    if (!webhookUrl) return;
+
+    try {
+      const payload = {
+        embeds: [
+          {
+            title: `⚙️ Ingestion Report: [${data.source}]`,
+            description: `\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``,
+            color: (data.errors || 0) === 0 ? 3066993 : 15158332,
+            timestamp: new Date().toISOString(),
+            footer: { text: "KhelPediA Data Ingestion Engine" }
+          }
+        ],
+        username: "KhelPediA Ingestion Bot"
+      };
+
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.error("⚠️ Discord notification error:", err.message || err);
+    }
+  }
+
   async printReport() {
     this.finish();
     console.log(this.getSummary());
     await this.sendDiscordNotification();
   }
 }
+
+export default IngestionLogger;
+

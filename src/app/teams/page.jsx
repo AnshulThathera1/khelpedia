@@ -1,16 +1,34 @@
 import { getTeams } from "@/lib/queries";
 import TeamCard from "../components/TeamCard";
+import Pagination from "../components/Pagination";
 
-export const metadata = {
-    title: "Esports Teams & Organizations",
-    description: "Browse professional esports teams and organizations competing in Valorant, CS2, BGMI, Dota 2, and more. View rosters, tournament history, and achievements.",
-    alternates: {
-        canonical: "/teams",
-    },
-};
+export async function generateMetadata({ searchParams }) {
+    const resolvedParams = await searchParams;
+    const page = parseInt(resolvedParams.page) || 1;
+    const isPaginated = page > 1;
 
-export default async function TeamsPage() {
-    const teams = await getTeams();
+    return {
+        title: "Esports Teams & Organizations",
+        description: "Browse professional esports teams and organizations competing in Valorant, CS2, BGMI, Dota 2, and more. View rosters, tournament history, and achievements.",
+        alternates: {
+            canonical: "/teams",
+        },
+        ...(isPaginated ? {
+            robots: {
+                index: false,
+                follow: true,
+            },
+        } : {}),
+    };
+}
+
+export default async function TeamsPage({ searchParams }) {
+    const resolvedParams = await searchParams;
+    const page = parseInt(resolvedParams.page) || 1;
+    const limit = 24;
+
+    const { teams, count } = await getTeams({ page, limit, paginate: true });
+    const totalPages = Math.ceil(count / limit);
 
     return (
         <div className="page-container">
@@ -32,6 +50,10 @@ export default async function TeamsPage() {
                     </p>
                 )}
             </div>
+
+            {totalPages > 1 && (
+                <Pagination currentPage={page} totalPages={totalPages} searchParams={resolvedParams} />
+            )}
         </div>
     );
 }

@@ -1,39 +1,46 @@
 import Link from "next/link";
 import Image from "next/image";
-import { query } from "@/lib/db";
+import { getBlogs } from "@/lib/queries";
+import Pagination from "../components/Pagination";
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
-    title: "Esports News, Analysis & Guides",
-    description: "Read the latest esports news, tournament previews, match analyses, meta guides, and in-depth team profiles. Original editorial content by the KhelPediA team.",
-    alternates: {
-        canonical: "/blogs",
-    },
-    openGraph: {
-        title: "Esports News & Analysis",
-        description: "Original esports journalism — tournament coverage, player profiles, patch analysis, and competitive gaming insights.",
-    },
-};
+export async function generateMetadata({ searchParams }) {
+    const resolvedParams = await searchParams;
+    const page = parseInt(resolvedParams.page) || 1;
+    const isPaginated = page > 1;
 
-export default async function BlogsIndexPage() {
-    let blogs = [];
-    try {
-        const blogsRes = await query(`
-            SELECT b.id, b.title, b.slug, b.excerpt, b.cover_image_url, b.created_at, b.author_id,
-              CASE WHEN p.id IS NOT NULL THEN json_build_object('id', p.id, 'display_name', p.display_name, 'avatar_url', p.avatar_url) ELSE NULL END AS profiles
-            FROM blogs b
-            LEFT JOIN profiles p ON b.author_id = p.id
-            WHERE b.is_published = true
-            ORDER BY b.created_at DESC
-        `);
-        blogs = blogsRes.rows || [];
-    } catch (error) {
-        console.error("Error fetching blogs:", error);
-    }
+    return {
+        title: "Esports News, Analysis & Guides",
+        description: "Read the latest esports news, tournament previews, match analyses, meta guides, and in-depth team profiles. Original editorial content by the KhelPediA team.",
+        alternates: {
+            canonical: "/blogs",
+        },
+        ...(isPaginated ? {
+            robots: {
+                index: false,
+                follow: true,
+            },
+        } : {}),
+        openGraph: {
+            title: "Esports News & Analysis",
+            description: "Original esports journalism — tournament coverage, player profiles, patch analysis, and competitive gaming insights.",
+        },
+    };
+}
 
-    const featuredBlog = blogs.length > 0 ? blogs[0] : null;
-    const remainingBlogs = blogs.length > 1 ? blogs.slice(1) : [];
+export default async function BlogsIndexPage({ searchParams }) {
+    const resolvedParams = await searchParams;
+    const page = parseInt(resolvedParams.page) || 1;
+    const limit = 12; // 1 featured + 11 regular per page, or 12 regular
+    
+    const { blogs, count } = await getBlogs({ page, limit, paginate: true });
+    const totalPages = Math.ceil(count / limit);
+
+    // Only show the massive featured blog block on page 1
+    const showFeatured = page === 1 && blogs.length > 0;
+    const featuredBlog = showFeatured ? blogs[0] : null;
+    const remainingBlogs = showFeatured ? blogs.slice(1) : blogs;
 
     return (
         <div className="page-container">
@@ -191,6 +198,12 @@ export default async function BlogsIndexPage() {
                     <span style={{ fontSize: "3rem", display: "block", marginBottom: "1rem" }}>📰</span>
                     <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>No Articles Published Yet</h3>
                     <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>Check back later for the latest esports news, tournament previews, and analysis.</p>
+                </div>
+            )}
+
+            {totalPages > 1 && (
+                <div style={{ marginTop: "3rem" }}>
+                    <Pagination currentPage={page} totalPages={totalPages} searchParams={resolvedParams} />
                 </div>
             )}
 

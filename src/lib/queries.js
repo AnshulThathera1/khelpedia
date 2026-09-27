@@ -170,28 +170,29 @@ export async function getMatchesByGame(gameId, limit = 20) {
 
 // ======================== PLAYERS ========================
 export async function getPlayers(filters = {}) {
+  const { page = 1, limit = 24, paginate = false, search, country, teamId } = filters;
   try {
     const whereConditions = [];
     const params = [];
     let paramIndex = 1;
 
-    if (filters.teamId) {
+    if (teamId) {
       whereConditions.push(`p.team_id = $${paramIndex++}`);
-      params.push(filters.teamId);
+      params.push(teamId);
     }
-    if (filters.country) {
+    if (country) {
       whereConditions.push(`p.country = $${paramIndex++}`);
-      params.push(filters.country);
+      params.push(country);
     }
-    if (filters.search) {
+    if (search) {
       whereConditions.push(`(p.ign ILIKE $${paramIndex} OR p.name ILIKE $${paramIndex})`);
-      params.push(`%${filters.search}%`);
+      params.push(`%${search}%`);
       paramIndex++;
     }
 
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
-    const sql = `
+    const baseSql = `
       SELECT p.*,
         CASE WHEN tm.id IS NOT NULL THEN json_build_object('name', tm.name, 'slug', tm.slug, 'logo_url', tm.logo_url) ELSE NULL END AS teams
       FROM players p
@@ -199,7 +200,19 @@ export async function getPlayers(filters = {}) {
       ${whereClause}
       ORDER BY p.earnings DESC NULLS LAST
     `;
-    const res = await query(sql, params);
+
+    if (paginate) {
+      const countRes = await query(`SELECT COUNT(*) FROM players p ${whereClause}`, params);
+      const totalCount = parseInt(countRes.rows[0].count, 10) || 0;
+      
+      const offset = (page - 1) * limit;
+      const sql = `${baseSql} LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+      const dataRes = await query(sql, [...params, limit, offset]);
+      
+      return { players: dataRes.rows || [], count: totalCount };
+    }
+
+    const res = await query(baseSql, params);
     return res.rows || [];
   } catch (error) {
     console.error("Error fetching players:", error);
@@ -244,21 +257,34 @@ export async function getPlayerStats(playerId) {
 
 // ======================== TEAMS ========================
 export async function getTeams(filters = {}) {
+  const { page = 1, limit = 24, paginate = false, search, region } = filters;
   try {
     const whereConditions = [];
     const params = [];
     let paramIndex = 1;
 
-    if (filters.region) {
+    if (region) {
       whereConditions.push(`region = $${paramIndex++}`);
-      params.push(filters.region);
+      params.push(region);
     }
-    if (filters.search) {
+    if (search) {
       whereConditions.push(`name ILIKE $${paramIndex++}`);
-      params.push(`%${filters.search}%`);
+      params.push(`%${search}%`);
     }
 
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+    if (paginate) {
+      const countRes = await query(`SELECT COUNT(*) FROM teams ${whereClause}`, params);
+      const totalCount = parseInt(countRes.rows[0].count, 10) || 0;
+      
+      const offset = (page - 1) * limit;
+      const sql = `SELECT * FROM teams ${whereClause} ORDER BY name ASC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+      const dataRes = await query(sql, [...params, limit, offset]);
+      
+      return { teams: dataRes.rows || [], count: totalCount };
+    }
+
     const sql = `SELECT * FROM teams ${whereClause} ORDER BY name ASC`;
     const res = await query(sql, params);
     return res.rows || [];
@@ -386,5 +412,53 @@ export async function searchAll(queryStr) {
   } catch (error) {
     console.error("Error in searchAll:", error);
     return { players: [], teams: [], news: [] };
+  }
+}
+
+// ======================== BLOGS ========================
+export async function getBlogs(filters = {}) {
+  const { page = 1, limit = 12, paginate = false, search, category } = filters;
+  try {
+    const whereConditions = ['b.is_published = true'];
+    const params = [];
+    let paramIndex = 1;
+
+    if (category) {
+      whereConditions.push(`b.category = $${paramIndex++}`);
+      params.push(category);
+    }
+    if (search) {
+      whereConditions.push(`b.title ILIKE $${paramIndex++}`);
+      params.push(`%${search}%`);
+    }
+
+    const whereClause = `WHERE ${whereConditions.join(' AND ')}`;
+
+    const baseSql = `
+      SELECT b.id, b.title, b.slug, b.excerpt, b.cover_image_url, b.created_at, b.author_id,
+        CASE WHEN p.id IS NOT NULL THEN json_build_object('id', p.id, 'display_name', p.display_name, 'avatar_url', p.avatar_url) ELSE NULL END AS profiles
+      FROM blogs b
+      LEFT JOIN profiles p ON b.author_id = p.id
+      ${whereClause}
+      ORDER BY b.created_at DESC
+    `;
+
+    if (paginate) {
+      const countRes = await query(`SELECT COUNT(*) FROM blogs b ${whereClause}`, params);
+      const totalCount = parseInt(countRes.rows[0].count, 10) || 0;
+      
+      const offset = (page - 1) * limit;
+      const sql = `${baseSql} LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+      const dataRes = await query(sql, [...params, limit, offset]);
+      
+      return { blogs: dataRes.rows || [], count: totalCount };
+    }
+
+    const res = await query(baseSql, params);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
+    if (paginate) return { blogs: [], count: 0 };
+    return [];
   }
 }

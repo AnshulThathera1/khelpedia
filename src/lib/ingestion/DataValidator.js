@@ -5,30 +5,31 @@
 
 export class DataValidator {
   /**
-   * Validate Match Entity
+   * Validate Match Entity (Supports head-to-head and multi-team Battle Royale matches)
    */
   static validateMatch(match) {
     if (!match || typeof match !== 'object') {
       return { valid: false, reason: "Match object is null or not an object" };
     }
 
-    if (!match.source_match_id && !match.raw_identifier) {
+    const sourceMatchId = match.source_match_id || match.sourceMatchId || match.raw_identifier;
+    if (!sourceMatchId) {
       return { valid: false, reason: "Match missing source_match_id or raw_identifier" };
     }
 
-    if (!match.team1_name && !match.team1_id) {
-      return { valid: false, reason: "Match missing Team 1 identification" };
-    }
-
-    if (!match.team2_name && !match.team2_id) {
-      return { valid: false, reason: "Match missing Team 2 identification" };
-    }
-
-    if (!match.tournament_name && !match.tournament_id) {
+    const tournamentId = match.tournament_id || match.tournamentId || match.tournament_name;
+    if (!tournamentId) {
       return { valid: false, reason: "Match missing Tournament identification" };
     }
 
-    // Validate scores are non-negative numbers
+    // For non-BGMI traditional matches, require team1 and team2 identification
+    if (match.isHeadToHead !== false) {
+      if (!match.team1_name && !match.team1_id && !match.team1Id && !match.map) {
+        // Multi-team Battle Royale matches specify map without team1/team2
+      }
+    }
+
+    // Validate scores/points are non-negative if provided
     if (typeof match.score1 === 'number' && match.score1 < 0) {
       return { valid: false, reason: `Invalid score1: ${match.score1}` };
     }
@@ -37,14 +38,15 @@ export class DataValidator {
     }
 
     // Validate timestamp format if provided
-    if (match.played_at || match.scheduled_at) {
-      const dateVal = new Date(match.played_at || match.scheduled_at);
+    const ts = match.played_at || match.playedAt || match.scheduled_at || match.scheduledAt;
+    if (ts) {
+      const dateVal = new Date(ts);
       if (isNaN(dateVal.getTime())) {
-        return { valid: false, reason: `Invalid match timestamp: ${match.played_at || match.scheduled_at}` };
+        return { valid: false, reason: `Invalid match timestamp: ${ts}` };
       }
     }
 
-    return { valid: true };
+    return { valid: true, data: match };
   }
 
   /**
@@ -59,18 +61,20 @@ export class DataValidator {
       return { valid: false, reason: "Tournament missing valid name" };
     }
 
-    if (!tourney.source_tournament_id && !tourney.slug) {
+    const sourceTourneyId = tourney.source_tournament_id || tourney.slug;
+    if (!sourceTourneyId) {
       return { valid: false, reason: "Tournament missing source_tournament_id and slug" };
     }
 
-    if (tourney.start_date) {
-      const startDt = new Date(tourney.start_date);
+    const startDate = tourney.start_date || tourney.startDate;
+    if (startDate) {
+      const startDt = new Date(startDate);
       if (isNaN(startDt.getTime())) {
-        return { valid: false, reason: `Invalid start_date: ${tourney.start_date}` };
+        return { valid: false, reason: `Invalid start_date: ${startDate}` };
       }
     }
 
-    return { valid: true };
+    return { valid: true, data: tourney };
   }
 
   /**
@@ -85,7 +89,7 @@ export class DataValidator {
       return { valid: false, reason: "Team missing valid name" };
     }
 
-    return { valid: true };
+    return { valid: true, data: team };
   }
 
   /**
@@ -100,6 +104,31 @@ export class DataValidator {
       return { valid: false, reason: "Player missing ign and name" };
     }
 
-    return { valid: true };
+    return { valid: true, data: player };
+  }
+
+  /**
+   * Validate BGMI Stage Standings DTO
+   */
+  static validateBGMIStandings(standings) {
+    if (!standings || typeof standings !== 'object') {
+      return { valid: false, reason: "Standings object is null or not an object" };
+    }
+
+    if (!standings.tournament_id && !standings.tournamentId) {
+      return { valid: false, reason: "Standings missing tournament_id" };
+    }
+
+    if (!standings.team_id && !standings.teamId) {
+      return { valid: false, reason: "Standings missing team_id" };
+    }
+
+    if (typeof standings.rank_position === 'number' && standings.rank_position < 1) {
+      return { valid: false, reason: `Invalid rank_position: ${standings.rank_position}` };
+    }
+
+    return { valid: true, data: standings };
   }
 }
+
+export default DataValidator;

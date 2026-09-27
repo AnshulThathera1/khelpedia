@@ -20,11 +20,9 @@ export async function generateMetadata({ params }) {
     const description = `Follow ${tournament.name} on KhelPediA. Track participating teams, live match results, standings, prize pool, and full tournament schedule for this premier ${gameName} event.`;
     const images = tournament.games?.icon_url ? [tournament.games.icon_url] : [];
 
-    const hasEditorial = tournament.editorial_content && tournament.editorial_content.trim().length > 50;
-    const hasTeams = teams.length > 0;
-    const hasMatches = matches.length > 0;
-    
-    const isThin = !(hasEditorial || (hasTeams && hasMatches));
+    const { checkTournamentIndexable } = await import("@/lib/seo");
+    const isIndexable = await checkTournamentIndexable(id);
+    const isThin = !isIndexable;
 
     return { 
         title: pageTitle, 
