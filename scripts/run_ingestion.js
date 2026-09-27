@@ -11,7 +11,18 @@ import { LiquipediaEngine } from '../src/lib/ingestion/engines/LiquipediaEngine.
 import { VLRCompliancePolicy } from '../src/lib/ingestion/engines/VLRCompliancePolicy.js';
 import ESportsAmazeEngine from '../src/lib/ingestion/engines/ESportsAmazeEngine.js';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+import fs from 'fs';
+
+const envLocalPath = path.resolve(process.cwd(), '.env.local');
+const envPath = path.resolve(process.cwd(), '.env');
+
+if (fs.existsSync(envLocalPath)) {
+    dotenv.config({ path: envLocalPath });
+} else if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+} else {
+    dotenv.config(); // fallback
+}
 
 // Parse CLI arguments
 const args = process.argv.slice(2);
