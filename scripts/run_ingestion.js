@@ -3,15 +3,9 @@
  * Command: node scripts/run_ingestion.js [engine_name] [--slug=tournament_slug]
  */
 
-import dotenv from 'dotenv';
-import path from 'path';
-import { PandaScoreEngine } from '../src/lib/ingestion/engines/PandaScoreEngine.js';
-import { OpenDotaEngine } from '../src/lib/ingestion/engines/OpenDotaEngine.js';
-import { LiquipediaEngine } from '../src/lib/ingestion/engines/LiquipediaEngine.js';
-import { VLRCompliancePolicy } from '../src/lib/ingestion/engines/VLRCompliancePolicy.js';
-import ESportsAmazeEngine from '../src/lib/ingestion/engines/ESportsAmazeEngine.js';
-
 import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
 
 const envLocalPath = path.resolve(process.cwd(), '.env.local');
 const envPath = path.resolve(process.cwd(), '.env');
@@ -42,6 +36,13 @@ async function runIngestion() {
   console.log(`Target Engine: ${targetEngine || 'ALL ENGINES'}`);
   if (slugArg) console.log(`Slug Filter: ${slugArg}`);
   console.log("==================================================\n");
+
+  const { VLRCompliancePolicy } = await import('../src/lib/ingestion/engines/VLRCompliancePolicy.js');
+  const { PandaScoreEngine } = await import('../src/lib/ingestion/engines/PandaScoreEngine.js');
+  const { OpenDotaEngine } = await import('../src/lib/ingestion/engines/OpenDotaEngine.js');
+  const { LiquipediaEngine } = await import('../src/lib/ingestion/engines/LiquipediaEngine.js');
+  const ESportsAmazeEngineModule = await import('../src/lib/ingestion/engines/ESportsAmazeEngine.js');
+  const ESportsAmazeEngine = ESportsAmazeEngineModule.default;
 
   // 1. Compliance check
   VLRCompliancePolicy.checkCompliance();
