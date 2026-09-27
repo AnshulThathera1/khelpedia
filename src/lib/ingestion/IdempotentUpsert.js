@@ -174,7 +174,11 @@ export class IdempotentUpsert {
     const played_at = matchData.played_at || matchData.playedAt || null;
     const raw_payload = matchData.raw_payload || matchData;
 
-    const sourceIdStr = source_match_id ? String(source_match_id) : null;
+    source = source || matchData.source || null;
+    const finalSourceMatchId = source_match_id || matchData.source_match_id || null;
+    source_url = source_url || matchData.source_url || null;
+
+    const sourceIdStr = finalSourceMatchId ? String(finalSourceMatchId) : null;
 
     if (source && sourceIdStr) {
       const existingMatchId = await this.findEntityBySource(source, sourceIdStr, 'match');
