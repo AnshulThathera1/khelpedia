@@ -122,7 +122,7 @@ export async function generateAIBlog() {
     Format your response STRICTLY as a JSON object with the following keys. DO NOT wrap in markdown backticks:
     - "title": A catchy, SEO-optimized title (60-70 characters ideal)
     - "excerpt": A compelling 2-3 sentence summary (150-160 characters ideal for meta description)
-    - "content": The full HTML content using <h2>, <p>, <ul>, <li>, <strong>, <a>, <blockquote> tags. Do NOT use <h1>.
+    - "content": The full HTML content using <h2>, <p>, <ul>, <li>, <strong>, <a>, <blockquote> tags. Do NOT use <h1>. IMPORTANT: Escape all double quotes inside the string (e.g. \\") or use single quotes.
     - "category": One of: "news", "analysis", "guide", "preview", "opinion"
     `;
 

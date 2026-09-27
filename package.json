@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "data:ingest": "node scripts/run_ingestion.js",
-    "data:audit": "node scripts/data_audit.js"
+    "data:audit": "node scripts/data_audit.js",
+    "data:audit:esportsamaze": "node scripts/data_audit_esportsamaze.js"
   },
   "dependencies": {
     "@google/genai": "^2.7.0",
@@ -24,7 +25,8 @@
     "react-dom": "19.1.0",
     "resend": "^6.9.3",
     "rss-parser": "^3.13.0",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
