@@ -12,31 +12,31 @@ export async function generateMetadata({ params }) {
         getTournamentMatches(id)
     ]);
     
-    if (!tournament) return { title: "Tournament Not Found" };
+    if (!tournament) return { title: "Tournament Not Found | KhelPediA" };
 
     const gameName = tournament.games?.name || "Esports";
-    const title = `${tournament.name} — ${gameName} Tournament`;
-    const description = `Complete coverage of ${tournament.name}. Track participating teams, live match results, tournament brackets, prize pool, and format for this ${gameName} event on KhelPediA.`;
+    const title = `${tournament.name} — Results, Matches, Teams & Standings | KhelPediA`;
+    const description = `Follow ${tournament.name} on KhelPediA. Track participating teams, live match results, standings, prize pool, and full tournament schedule for this premier ${gameName} event.`;
     const images = tournament.games?.icon_url ? [tournament.games.icon_url] : [];
 
     const hasEditorial = tournament.editorial_content && tournament.editorial_content.trim().length > 50;
     const hasTeams = teams.length > 0;
     const hasMatches = matches.length > 0;
     
-    // Only index pages that have a meaningful description OR both teams and schedule/results
     const isThin = !(hasEditorial || (hasTeams && hasMatches));
 
     return { 
         title, 
         description,
         alternates: {
-            canonical: `/tournaments/${id}`,
+            canonical: `https://khelpedia.org/tournaments/${id}`,
         },
         robots: isThin ? { index: false, follow: true } : { index: true, follow: true },
         openGraph: {
             title,
             description,
             type: "website",
+            url: `https://khelpedia.org/tournaments/${id}`,
             images: images,
         },
         twitter: {
@@ -89,38 +89,40 @@ export default async function TournamentDetailPage({ params }) {
     const gameName = tournament.games?.name || "Unknown";
     const gameSlug = tournament.games?.slug;
 
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'Event',
-        name: tournament.name,
-        startDate: tournament.start_date,
-        endDate: tournament.end_date,
-        eventStatus: tournament.status === 'live' ? "https://schema.org/EventMovedOnline" : "https://schema.org/EventScheduled",
-        eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
-        location: {
-            '@type': 'VirtualLocation',
-            url: `https://khelpedia.org/tournaments/${tournament.id}`
-        },
-        image: tournament.games?.icon_url ? [tournament.games.icon_url] : [],
-        description: `Follow ${tournament.name} live on KhelPediA. Track teams, matches, and results for this ${gameName} tournament.`,
-        organizer: {
-            '@type': 'Organization',
-            name: 'KhelPediA',
-            url: 'https://khelpedia.org'
-        },
-        offers: tournament.prize_pool ? {
-            '@type': 'Offer',
-            price: tournament.prize_pool,
-            priceCurrency: tournament.currency || 'USD',
-        } : undefined,
-    };
+    let jsonLd = null;
+    if (tournament.start_date) {
+        jsonLd = {
+            '@context': 'https://schema.org',
+            '@type': 'Event',
+            name: tournament.name,
+            startDate: tournament.start_date,
+            ...(tournament.end_date && { endDate: tournament.end_date }),
+            eventStatus: tournament.status === 'live' ? "https://schema.org/EventMovedOnline" : "https://schema.org/EventScheduled",
+            eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
+            location: {
+                '@type': 'VirtualLocation',
+                url: `https://khelpedia.org/tournaments/${tournament.id}`
+            },
+            image: tournament.games?.icon_url ? [tournament.games.icon_url] : [],
+            description: `Follow ${tournament.name} live on KhelPediA. Track teams, matches, and results for this ${gameName} tournament.`,
+            ...(tournament.prize_pool && {
+                offers: {
+                    '@type': 'Offer',
+                    price: tournament.prize_pool,
+                    priceCurrency: tournament.currency || 'USD',
+                }
+            })
+        };
+    }
 
     return (
         <div className="page-container">
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
+            {jsonLd && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+            )}
 
             {/* Tournament Header */}
             <div className="glass-card" style={{ padding: "3rem 2rem", marginBottom: "3rem", borderTop: "4px solid var(--accent-cyan)" }}>

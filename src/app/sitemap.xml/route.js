@@ -11,13 +11,14 @@ export async function GET() {
     'teams'
   ];
 
+  const today = new Date().toISOString().split('T')[0];
   const sitemapIndexXML = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${sitemaps
   .map(
     (name) => `  <sitemap>
     <loc>${baseUrl}/sitemap/${name}/sitemap.xml</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
+    <lastmod>${today}</lastmod>
   </sitemap>`
   )
   .join('\n')}

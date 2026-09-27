@@ -21,12 +21,25 @@ export async function generateMetadata({ params }) {
     const isThin = !(hasEditorial || (hasRoster && hasTournaments));
 
     return {
-        title: `${team.name} — Esports Team Profile`,
-        description: `Roster, tournament history, and results for ${team.name}. View current players, recent placements, and team achievements.`,
+        title: `${team.name} — Roster, Matches, Results & Statistics | KhelPediA`,
+        description: `Follow ${team.name} esports team on KhelPediA. View current active roster, match results, tournament placements, and team statistics.`,
         alternates: {
-            canonical: `/teams/${id}`,
+            canonical: `https://khelpedia.org/teams/${id}`,
         },
         robots: isThin ? { index: false, follow: true } : { index: true, follow: true },
+        openGraph: {
+            title: `${team.name} — Roster, Matches, Results & Statistics | KhelPediA`,
+            description: `Follow ${team.name} esports team on KhelPediA. View current active roster, match results, tournament placements, and team statistics.`,
+            type: "website",
+            url: `https://khelpedia.org/teams/${id}`,
+            images: team.logo_url ? [team.logo_url] : [],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: `${team.name} — Roster, Matches, Results & Statistics | KhelPediA`,
+            description: `Follow ${team.name} esports team on KhelPediA. View current active roster, match results, tournament placements, and team statistics.`,
+            images: team.logo_url ? [team.logo_url] : [],
+        }
     };
 }
 
@@ -49,8 +62,8 @@ export default async function TeamDetailPage({ params }) {
         name: team.name,
         sport: 'Esports',
         url: `https://khelpedia.org/teams/${team.id}`,
-        logo: team.logo_url || '',
-        description: team.description || `Roster and results for ${team.name}.`
+        ...(team.logo_url && { logo: team.logo_url }),
+        description: team.description || `Roster and results for ${team.name} esports team.`
     };
 
     return (
@@ -74,7 +87,7 @@ export default async function TeamDetailPage({ params }) {
                     </span>
                 </div>
 
-                <h1 className="page-title">{team.name}</h1>
+                <h1 className="page-title">{team.name} Esports Team</h1>
 
                 <div style={{ display: "flex", gap: "1.5rem", justifyContent: "center", marginTop: "1rem" }}>
                     <span className="badge" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border-color)" }}>🌍 {team.region || "Global"}</span>

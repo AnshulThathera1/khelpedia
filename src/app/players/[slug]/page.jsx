@@ -6,21 +6,37 @@ import Link from "next/link";
 export async function generateMetadata({ params }) {
     const resolvedParams = await params;
 
-    const res = await query("SELECT ign, name FROM players WHERE slug = $1 LIMIT 1", [resolvedParams.slug]);
+    const res = await query("SELECT ign, name, image_url FROM players WHERE slug = $1 LIMIT 1", [resolvedParams.slug]);
     const player = res.rows[0];
 
     if (!player) return { title: "Player Not Found | KhelPediA" };
 
     const playerTitle = player.name && player.name !== player.ign 
-        ? `${player.ign} (${player.name}) — Player Profile & Stats`
-        : `${player.ign} — Player Profile & Stats`;
+        ? `${player.ign} (${player.name}) — Matches, Teams, Statistics & Esports Profile | KhelPediA`
+        : `${player.ign} — Matches, Teams, Statistics & Esports Profile | KhelPediA`;
+        
+    const description = `View detailed esports statistics, career history, match results, and team information for ${player.ign} on KhelPediA.`;
+    const images = player.image_url ? [player.image_url] : [];
 
     return {
         title: playerTitle,
-        description: `View detailed esports statistics, career history, and team information for ${player.ign} on KhelPediA.`,
+        description,
         alternates: {
-            canonical: `/players/${resolvedParams.slug}`,
+            canonical: `https://khelpedia.org/players/${resolvedParams.slug}`,
         },
+        openGraph: {
+            title: playerTitle,
+            description,
+            type: "profile",
+            url: `https://khelpedia.org/players/${resolvedParams.slug}`,
+            images,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: playerTitle,
+            description,
+            images,
+        }
     };
 }
 
@@ -78,7 +94,7 @@ export default async function PlayerProfilePage({ params }) {
         name: playerRealName || playerDisplayName,
         alternateName: player.ign,
         jobTitle: 'Esports Player',
-        image: player.image_url || '',
+        ...(player.image_url && { image: player.image_url }),
         url: `https://khelpedia.org/players/${player.slug}`,
         memberOf: player.teams ? {
             '@type': 'SportsTeam',
@@ -88,10 +104,12 @@ export default async function PlayerProfilePage({ params }) {
 
     return (
         <div className="page-container" style={{ maxWidth: "1000px" }}>
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
+            {jsonLd && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+            )}
 
             {/* Breadcrumbs */}
             <div style={{ marginBottom: "2rem" }}>
@@ -119,7 +137,7 @@ export default async function PlayerProfilePage({ params }) {
                 <div style={{ flex: 1, minWidth: "300px", position: "relative", zIndex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.5rem" }}>
                         <h1 style={{ fontSize: "3.5rem", fontWeight: 800, color: "var(--text-primary)", margin: 0, lineHeight: 1, fontFamily: '"Rajdhani", sans-serif', textTransform: "uppercase" }}>
-                            {playerDisplayName}
+                            {playerDisplayName} Esports Profile
                         </h1>
                         {/* Country Flag */}
                         {player.country && (
