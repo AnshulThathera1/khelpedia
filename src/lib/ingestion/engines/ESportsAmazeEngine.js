@@ -61,7 +61,7 @@ export default class ESportsAmazeEngine extends BaseFetcher {
         const tournamentPayload = {
           name: this.formatTournamentName(slug),
           slug: slug,
-          game: 'BGMI',
+          game_id: '01dae6b9-7e1a-4a70-a452-648e441e2ca2',
           region: 'IN',
           status: 'completed'
         };
