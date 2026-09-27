@@ -11,21 +11,22 @@ export async function generateMetadata({ params }) {
 
     if (!player) return { title: "Player Not Found | KhelPediA" };
 
-    const playerTitle = player.name && player.name !== player.ign 
-        ? `${player.ign} (${player.name}) — Matches, Teams, Statistics & Esports Profile | KhelPediA`
-        : `${player.ign} — Matches, Teams, Statistics & Esports Profile | KhelPediA`;
+    const pageTitle = player.name && player.name !== player.ign 
+        ? `${player.ign} (${player.name}) — Matches, Teams, Statistics & Esports Profile`
+        : `${player.ign} — Matches, Teams, Statistics & Esports Profile`;
         
+    const fullTitle = `${pageTitle} | KhelPediA`;
     const description = `View detailed esports statistics, career history, match results, and team information for ${player.ign} on KhelPediA.`;
     const images = player.image_url ? [player.image_url] : [];
 
     return {
-        title: playerTitle,
+        title: pageTitle,
         description,
         alternates: {
             canonical: `https://khelpedia.org/players/${resolvedParams.slug}`,
         },
         openGraph: {
-            title: playerTitle,
+            title: fullTitle,
             description,
             type: "profile",
             url: `https://khelpedia.org/players/${resolvedParams.slug}`,
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }) {
         },
         twitter: {
             card: "summary_large_image",
-            title: playerTitle,
+            title: fullTitle,
             description,
             images,
         }

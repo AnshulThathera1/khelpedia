@@ -9,18 +9,19 @@ export async function generateMetadata({ params }) {
   const game = await getGameBySlug(slug);
   if (!game) return { title: "Game Not Found | KhelPediA" };
   
-  const title = `${game.name} Esports — News, Tournaments, Teams, Players & Results | KhelPediA`;
+  const pageTitle = `${game.name} Esports — News, Tournaments, Teams, Players & Results`;
+  const fullTitle = `${pageTitle} | KhelPediA`;
   const description = `Track live ${game.name} tournaments, recent match results, upcoming schedules, roster transfers, and player stats on KhelPediA.`;
   const images = game.icon_url ? [game.icon_url] : [];
 
   return { 
-    title, 
+    title: pageTitle, 
     description,
     alternates: {
       canonical: `https://khelpedia.org/games/${slug}`,
     },
     openGraph: {
-        title,
+        title: fullTitle,
         description,
         type: "website",
         url: `https://khelpedia.org/games/${slug}`,
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
         card: "summary_large_image",
-        title,
+        title: fullTitle,
         description,
         images,
     }

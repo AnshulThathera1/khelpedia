@@ -22,15 +22,19 @@ export async function generateMetadata({ params }) {
 
     const images = blog.cover_image_url ? [blog.cover_image_url] : [];
 
+    const pageTitle = blog.title;
+    const fullTitle = `${blog.title} | KhelPediA`;
+    const description = blog.excerpt;
+
     return {
-        title: `${blog.title} | KhelPediA`,
-        description: blog.excerpt,
+        title: pageTitle,
+        description: description,
         alternates: {
             canonical: `https://khelpedia.org/blogs/${resolvedParams.slug}`,
         },
         openGraph: {
-            title: `${blog.title} | KhelPediA`,
-            description: blog.excerpt,
+            title: fullTitle,
+            description: description,
             type: "article",
             url: `https://khelpedia.org/blogs/${resolvedParams.slug}`,
             images: images,
@@ -40,8 +44,8 @@ export async function generateMetadata({ params }) {
         },
         twitter: {
             card: "summary_large_image",
-            title: `${blog.title} | KhelPediA`,
-            description: blog.excerpt,
+            title: fullTitle,
+            description: description,
             images: images,
         }
     };

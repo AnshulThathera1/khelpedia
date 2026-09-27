@@ -20,24 +20,28 @@ export async function generateMetadata({ params }) {
     // Only index pages that have a meaningful description OR both active roster and recent tournaments
     const isThin = !(hasEditorial || (hasRoster && hasTournaments));
 
+    const pageTitle = `${team.name} — Roster, Matches, Results & Statistics`;
+    const fullTitle = `${pageTitle} | KhelPediA`;
+    const description = `Follow ${team.name} esports team on KhelPediA. View current active roster, match results, tournament placements, and team statistics.`;
+
     return {
-        title: `${team.name} — Roster, Matches, Results & Statistics | KhelPediA`,
-        description: `Follow ${team.name} esports team on KhelPediA. View current active roster, match results, tournament placements, and team statistics.`,
+        title: pageTitle,
+        description,
         alternates: {
             canonical: `https://khelpedia.org/teams/${id}`,
         },
         robots: isThin ? { index: false, follow: true } : { index: true, follow: true },
         openGraph: {
-            title: `${team.name} — Roster, Matches, Results & Statistics | KhelPediA`,
-            description: `Follow ${team.name} esports team on KhelPediA. View current active roster, match results, tournament placements, and team statistics.`,
+            title: fullTitle,
+            description,
             type: "website",
             url: `https://khelpedia.org/teams/${id}`,
             images: team.logo_url ? [team.logo_url] : [],
         },
         twitter: {
             card: "summary_large_image",
-            title: `${team.name} — Roster, Matches, Results & Statistics | KhelPediA`,
-            description: `Follow ${team.name} esports team on KhelPediA. View current active roster, match results, tournament placements, and team statistics.`,
+            title: fullTitle,
+            description,
             images: team.logo_url ? [team.logo_url] : [],
         }
     };

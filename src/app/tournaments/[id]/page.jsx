@@ -15,7 +15,8 @@ export async function generateMetadata({ params }) {
     if (!tournament) return { title: "Tournament Not Found | KhelPediA" };
 
     const gameName = tournament.games?.name || "Esports";
-    const title = `${tournament.name} — Results, Matches, Teams & Standings | KhelPediA`;
+    const pageTitle = `${tournament.name} — Results, Matches, Teams & Standings`;
+    const fullTitle = `${pageTitle} | KhelPediA`;
     const description = `Follow ${tournament.name} on KhelPediA. Track participating teams, live match results, standings, prize pool, and full tournament schedule for this premier ${gameName} event.`;
     const images = tournament.games?.icon_url ? [tournament.games.icon_url] : [];
 
@@ -26,14 +27,14 @@ export async function generateMetadata({ params }) {
     const isThin = !(hasEditorial || (hasTeams && hasMatches));
 
     return { 
-        title, 
+        title: pageTitle, 
         description,
         alternates: {
             canonical: `https://khelpedia.org/tournaments/${id}`,
         },
         robots: isThin ? { index: false, follow: true } : { index: true, follow: true },
         openGraph: {
-            title,
+            title: fullTitle,
             description,
             type: "website",
             url: `https://khelpedia.org/tournaments/${id}`,
@@ -41,7 +42,7 @@ export async function generateMetadata({ params }) {
         },
         twitter: {
             card: "summary_large_image",
-            title,
+            title: fullTitle,
             description,
             images: images,
         }
