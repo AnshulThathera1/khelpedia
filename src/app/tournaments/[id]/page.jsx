@@ -1,4 +1,6 @@
-import { getTournamentById, getTournamentTeams, getTournamentMatches } from "@/lib/queries";
+import { getTournamentById, getTournamentTeams, getTournamentMatches, getTournamentStats } from "@/lib/queries";
+import TournamentStatsWidget from "@/app/components/TournamentStatsWidget";
+import AdContainer from "@/app/components/ads/AdContainer";
 import { query } from "@/lib/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -50,10 +52,11 @@ export async function generateMetadata({ params }) {
 export default async function TournamentDetailPage({ params }) {
     const { id } = await params;
 
-    const [tournament, teams, matches] = await Promise.all([
+    const [tournament, teams, matches, stats] = await Promise.all([
         getTournamentById(id),
         getTournamentTeams(id),
-        getTournamentMatches(id)
+        getTournamentMatches(id),
+        getTournamentStats(id)
     ]);
 
     if (!tournament) {
@@ -158,44 +161,23 @@ export default async function TournamentDetailPage({ params }) {
                 </div>
             </div>
 
-            {/* Tournament Overview — adds original content to avoid thin pages */}
-            <section style={{ marginBottom: "3rem" }}>
-                <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
-                    Tournament Overview
-                </h2>
-                <div className="glass-card" style={{ padding: "2rem" }}>
-                    {tournament.editorial_content ? (
+            {/* Verified Tournament Metrics Widget */}
+            <TournamentStatsWidget stats={stats} />
+
+            {/* Tournament Ad Placement */}
+            <AdContainer type="banner" placement="tournament" />
+
+            {/* Tournament Overview — Editorial Only */}
+            {tournament.editorial_content && (
+                <section style={{ marginBottom: "3rem" }}>
+                    <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
+                        Tournament Overview
+                    </h2>
+                    <div className="glass-card" style={{ padding: "2rem" }}>
                         <div style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: tournament.editorial_content }} />
-                    ) : (
-                        <>
-                            <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
-                                <strong>{tournament.name}</strong> is a premier <strong>{gameName}</strong> tournament {tournament.region ? `held in the ${tournament.region} region` : 'hosted internationally'}. 
-                                The competition features elite teams competing for regional supremacy, ranking points, and {tournament.prize_pool ? `a share of the ${formatPrize(tournament.prize_pool, tournament.currency)} prize pool` : 'championship glory'}. 
-                                This event serves as a critical battleground for teams looking to establish their dominance in the {gameName} competitive ecosystem.
-                            </p>
-                            <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
-                                {teams.length > 0 
-                                    ? `This stage of the tournament features ${teams.length} top-tier organizations. These teams have prepared extensively, refining their map pools and strategies to adapt to the current ${gameName} meta.`
-                                    : 'Participating teams are currently being finalized through open qualifiers and direct invitations.'}
-                                {matches.length > 0 
-                                    ? ` With ${matches.length} matches tracked so far, the competition has already delivered intense tactical gameplay and high-stakes moments.`
-                                    : ' Matches are scheduled to begin shortly, promising intense tactical gameplay and high-stakes moments.'}
-                            </p>
-                            <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1rem" }}>
-                                Fans and analysts can follow live match results, tournament brackets, team standings, and roster performances directly on this page. Our live data integration ensures you never miss a pivotal moment in the <strong>{tournament.name}</strong>.
-                            </p>
-                            {gameSlug && (
-                                <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", lineHeight: 1.7, marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
-                                    Looking for more {gameName} tournaments?{' '}
-                                    <Link href={`/games/${gameSlug}`} style={{ color: "var(--accent-cyan)", textDecoration: "none", fontWeight: 600 }}>
-                                        Browse all {gameName} events →
-                                    </Link>
-                                </p>
-                            )}
-                        </>
-                    )}
-                </div>
-            </section>
+                    </div>
+                </section>
+            )}
 
             {/* Teams to Watch */}
             {teams.length > 0 && (
@@ -204,12 +186,6 @@ export default async function TournamentDetailPage({ params }) {
                         Teams to Watch
                     </h2>
                     <div className="glass-card" style={{ padding: "2rem" }}>
-                        <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "1.5rem" }}>
-                            {teams.length > 3 
-                                ? `Here are some of the key teams competing in ${tournament.name}. Follow their journey through the brackets and matches below.`
-                                : `${teams.length} team${teams.length > 1 ? 's are' : ' is'} participating in ${tournament.name}.`
-                            }
-                        </p>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
                             {teams.slice(0, 8).map((t) => (
                                 <Link
@@ -247,37 +223,36 @@ export default async function TournamentDetailPage({ params }) {
                 </section>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: "3rem" }}>
-                {/* Left Column: Teams */}
-                <aside>
-                    <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1.5rem" }}>Participating Teams</h2>
-                    <div className="glass-card" style={{ padding: "1rem" }}>
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Team</th>
-                                    <th style={{ textAlign: "right" }}>Seed</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {teams.map((t, i) => (
-                                    <tr key={t.id}>
-                                        <td>
-                                            <Link href={`/teams/${t.team_id}`} style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-primary)", textDecoration: "none", fontWeight: 600 }}>
-                                                {t.teams?.logo_url && <Image src={t.teams.logo_url} alt={t.teams?.name} width={20} height={20} style={{ objectFit: "contain" }} />}
-                                                {t.teams?.name}
-                                            </Link>
-                                        </td>
-                                        <td style={{ textAlign: "right", color: "var(--text-muted)" }}>{t.placement || i + 1}</td>
+            <div style={{ display: "grid", gridTemplateColumns: teams.length > 0 ? "1fr 3fr" : "1fr", gap: "3rem" }}>
+                {/* Left Column: Teams - Only render if participating teams exist */}
+                {teams.length > 0 && (
+                    <aside>
+                        <h2 className="section-title" style={{ fontSize: "1.25rem", marginBottom: "1.5rem" }}>Participating Teams</h2>
+                        <div className="glass-card" style={{ padding: "1rem" }}>
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Team</th>
+                                        <th style={{ textAlign: "right" }}>Seed</th>
                                     </tr>
-                                ))}
-                                {teams.length === 0 && (
-                                    <tr><td colSpan="2" style={{ textAlign: "center", color: "var(--text-muted)" }}>Teams TBA</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </aside>
+                                </thead>
+                                <tbody>
+                                    {teams.map((t, i) => (
+                                        <tr key={t.id}>
+                                            <td>
+                                                <Link href={`/teams/${t.team_id}`} style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-primary)", textDecoration: "none", fontWeight: 600 }}>
+                                                    {t.teams?.logo_url && <Image src={t.teams.logo_url} alt={t.teams?.name || ''} width={20} height={20} style={{ objectFit: "contain" }} />}
+                                                    {t.teams?.name}
+                                                </Link>
+                                            </td>
+                                            <td style={{ textAlign: "right", color: "var(--text-muted)" }}>{t.placement || i + 1}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </aside>
+                )}
 
                 {/* Right Column: matches */}
                 <main>

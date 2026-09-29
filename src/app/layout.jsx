@@ -1,5 +1,6 @@
 import "./globals.css";
 import LayoutWrapper from "./components/LayoutWrapper";
+import AdContainer from "./components/ads/AdContainer";
 import Script from "next/script";
 import { Outfit, Rajdhani, Orbitron } from 'next/font/google';
 
@@ -180,6 +181,7 @@ export default async function RootLayout({ children }) {
       <body suppressHydrationWarning className={`${outfit.variable} ${rajdhani.variable} ${orbitron.variable}`}>
         <LayoutWrapper user={user}>
           {children}
+          <AdContainer type="socialbar" placement="root" />
         </LayoutWrapper>
       </body>
     </html>

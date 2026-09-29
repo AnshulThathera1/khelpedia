@@ -2,7 +2,7 @@ import { query } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import AdBanner from "@/app/components/AdBanner";
+import AdContainer from "@/app/components/ads/AdContainer";
 import SocialShare from "@/app/components/SocialShare";
 import RelatedArticles from "@/app/components/RelatedArticles";
 import ViewTracker from "@/app/components/ViewTracker";
@@ -238,8 +238,8 @@ export default async function BlogPostPage({ params }) {
 
             <ViewTracker slug={blog.slug} />
 
-            {/* Ad Banner at bottom */}
-            <AdBanner />
+            {/* Ad Container */}
+            <AdContainer type="banner" placement="blog" />
 
             {/* Blog Content Styles */}
             <style dangerouslySetInnerHTML={{

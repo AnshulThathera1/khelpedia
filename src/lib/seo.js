@@ -7,23 +7,27 @@ import { query } from "./db";
 // ---------------------------------------------------------
 
 export const TOURNAMENT_INDEXABLE_SQL = `
-  LENGTH(TRIM(COALESCE(t.editorial_content, ''))) > 50
+  LENGTH(TRIM(COALESCE(t.editorial_content, ''))) > 100
   OR (
     EXISTS (SELECT 1 FROM tournament_teams tt WHERE tt.tournament_id = t.id)
-    AND EXISTS (SELECT 1 FROM matches m WHERE m.tournament_id = t.id)
+    AND EXISTS (SELECT 1 FROM matches m WHERE m.tournament_id = t.id HAVING COUNT(m.id) >= 2)
   )
 `;
 
 export const TEAM_INDEXABLE_SQL = `
-  LENGTH(TRIM(COALESCE(t.editorial_content, ''))) > 50
+  LENGTH(TRIM(COALESCE(t.editorial_content, ''))) > 100
   OR (
     EXISTS (SELECT 1 FROM players p WHERE p.team_id = t.id)
-    AND EXISTS (SELECT 1 FROM tournament_teams tt WHERE tt.team_id = t.id)
+    AND EXISTS (SELECT 1 FROM matches m WHERE m.team1_id = t.id OR m.team2_id = t.id HAVING COUNT(m.id) >= 3)
   )
 `;
 
 export const PLAYER_INDEXABLE_SQL = `
   p.ign IS NOT NULL AND TRIM(p.ign) != ''
+  AND (
+    EXISTS (SELECT 1 FROM player_stats ps WHERE ps.player_id = p.id AND ps.matches_played > 0)
+    OR LENGTH(TRIM(COALESCE(p.editorial_content, ''))) > 100
+  )
 `;
 
 export const BLOG_INDEXABLE_SQL = `
@@ -51,6 +55,16 @@ export async function checkTeamIndexable(id) {
     return res.rowCount > 0;
   } catch (error) {
     console.error("Error checking team indexability", error);
+    return false;
+  }
+}
+
+export async function checkPlayerIndexable(slug) {
+  try {
+    const res = await query(`SELECT 1 FROM players p WHERE p.slug = $1 AND (${PLAYER_INDEXABLE_SQL})`, [slug]);
+    return res.rowCount > 0;
+  } catch (error) {
+    console.error("Error checking player indexability", error);
     return false;
   }
 }

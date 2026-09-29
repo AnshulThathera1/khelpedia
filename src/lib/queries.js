@@ -370,21 +370,21 @@ export async function getTopPlayers(limit = 10) {
 
 export async function getSiteStats() {
   try {
-    const [games, tournaments, players, teams] = await Promise.all([
+    const [matchesRes, gamesRes, tournamentsRes, teamsRes] = await Promise.all([
+      query('SELECT COUNT(*)::int AS count FROM matches WHERE winner_id IS NOT NULL'),
       query('SELECT COUNT(*)::int AS count FROM games'),
-      query('SELECT COUNT(*)::int AS count FROM tournaments'),
-      query('SELECT COUNT(*)::int AS count FROM players'),
-      query('SELECT COUNT(*)::int AS count FROM teams'),
+      query('SELECT COUNT(DISTINCT tournament_id)::int AS count FROM matches WHERE tournament_id IS NOT NULL'),
+      query('SELECT COUNT(DISTINCT team_id)::int AS count FROM (SELECT team1_id AS team_id FROM matches UNION SELECT team2_id AS team_id FROM matches) t WHERE team_id IS NOT NULL'),
     ]);
     return {
-      games: games.rows[0]?.count || 0,
-      tournaments: tournaments.rows[0]?.count || 0,
-      players: players.rows[0]?.count || 0,
-      teams: teams.rows[0]?.count || 0,
+      matches: matchesRes.rows[0]?.count || 0,
+      games: gamesRes.rows[0]?.count || 0,
+      tournaments: tournamentsRes.rows[0]?.count || 0,
+      teams: teamsRes.rows[0]?.count || 0,
     };
   } catch (error) {
     console.error("Error fetching site stats:", error);
-    return { games: 0, tournaments: 0, players: 0, teams: 0 };
+    return { matches: 0, games: 0, tournaments: 0, teams: 0 };
   }
 }
 
@@ -462,3 +462,210 @@ export async function getBlogs(filters = {}) {
     return [];
   }
 }
+
+// ======================== VERIFIED STATISTICS HELPERS ========================
+
+export async function getTeamPerformanceStats(teamId) {
+  if (!teamId) return { total_matches: 0, wins: 0, losses: 0, unresolved_matches: 0, win_rate: 0 };
+  try {
+    const sql = `
+      SELECT 
+        COUNT(m.id)::int AS total_matches,
+        COUNT(CASE WHEN m.winner_id = $1 THEN 1 END)::int AS wins,
+        COUNT(CASE WHEN m.winner_id IS NOT NULL AND m.winner_id != $1 THEN 1 END)::int AS losses,
+        COUNT(CASE WHEN m.winner_id IS NULL THEN 1 END)::int AS unresolved_matches
+      FROM matches m
+      WHERE m.team1_id = $1 OR m.team2_id = $1;
+    `;
+    const res = await query(sql, [teamId]);
+    const row = res.rows[0] || { total_matches: 0, wins: 0, losses: 0, unresolved_matches: 0 };
+    const decidedMatches = row.wins + row.losses;
+    const win_rate = decidedMatches > 0 ? parseFloat(((row.wins / decidedMatches) * 100).toFixed(1)) : 0;
+    return { ...row, win_rate };
+  } catch (error) {
+    console.error("Error in getTeamPerformanceStats:", error);
+    return { total_matches: 0, wins: 0, losses: 0, unresolved_matches: 0, win_rate: 0 };
+  }
+}
+
+export async function getTeamRecentMatches(teamId, limit = 5) {
+  if (!teamId) return [];
+  try {
+    const sql = `
+      SELECT m.*,
+        json_build_object('name', t1.name, 'slug', t1.slug, 'logo_url', t1.logo_url) AS team1,
+        json_build_object('name', t2.name, 'slug', t2.slug, 'logo_url', t2.logo_url) AS team2,
+        CASE WHEN w.id IS NOT NULL THEN json_build_object('name', w.name, 'slug', w.slug) ELSE NULL END AS winner,
+        json_build_object('name', tr.name, 'slug', tr.slug) AS tournament
+      FROM matches m
+      LEFT JOIN teams t1 ON m.team1_id = t1.id
+      LEFT JOIN teams t2 ON m.team2_id = t2.id
+      LEFT JOIN teams w ON m.winner_id = w.id
+      LEFT JOIN tournaments tr ON m.tournament_id = tr.id
+      WHERE m.team1_id = $1 OR m.team2_id = $1
+      ORDER BY m.played_at DESC NULLS LAST
+      LIMIT $2
+    `;
+    const res = await query(sql, [teamId, limit]);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error in getTeamRecentMatches:", error);
+    return [];
+  }
+}
+
+export async function getHeadToHeadStats(team1Id, team2Id, beforeDate = null) {
+  if (!team1Id || !team2Id) return { total_h2h: 0, team1_wins: 0, team2_wins: 0, unresolved: 0 };
+  try {
+    const whereConditions = [
+      `((m.team1_id = $1 AND m.team2_id = $2) OR (m.team1_id = $2 AND m.team2_id = $1))`
+    ];
+    const params = [team1Id, team2Id];
+
+    if (beforeDate) {
+      whereConditions.push(`m.played_at < $3`);
+      params.push(beforeDate);
+    }
+
+    const sql = `
+      SELECT 
+        COUNT(m.id)::int AS total_h2h,
+        COUNT(CASE WHEN m.winner_id = $1 THEN 1 END)::int AS team1_wins,
+        COUNT(CASE WHEN m.winner_id = $2 THEN 1 END)::int AS team2_wins,
+        COUNT(CASE WHEN m.winner_id IS NULL THEN 1 END)::int AS unresolved
+      FROM matches m
+      WHERE ${whereConditions.join(' AND ')};
+    `;
+    const res = await query(sql, params);
+    return res.rows[0] || { total_h2h: 0, team1_wins: 0, team2_wins: 0, unresolved: 0 };
+  } catch (error) {
+    console.error("Error in getHeadToHeadStats:", error);
+    return { total_h2h: 0, team1_wins: 0, team2_wins: 0, unresolved: 0 };
+  }
+}
+
+export async function getHeadToHeadRecentMatches(team1Id, team2Id, limit = 5, beforeDate = null) {
+  if (!team1Id || !team2Id) return [];
+  try {
+    const whereConditions = [
+      `((m.team1_id = $1 AND m.team2_id = $2) OR (m.team1_id = $2 AND m.team2_id = $1))`
+    ];
+    const params = [team1Id, team2Id, limit];
+
+    if (beforeDate) {
+      whereConditions.push(`m.played_at < $4`);
+      params.push(beforeDate);
+    }
+
+    const sql = `
+      SELECT m.*,
+        json_build_object('name', t1.name, 'slug', t1.slug, 'logo_url', t1.logo_url) AS team1,
+        json_build_object('name', t2.name, 'slug', t2.slug, 'logo_url', t2.logo_url) AS team2,
+        CASE WHEN w.id IS NOT NULL THEN json_build_object('name', w.name, 'slug', w.slug) ELSE NULL END AS winner,
+        json_build_object('name', tr.name, 'slug', tr.slug) AS tournament
+      FROM matches m
+      LEFT JOIN teams t1 ON m.team1_id = t1.id
+      LEFT JOIN teams t2 ON m.team2_id = t2.id
+      LEFT JOIN teams w ON m.winner_id = w.id
+      LEFT JOIN tournaments tr ON m.tournament_id = tr.id
+      WHERE ${whereConditions.join(' AND ')}
+      ORDER BY m.played_at DESC NULLS LAST
+      LIMIT $3
+    `;
+    const res = await query(sql, params);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error in getHeadToHeadRecentMatches:", error);
+    return [];
+  }
+}
+
+export async function getTournamentStats(tournamentId) {
+  if (!tournamentId) return { match_count: 0, maps_played: 0, last_match_played: null };
+  try {
+    const sql = `
+      SELECT 
+        COUNT(m.id)::int AS match_count,
+        COUNT(DISTINCT m.map)::int AS maps_played,
+        MAX(m.played_at) AS last_match_played
+      FROM matches m
+      WHERE m.tournament_id = $1;
+    `;
+    const res = await query(sql, [tournamentId]);
+    return res.rows[0] || { match_count: 0, maps_played: 0, last_match_played: null };
+  } catch (error) {
+    console.error("Error in getTournamentStats:", error);
+    return { match_count: 0, maps_played: 0, last_match_played: null };
+  }
+}
+
+export async function getPlayerVerifiedStats(playerId) {
+  if (!playerId) return null;
+  try {
+    const sql = `
+      SELECT ps.*,
+        json_build_object('name', g.name, 'slug', g.slug, 'icon_url', g.icon_url) AS games
+      FROM player_stats ps
+      LEFT JOIN games g ON ps.game_id = g.id
+      WHERE ps.player_id = $1 AND ps.matches_played > 0
+      LIMIT 1;
+    `;
+    const res = await query(sql, [playerId]);
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error("Error in getPlayerVerifiedStats:", error);
+    return null;
+  }
+}
+
+export async function getMatchById(id) {
+  if (!id) return null;
+  try {
+    const sql = `
+      SELECT m.*,
+        json_build_object('id', t1.id, 'name', t1.name, 'slug', t1.slug, 'logo_url', t1.logo_url) AS team1,
+        json_build_object('id', t2.id, 'name', t2.name, 'slug', t2.slug, 'logo_url', t2.logo_url) AS team2,
+        CASE WHEN w.id IS NOT NULL THEN json_build_object('id', w.id, 'name', w.name, 'slug', w.slug) ELSE NULL END AS winner,
+        json_build_object('id', tr.id, 'name', tr.name, 'slug', tr.slug, 'tier', tr.tier) AS tournament
+      FROM matches m
+      LEFT JOIN teams t1 ON m.team1_id = t1.id
+      LEFT JOIN teams t2 ON m.team2_id = t2.id
+      LEFT JOIN teams w ON m.winner_id = w.id
+      LEFT JOIN tournaments tr ON m.tournament_id = tr.id
+      WHERE m.id = $1
+      LIMIT 1
+    `;
+    const res = await query(sql, [id]);
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error("Error in getMatchById:", error);
+    return null;
+  }
+}
+
+export async function getRecentMatches(limit = 5) {
+  try {
+    const sql = `
+      SELECT m.*,
+        json_build_object('id', t1.id, 'name', t1.name, 'slug', t1.slug, 'logo_url', t1.logo_url) AS team1,
+        json_build_object('id', t2.id, 'name', t2.name, 'slug', t2.slug, 'logo_url', t2.logo_url) AS team2,
+        CASE WHEN w.id IS NOT NULL THEN json_build_object('id', w.id, 'name', w.name, 'slug', w.slug) ELSE NULL END AS winner,
+        json_build_object('id', tr.id, 'name', tr.name, 'slug', tr.slug) AS tournament
+      FROM matches m
+      LEFT JOIN teams t1 ON m.team1_id = t1.id
+      LEFT JOIN teams t2 ON m.team2_id = t2.id
+      LEFT JOIN teams w ON m.winner_id = w.id
+      LEFT JOIN tournaments tr ON m.tournament_id = tr.id
+      WHERE m.played_at IS NOT NULL
+      ORDER BY m.played_at DESC
+      LIMIT $1
+    `;
+    const res = await query(sql, [limit]);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error in getRecentMatches:", error);
+    return [];
+  }
+}
+
+

@@ -1,6 +1,8 @@
 import { query } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import PlayerCareerWidget from "@/app/components/PlayerCareerWidget";
+import AdContainer from "@/app/components/ads/AdContainer";
 
 // Dynamically set page metadata for SEO
 export async function generateMetadata({ params }) {
@@ -17,7 +19,9 @@ export async function generateMetadata({ params }) {
         
     const fullTitle = `${pageTitle} | KhelPediA`;
     const description = `View detailed esports statistics, career history, match results, and team information for ${player.ign} on KhelPediA.`;
-    const images = player.image_url ? [player.image_url] : [];
+    const { checkPlayerIndexable } = await import("@/lib/seo");
+    const isIndexable = await checkPlayerIndexable(resolvedParams.slug);
+    const isThin = !isIndexable;
 
     return {
         title: pageTitle,
@@ -25,6 +29,7 @@ export async function generateMetadata({ params }) {
         alternates: {
             canonical: `https://khelpedia.org/players/${resolvedParams.slug}`,
         },
+        robots: isThin ? { index: false, follow: true } : { index: true, follow: true },
         openGraph: {
             title: fullTitle,
             description,
@@ -186,27 +191,11 @@ export default async function PlayerProfilePage({ params }) {
                 </div>
             </header>
 
-            {/* Statistics Grid — only show if we have real stats data */}
-            {hasStats && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "3rem" }}>
-                    {[
-                        { label: "K/D Ratio", value: (primaryStats.kills / Math.max(primaryStats.deaths, 1)).toFixed(2), icon: "⚔️", show: primaryStats.kills > 0 },
-                        { label: "Win Rate", value: `${primaryStats.win_rate}%`, icon: "🏆", show: primaryStats.win_rate != null && primaryStats.win_rate > 0 },
-                        { label: "Headshot %", value: `${primaryStats.headshot_pct}%`, icon: "🎯", show: primaryStats.headshot_pct != null && primaryStats.headshot_pct > 0 },
-                        { label: "Avg Damage", value: primaryStats.avg_damage, icon: "💥", show: primaryStats.avg_damage != null && primaryStats.avg_damage > 0 },
-                    ].filter(stat => stat.show).map((stat, i) => (
-                        <div key={i} className="glass-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <span style={{ color: "var(--text-muted)", fontSize: "0.9rem", fontWeight: 600, textTransform: "uppercase" }}>{stat.label}</span>
-                                <span style={{ fontSize: "1.2rem", opacity: 0.8 }}>{stat.icon}</span>
-                            </div>
-                            <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: '"Rajdhani", sans-serif' }}>
-                                {stat.value}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+            {/* Statistics Grid — only show if we have verified stats data */}
+            <PlayerCareerWidget stats={primaryStats} />
+
+            {/* Player Ad Placement */}
+            <AdContainer type="banner" placement="player" />
 
             {/* Biography & Playstyle — only show editorial content, never auto-generated filler */}
             {player.editorial_content && (
@@ -220,39 +209,9 @@ export default async function PlayerProfilePage({ params }) {
                 </section>
             )}
 
-            {/* Bottom Section Layout */}
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "3rem" }}>
-
-                {/* Career Overview — replaces the empty "Recent Matches" placeholder */}
+            {/* Bottom Section Layout — Player Details */}
+            <div style={{ maxWidth: "600px" }}>
                 <div className="glass-card" style={{ padding: "2rem" }}>
-                    <h3 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "1.5rem", fontFamily: '"Rajdhani", sans-serif', display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><path d="m10 13 4 4" /><path d="m14 13-4 4" /></svg>
-                        Career Overview
-                    </h3>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem", color: "var(--text-secondary)", lineHeight: 1.8 }}>
-                        <p>
-                            <strong style={{ color: "var(--text-primary)" }}>{playerDisplayName}</strong>
-                            {playerRealName && playerRealName !== playerDisplayName ? ` (${playerRealName})` : ''}
-                            {player.teams ? ` currently competes for ${player.teams.name}` : ' is currently a free agent'}
-                            {mainGame ? ` in professional ${mainGame} esports.` : ' in professional esports.'}
-                        </p>
-                        {hasStats && (
-                            <p>
-                                Across {primaryStats.matches_played} tracked matches,
-                                {playerDisplayName} holds a {(primaryStats.kills / Math.max(primaryStats.deaths, 1)).toFixed(2)} K/D ratio
-                                {primaryStats.win_rate > 0 ? ` with a ${primaryStats.win_rate}% win rate` : ''}.
-                            </p>
-                        )}
-                        <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontStyle: "italic" }}>
-                            Player data is sourced from official APIs and updated periodically. 
-                            For corrections, <Link href="/contact" style={{ color: "var(--accent-cyan)", textDecoration: "none" }}>contact our editorial team</Link>.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Info Sidebar */}
-                <div className="glass-card" style={{ padding: "2rem", height: "fit-content" }}>
                     <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "1.5rem", borderBottom: "1px solid var(--border-color)", paddingBottom: "0.5rem" }}>
                         Player Details
                     </h3>
@@ -281,7 +240,6 @@ export default async function PlayerProfilePage({ params }) {
                         )}
                     </ul>
                 </div>
-
             </div>
 
             <style dangerouslySetInnerHTML={{

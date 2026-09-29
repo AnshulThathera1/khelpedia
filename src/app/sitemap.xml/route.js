@@ -6,12 +6,25 @@ export async function GET() {
   const limit = 1000;
   
   // Count indexable entities
-  const [tournaments, teams, players, blogs] = await Promise.all([
-    query(`SELECT COUNT(*) FROM tournaments t WHERE ${TOURNAMENT_INDEXABLE_SQL}`),
-    query(`SELECT COUNT(*) FROM teams t WHERE ${TEAM_INDEXABLE_SQL}`),
-    query(`SELECT COUNT(*) FROM players p WHERE ${PLAYER_INDEXABLE_SQL}`),
-    query(`SELECT COUNT(*) FROM blogs b WHERE ${BLOG_INDEXABLE_SQL}`)
-  ]);
+  let tournaments = { rows: [{ count: 0 }] };
+  let teams = { rows: [{ count: 0 }] };
+  let players = { rows: [{ count: 0 }] };
+  let blogs = { rows: [{ count: 0 }] };
+
+  try {
+    const res = await Promise.all([
+      query(`SELECT COUNT(*) FROM tournaments t WHERE ${TOURNAMENT_INDEXABLE_SQL}`),
+      query(`SELECT COUNT(*) FROM teams t WHERE ${TEAM_INDEXABLE_SQL}`),
+      query(`SELECT COUNT(*) FROM players p WHERE ${PLAYER_INDEXABLE_SQL}`),
+      query(`SELECT COUNT(*) FROM blogs b WHERE ${BLOG_INDEXABLE_SQL}`)
+    ]);
+    tournaments = res[0];
+    teams = res[1];
+    players = res[2];
+    blogs = res[3];
+  } catch (error) {
+    console.error("sitemap.xml query error:", error);
+  }
 
   const getChunks = (res) => Math.ceil((parseInt(res.rows[0]?.count, 10) || 0) / limit) || 1;
 

@@ -6,31 +6,47 @@ import GameCard from "./components/GameCard";
 import Link from "next/link";
 import HomeHero from "./components/HomeHero";
 import BlogCarousel from "./components/BlogCarousel";
+import AdContainer from "./components/ads/AdContainer";
 
 export default async function HomePage() {
-    const [live, upcoming, players, gms, stats, blogsRes] = await Promise.all([
-        getLiveTournaments(),
-        getUpcomingTournaments(),
-        getTopPlayers(5),
-        getGames(),
-        getSiteStats(),
-        query(`
-            SELECT b.id, b.title, b.slug, b.excerpt, b.cover_image_url, b.created_at, b.author_id,
-              CASE WHEN p.id IS NOT NULL THEN json_build_object('id', p.id, 'display_name', p.display_name) ELSE NULL END AS profiles
-            FROM blogs b
-            LEFT JOIN profiles p ON b.author_id = p.id
-            WHERE b.is_published = true
-            ORDER BY b.created_at DESC
-            LIMIT 10
-        `).catch(() => ({ rows: [] }))
-    ]);
+    let liveTournaments = [];
+    let upcomingTournaments = [];
+    let topPlayers = [];
+    let games = [];
+    let stats = { matches: 0, games: 0, tournaments: 0, teams: 0 };
+    let blogs = [];
 
-    const blogs = blogsRes.rows || [];
+    try {
+        const [live, upcoming, players, gms, siteStats, blogsRes] = await Promise.all([
+            getLiveTournaments().catch(() => []),
+            getUpcomingTournaments().catch(() => []),
+            getTopPlayers(5).catch(() => []),
+            getGames().catch(() => []),
+            getSiteStats().catch(() => ({ matches: 0, games: 0, tournaments: 0, teams: 0 })),
+            query(`
+                SELECT b.id, b.title, b.slug, b.excerpt, b.cover_image_url, b.created_at, b.author_id,
+                  CASE WHEN p.id IS NOT NULL THEN json_build_object('id', p.id, 'display_name', p.display_name) ELSE NULL END AS profiles
+                FROM blogs b
+                LEFT JOIN profiles p ON b.author_id = p.id
+                WHERE b.is_published = true
+                ORDER BY b.created_at DESC
+                LIMIT 10
+            `).catch(() => ({ rows: [] }))
+        ]);
 
-    const liveTournaments = live || [];
-    const upcomingTournaments = upcoming || [];
-    const topPlayers = players || [];
-    const games = gms || [];
+        liveTournaments = live || [];
+        upcomingTournaments = upcoming || [];
+        topPlayers = players || [];
+        games = gms || [];
+        stats = siteStats || { matches: 0, games: 0, tournaments: 0, teams: 0 };
+        blogs = blogsRes.rows || [];
+    } catch (err) {
+        console.error("Error loading homepage data:", err);
+    }
+
+    const matchCountFormatted = stats.matches > 0
+        ? `${(Math.floor(stats.matches / 1000) * 1000).toLocaleString()}+`
+        : "0";
 
     return (
         <div>
@@ -153,6 +169,9 @@ export default async function HomePage() {
                     </section>
                 )}
 
+                {/* Homepage Ad Placement */}
+                <AdContainer type="banner" placement="homepage" />
+
                 {/* Latest News & Analysis */}
                 {blogs.length > 0 && (
                     <section style={{ marginBottom: "5rem" }}>
@@ -207,10 +226,10 @@ export default async function HomePage() {
                         }}
                     >
                         {[
-                            { label: "Games Tracked", value: stats.games, icon: "🎮" },
-                            { label: "Tournaments", value: stats.tournaments, icon: "🏆" },
-                            { label: "Pro Players", value: stats.players, icon: "👤" },
-                            { label: "Teams", value: stats.teams, icon: "⚔️" },
+                            { label: "Recorded Match Results", value: matchCountFormatted, icon: "📊" },
+                            { label: "Major Esports Titles", value: stats.games, icon: "🎮" },
+                            { label: "Active Tournaments", value: stats.tournaments, icon: "🏆" },
+                            { label: "Active Teams", value: stats.teams, icon: "⚔️" },
                         ].map(stat => (
                             <div
                                 key={stat.label}

@@ -357,7 +357,7 @@ export default function PrivacyPolicyPage() {
                     <li><strong style={{ color: "var(--text-primary)" }}>Riot Games API</strong> — Valorant player data</li>
                     <li><strong style={{ color: "var(--text-primary)" }}>PandaScore API</strong> — Tournament and match data</li>
                     <li><strong style={{ color: "var(--text-primary)" }}>Google Analytics</strong> — Website analytics</li>
-                    <li><strong style={{ color: "var(--text-primary)" }}>Google AdSense</strong> — Advertising partner (when advertising is enabled)</li>
+                    <li><strong style={{ color: "var(--text-primary)" }}>Adsterra / Google AdSense</strong> — Advertising partners (when advertising features are enabled)</li>
                 </ul>
                 <p style={paragraphStyle}>
                     We recommend reviewing each provider&apos;s privacy policy for a complete

@@ -2,11 +2,16 @@ import { query } from "@/lib/db";
 import { TOURNAMENT_INDEXABLE_SQL } from "@/lib/seo";
 
 export async function generateSitemaps() {
-  const limit = 1000;
-  const res = await query(`SELECT COUNT(*) FROM tournaments t WHERE ${TOURNAMENT_INDEXABLE_SQL}`);
-  const total = parseInt(res.rows[0].count, 10) || 0;
-  const chunks = Math.ceil(total / limit);
-  return Array.from({ length: chunks || 1 }, (_, i) => ({ id: i }));
+  try {
+    const limit = 1000;
+    const res = await query(`SELECT COUNT(*) FROM tournaments t WHERE ${TOURNAMENT_INDEXABLE_SQL}`);
+    const total = parseInt(res.rows[0].count, 10) || 0;
+    const chunks = Math.ceil(total / limit);
+    return Array.from({ length: chunks || 1 }, (_, i) => ({ id: i }));
+  } catch (error) {
+    console.error("Tournaments generateSitemaps error:", error);
+    return [{ id: 0 }];
+  }
 }
 
 export default async function sitemap({ id }) {
