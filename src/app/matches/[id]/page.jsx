@@ -1,6 +1,7 @@
 import { getMatchById, getHeadToHeadStats } from "@/lib/queries";
 import HeadToHeadWidget from "@/app/components/HeadToHeadWidget";
 import AdContainer from "@/app/components/ads/AdContainer";
+import DesktopSidebarLayout from "@/app/components/ads/DesktopSidebarLayout";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -60,7 +61,8 @@ export default async function MatchDetailPage({ params }) {
     const isT2Winner = match.winner_id && match.winner_id === match.team2_id;
 
     return (
-        <div className="page-container" style={{ maxWidth: "900px" }}>
+        <DesktopSidebarLayout pageType="match" variant="compact">
+            <div className="page-container" style={{ maxWidth: "900px" }}>
             {/* Tournament Breadcrumb */}
             {match.tournament?.name && (
                 <div style={{ marginBottom: "2rem" }}>
@@ -131,11 +133,12 @@ export default async function MatchDetailPage({ params }) {
                 </div>
             </div>
 
-            {/* Match Ad Placement */}
-            <AdContainer type="banner" placement="match" />
-
             {/* Head to Head History Widget — Only rendered when previous meetings exist */}
             <HeadToHeadWidget h2hStats={h2hStats} team1Name={t1Name} team2Name={t2Name} />
+
+            {/* Post-Match Statistics Ad Break */}
+            <AdContainer type="banner" placement="match_post_h2h_break" />
         </div>
+        </DesktopSidebarLayout>
     );
 }

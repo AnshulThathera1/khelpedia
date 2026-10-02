@@ -1,6 +1,8 @@
 import { getTournamentById, getTournamentTeams, getTournamentMatches, getTournamentStats } from "@/lib/queries";
+import { checkTournamentIndexable } from "@/lib/seo";
 import TournamentStatsWidget from "@/app/components/TournamentStatsWidget";
 import AdContainer from "@/app/components/ads/AdContainer";
+import DesktopSidebarLayout from "@/app/components/ads/DesktopSidebarLayout";
 import { query } from "@/lib/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,22 +10,29 @@ import Image from "next/image";
 
 export async function generateMetadata({ params }) {
     const { id } = await params;
-    const [tournament, teams, matches] = await Promise.all([
+    const [tournament, teams, stats, isIndexable] = await Promise.all([
         getTournamentById(id),
         getTournamentTeams(id),
-        getTournamentMatches(id)
+        getTournamentStats(id),
+        checkTournamentIndexable(id)
     ]);
     
     if (!tournament) return { title: "Tournament Not Found | KhelPediA" };
 
     const gameName = tournament.games?.name || "Esports";
-    const pageTitle = `${tournament.name} — Results, Matches, Teams & Standings`;
+    const pageTitle = `${tournament.name} — Schedule, Matches, Teams & Results`;
     const fullTitle = `${pageTitle} | KhelPediA`;
-    const description = `Follow ${tournament.name} on KhelPediA. Track participating teams, live match results, standings, prize pool, and full tournament schedule for this premier ${gameName} event.`;
+    
+    let description = `Follow ${tournament.name} on KhelPediA.`;
+    if (stats?.match_count > 0 && teams?.length > 0) {
+        description = `${tournament.name} (${gameName}) featuring ${stats.match_count.toLocaleString()} tracked matches and ${teams.length} participating teams. View match results, schedule, standings, and esports statistics on KhelPediA.`;
+    } else if (stats?.match_count > 0) {
+        description = `${tournament.name} (${gameName}) featuring ${stats.match_count.toLocaleString()} tracked matches. View match results, bracket schedule, and esports statistics on KhelPediA.`;
+    } else {
+        description = `Follow ${tournament.name} on KhelPediA. Track participating teams, prize pool, and tournament schedule for this premier ${gameName} event.`;
+    }
     const images = tournament.games?.icon_url ? [tournament.games.icon_url] : [];
 
-    const { checkTournamentIndexable } = await import("@/lib/seo");
-    const isIndexable = await checkTournamentIndexable(id);
     const isThin = !isIndexable;
 
     return { 
@@ -52,11 +61,12 @@ export async function generateMetadata({ params }) {
 export default async function TournamentDetailPage({ params }) {
     const { id } = await params;
 
-    const [tournament, teams, matches, stats] = await Promise.all([
+    const [tournament, teams, matches, stats, isIndexable] = await Promise.all([
         getTournamentById(id),
         getTournamentTeams(id),
         getTournamentMatches(id),
-        getTournamentStats(id)
+        getTournamentStats(id),
+        checkTournamentIndexable(id)
     ]);
 
     if (!tournament) {
@@ -117,7 +127,7 @@ export default async function TournamentDetailPage({ params }) {
         };
     }
 
-    return (
+    const pageContent = (
         <div className="page-container">
             {jsonLd && (
                 <script
@@ -164,8 +174,10 @@ export default async function TournamentDetailPage({ params }) {
             {/* Verified Tournament Metrics Widget */}
             <TournamentStatsWidget stats={stats} />
 
-            {/* Tournament Ad Placement */}
-            <AdContainer type="banner" placement="tournament" />
+            {/* Tournament Ad Placement — Only rendered on verified, indexable tournament records */}
+            {isIndexable && (
+                <AdContainer type="banner" placement="tournament_overview_break" />
+            )}
 
             {/* Tournament Overview — Editorial Only */}
             {tournament.editorial_content && (
@@ -283,8 +295,11 @@ export default async function TournamentDetailPage({ params }) {
                                     </Link>
                                 </div>
 
-                                <div style={{ width: "100px", textAlign: "right" }}>
+                                <div style={{ width: "110px", textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
                                     <span className="badge" style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}>{m.round}</span>
+                                    <Link href={`/matches/${m.id}`} style={{ color: "var(--accent-cyan)", fontSize: "0.78rem", textDecoration: "none", fontWeight: 600 }}>
+                                        Details →
+                                    </Link>
                                 </div>
                             </div>
                         ))}
@@ -341,4 +356,14 @@ export default async function TournamentDetailPage({ params }) {
             `}} />
         </div>
     );
+
+    if (isIndexable) {
+        return (
+            <DesktopSidebarLayout pageType="tournament" variant="standard">
+                {pageContent}
+            </DesktopSidebarLayout>
+        );
+    }
+
+    return pageContent;
 }

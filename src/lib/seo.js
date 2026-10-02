@@ -1,27 +1,59 @@
-import { query } from "./db";
+import { query } from "./db.js";
 
 // ---------------------------------------------------------
-// SHARED INDEXABILITY RULES
-// These conditions are shared between Sitemaps and Page Metadata
-// to ensure Google only crawls what we actually index.
+// SHARED INDEXABILITY RULES — SINGLE SOURCE OF TRUTH
+// These conditions are shared between Sitemaps, Metadata,
+// and Admin SEO Audit to ensure 100% synchronization.
 // ---------------------------------------------------------
 
+/**
+ * Tournament Indexability Predicate:
+ * - Editorial lore/analysis > 100 chars
+ *   OR
+ * - At least 3 verified competitive matches recorded for this tournament
+ *   (Guarantees full brackets/results to display, filtering out empty stubs
+ *    and single-match undated sub-stage brackets).
+ */
 export const TOURNAMENT_INDEXABLE_SQL = `
   LENGTH(TRIM(COALESCE(t.editorial_content, ''))) > 100
   OR (
-    EXISTS (SELECT 1 FROM tournament_teams tt WHERE tt.tournament_id = t.id)
-    AND EXISTS (SELECT 1 FROM matches m WHERE m.tournament_id = t.id HAVING COUNT(m.id) >= 2)
+    EXISTS (
+      SELECT 1 FROM matches m
+      WHERE m.tournament_id = t.id
+      HAVING COUNT(m.id) >= 3
+    )
   )
 `;
 
+/**
+ * Team Indexability Predicate:
+ * - Editorial lore/analysis > 100 chars
+ *   OR
+ * - Active verified player roster in players table AND at least 1 match
+ *   OR
+ * - At least 3 verified competitive matches recorded in matches table
+ *   (Guarantees substantial performance summary, recent match results,
+ *    opponent history, and tournament appearances).
+ */
 export const TEAM_INDEXABLE_SQL = `
   LENGTH(TRIM(COALESCE(t.editorial_content, ''))) > 100
   OR (
     EXISTS (SELECT 1 FROM players p WHERE p.team_id = t.id)
-    AND EXISTS (SELECT 1 FROM matches m WHERE m.team1_id = t.id OR m.team2_id = t.id HAVING COUNT(m.id) >= 3)
+    AND EXISTS (SELECT 1 FROM matches m WHERE m.team1_id = t.id OR m.team2_id = t.id HAVING COUNT(m.id) >= 1)
+  )
+  OR (
+    EXISTS (
+      SELECT 1 FROM matches m
+      WHERE (m.team1_id = t.id OR m.team2_id = t.id)
+      HAVING COUNT(m.id) >= 3
+    )
   )
 `;
 
+/**
+ * Player Indexability Predicate:
+ * - Valid IGN AND (telemetry matches > 0 OR editorial content > 100 chars)
+ */
 export const PLAYER_INDEXABLE_SQL = `
   p.ign IS NOT NULL AND TRIM(p.ign) != ''
   AND (
@@ -30,18 +62,24 @@ export const PLAYER_INDEXABLE_SQL = `
   )
 `;
 
+/**
+ * Blog Article Indexability Predicate:
+ * - Published status is true
+ */
 export const BLOG_INDEXABLE_SQL = `
   b.is_published = true
 `;
 
 // ---------------------------------------------------------
-// PAGE-LEVEL HELPERS
-// Used in generateMetadata to determine robots: { index }
+// PAGE-LEVEL DIAGNOSTIC & ELIGIBILITY HELPERS
 // ---------------------------------------------------------
 
 export async function checkTournamentIndexable(id) {
   try {
-    const res = await query(`SELECT 1 FROM tournaments t WHERE t.id = $1 AND (${TOURNAMENT_INDEXABLE_SQL})`, [id]);
+    const res = await query(
+      `SELECT 1 FROM tournaments t WHERE t.id = $1 AND (${TOURNAMENT_INDEXABLE_SQL})`,
+      [id]
+    );
     return res.rowCount > 0;
   } catch (error) {
     console.error("Error checking tournament indexability", error);
@@ -51,7 +89,10 @@ export async function checkTournamentIndexable(id) {
 
 export async function checkTeamIndexable(id) {
   try {
-    const res = await query(`SELECT 1 FROM teams t WHERE t.id = $1 AND (${TEAM_INDEXABLE_SQL})`, [id]);
+    const res = await query(
+      `SELECT 1 FROM teams t WHERE t.id = $1 AND (${TEAM_INDEXABLE_SQL})`,
+      [id]
+    );
     return res.rowCount > 0;
   } catch (error) {
     console.error("Error checking team indexability", error);
@@ -61,7 +102,10 @@ export async function checkTeamIndexable(id) {
 
 export async function checkPlayerIndexable(slug) {
   try {
-    const res = await query(`SELECT 1 FROM players p WHERE p.slug = $1 AND (${PLAYER_INDEXABLE_SQL})`, [slug]);
+    const res = await query(
+      `SELECT 1 FROM players p WHERE p.slug = $1 AND (${PLAYER_INDEXABLE_SQL})`,
+      [slug]
+    );
     return res.rowCount > 0;
   } catch (error) {
     console.error("Error checking player indexability", error);

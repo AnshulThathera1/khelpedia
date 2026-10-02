@@ -16,15 +16,15 @@ if (process.env.NODE_ENV === 'production') {
     connectionString,
     max: 20,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 10000,
   });
 } else {
   if (!globalThis.pgPool) {
     globalThis.pgPool = new Pool({
-      connectionString: connectionString || 'postgresql://khelpedia_db:Anshul%4012@127.0.0.1:5433/khelpedia',
+      connectionString: connectionString || 'postgresql://khelpedia_db:Anshul%4012@88.222.245.63:5433/khelpedia',
       max: 10,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      connectionTimeoutMillis: 10000,
     });
   }
   pool = globalThis.pgPool;

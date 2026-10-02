@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Trophy, Calendar, Coins, Gamepad2, Users, Swords } from "lucide-react";
 import GameDashboardClient from "./GameDashboardClient";
+import DesktopSidebarLayout from "@/app/components/ads/DesktopSidebarLayout";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -172,13 +173,15 @@ export default async function GameDetailPage({ params }) {
       </div>
 
       {/* Main Content Dashboard */}
-      <main className="max-w-7xl mx-auto px-6 pt-10">
-        <GameDashboardClient 
-          game={game} 
-          initialTournaments={tournaments} 
-          initialMatches={matches} 
-        />
-      </main>
+      <DesktopSidebarLayout pageType="game" variant="standard">
+        <main className="max-w-7xl mx-auto px-6 pt-10">
+          <GameDashboardClient 
+            game={game} 
+            initialTournaments={tournaments} 
+            initialMatches={matches} 
+          />
+        </main>
+      </DesktopSidebarLayout>
 
     </div>
   );

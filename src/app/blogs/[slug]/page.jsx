@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import AdContainer from "@/app/components/ads/AdContainer";
+import DesktopSidebarLayout from "@/app/components/ads/DesktopSidebarLayout";
 import SocialShare from "@/app/components/SocialShare";
 import RelatedArticles from "@/app/components/RelatedArticles";
 import ViewTracker from "@/app/components/ViewTracker";
@@ -58,6 +59,116 @@ function getReadingTime(htmlContent) {
     return Math.max(1, Math.ceil(wordCount / 200));
 }
 
+/**
+ * Splits blog HTML safely at paragraph boundaries according to UX safeguards:
+ * - < 500 words: No inline ad, 1 banner at article conclusion
+ * - 500 - 1100 words: 1 Native widget in middle, 1 banner at article conclusion
+ * - > 1100 words: 1 Banner in first third, 1 Native widget in second third, 1 banner at article conclusion
+ */
+function renderSegmentedBlogContent(htmlContent) {
+    if (!htmlContent) return null;
+
+    const textOnly = htmlContent.replace(/<[^>]*>/g, " ");
+    const wordCount = textOnly.trim().split(/\s+/).filter(Boolean).length;
+
+    // Find all closing paragraph tags </p>
+    const pRegex = /<\/p>/gi;
+    const splitIndices = [];
+    let match;
+    while ((match = pRegex.exec(htmlContent)) !== null) {
+        splitIndices.push(match.index + match[0].length);
+    }
+
+    const contentStyle = {
+        color: "var(--text-muted)",
+        fontSize: "1.1rem",
+        lineHeight: 1.8,
+        fontFamily: "var(--font-system)",
+    };
+
+    // Case 1: Short article (< 500 words or < 4 paragraphs)
+    if (wordCount < 500 || splitIndices.length < 4) {
+        return (
+            <>
+                <div
+                    className="blog-content"
+                    style={contentStyle}
+                    dangerouslySetInnerHTML={{ __html: htmlContent }}
+                />
+                <AdContainer type="banner" placement="blog_article_end" />
+            </>
+        );
+    }
+
+    // Case 2: Medium article (500 - 1100 words)
+    if (wordCount < 1100 || splitIndices.length < 8) {
+        const midPointIndex = Math.floor(splitIndices.length / 2);
+        const splitPos = splitIndices[midPointIndex];
+        const part1 = htmlContent.slice(0, splitPos);
+        const part2 = htmlContent.slice(splitPos);
+
+        return (
+            <>
+                <div
+                    className="blog-content"
+                    style={contentStyle}
+                    dangerouslySetInnerHTML={{ __html: part1 }}
+                />
+
+                {/* Natural midpoint break: Sponsored recommendations */}
+                <AdContainer type="native" placement="blog_inline_native" />
+
+                <div
+                    className="blog-content"
+                    style={contentStyle}
+                    dangerouslySetInnerHTML={{ __html: part2 }}
+                />
+
+                <AdContainer type="banner" placement="blog_article_end" />
+            </>
+        );
+    }
+
+    // Case 3: In-depth / Long article (> 1100 words and >= 8 paragraphs)
+    const cut1Index = Math.floor(splitIndices.length / 3);
+    const cut2Index = Math.floor((splitIndices.length * 2) / 3);
+
+    const pos1 = splitIndices[cut1Index];
+    const pos2 = splitIndices[cut2Index];
+
+    const part1 = htmlContent.slice(0, pos1);
+    const part2 = htmlContent.slice(pos1, pos2);
+    const part3 = htmlContent.slice(pos2);
+
+    return (
+        <>
+            <div
+                className="blog-content"
+                style={contentStyle}
+                dangerouslySetInnerHTML={{ __html: part1 }}
+            />
+
+            <AdContainer type="banner" placement="blog_inline_banner" />
+
+            <div
+                className="blog-content"
+                style={contentStyle}
+                dangerouslySetInnerHTML={{ __html: part2 }}
+            />
+
+            <AdContainer type="native" placement="blog_inline_native" />
+
+            <div
+                className="blog-content"
+                style={contentStyle}
+                dangerouslySetInnerHTML={{ __html: part3 }}
+            />
+
+            <AdContainer type="banner" placement="blog_article_end" />
+        </>
+    );
+}
+
 export default async function BlogPostPage({ params }) {
     const resolvedParams = await params;
 
@@ -111,11 +222,12 @@ export default async function BlogPostPage({ params }) {
     const currentUrl = `${origin}/blogs/${blog.slug}`;
 
     return (
-        <article style={{
-            maxWidth: "800px",
-            margin: "0 auto",
-            padding: "4rem 1.5rem",
-        }}>
+        <DesktopSidebarLayout pageType="article" variant="compact">
+            <article style={{
+                maxWidth: "800px",
+                margin: "0 auto",
+                padding: "4rem 1.5rem",
+            }}>
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -194,17 +306,8 @@ export default async function BlogPostPage({ params }) {
                 </div>
             )}
 
-            {/* Article Content */}
-            <div
-                className="blog-content"
-                style={{
-                    color: "var(--text-muted)",
-                    fontSize: "1.1rem",
-                    lineHeight: 1.8,
-                    fontFamily: "var(--font-system)"
-                }}
-                dangerouslySetInnerHTML={{ __html: blog.content }}
-            />
+            {/* Article Content with Dynamic, Safe In-Content Monetization */}
+            {renderSegmentedBlogContent(blog.content)}
 
             {/* Article Footer - Author Bio */}
             <div style={{
@@ -238,9 +341,6 @@ export default async function BlogPostPage({ params }) {
 
             <ViewTracker slug={blog.slug} />
 
-            {/* Ad Container */}
-            <AdContainer type="banner" placement="blog" />
-
             {/* Blog Content Styles */}
             <style dangerouslySetInnerHTML={{
                 __html: `
@@ -256,5 +356,6 @@ export default async function BlogPostPage({ params }) {
                 .blog-content strong { color: var(--text-primary); }
             `}} />
         </article>
+        </DesktopSidebarLayout>
     );
 }

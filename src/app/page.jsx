@@ -7,6 +7,7 @@ import Link from "next/link";
 import HomeHero from "./components/HomeHero";
 import BlogCarousel from "./components/BlogCarousel";
 import AdContainer from "./components/ads/AdContainer";
+import DesktopSidebarLayout from "./components/ads/DesktopSidebarLayout";
 
 export default async function HomePage() {
     let liveTournaments = [];
@@ -53,7 +54,8 @@ export default async function HomePage() {
             {/* Animated Hero (client component) */}
             <HomeHero />
 
-            <div className="page-container">
+            <DesktopSidebarLayout pageType="homepage" variant="standard">
+                <div className="page-container">
                 {/* What is KhelPediA - SEO-rich original content */}
                 <section style={{ marginBottom: "5rem" }}>
                     <div
@@ -169,8 +171,8 @@ export default async function HomePage() {
                     </section>
                 )}
 
-                {/* Homepage Ad Placement */}
-                <AdContainer type="banner" placement="homepage" />
+                {/* Homepage Leaderboard Ad Break */}
+                <AdContainer type="banner" placement="homepage_tournaments_break" />
 
                 {/* Latest News & Analysis */}
                 {blogs.length > 0 && (
@@ -200,6 +202,9 @@ export default async function HomePage() {
                         <BlogCarousel blogs={blogs.slice(5, 10)} variant="featured" />
                     </section>
                 )}
+
+                {/* Sponsored Content / Native Recommendations Break */}
+                <AdContainer type="native" placement="homepage_editorial_native" />
 
                 {/* Featured Games */}
                 <section style={{ marginBottom: "5rem" }}>
@@ -297,6 +302,7 @@ export default async function HomePage() {
                     </section>
                 </div>
             </div>
+            </DesktopSidebarLayout>
         </div>
     );
 }

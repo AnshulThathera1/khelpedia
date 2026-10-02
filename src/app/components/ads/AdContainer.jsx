@@ -1,56 +1,126 @@
+"use client";
+
 import AdsterraBanner from "./AdsterraBanner";
 import AdsterraNative from "./AdsterraNative";
 import AdsterraSocialBar from "./AdsterraSocialBar";
+import AdsterraSidebar from "./AdsterraSidebar";
+import DesktopSidebarLayout from "./DesktopSidebarLayout";
 
-export default function AdContainer({ type = "banner", placement = "content" }) {
-  const isAdsEnabled = process.env.NEXT_PUBLIC_ADS_ENABLED === "true";
-  const provider = process.env.NEXT_PUBLIC_AD_PROVIDER || "adsterra";
+export {
+  AdsterraBanner,
+  AdsterraNative,
+  AdsterraSocialBar,
+  AdsterraSidebar,
+  DesktopSidebarLayout,
+};
+
+/**
+ * AdContainer
+ * Unified ad container providing clean abstraction across all Adsterra formats.
+ * Supports:
+ * - type="banner" (responsive 728x90 on desktop / 320x50 on mobile)
+ * - type="banner_728x90" or size="728x90"
+ * - type="banner_300x250" or size="300x250"
+ * - type="banner_320x50" or size="320x50"
+ * - type="sidebar" or type="sidebar_300x250"
+ * - type="native"
+ * - type="socialbar"
+ */
+export default function AdContainer({
+  type = "banner",
+  size = null,
+  placement = "content",
+  position = "left",
+  className = "",
+  style = {},
+}) {
+  const isAdsEnabled = process.env.NEXT_PUBLIC_ADS_ENABLED !== "false";
 
   if (!isAdsEnabled) {
     return null;
   }
 
-  if (provider === "adsterra") {
-    const key320 = process.env.NEXT_PUBLIC_ADSTERRA_BANNER_320X50_KEY || "4f4ab1bbe05068164ef41d1096876079";
-    const key728 = process.env.NEXT_PUBLIC_ADSTERRA_BANNER_728X90_KEY || "5f86b8ba897a34d202901f2a1670db55";
-    const key300 = process.env.NEXT_PUBLIC_ADSTERRA_BANNER_300X250_KEY || "cc7bdff7f055d2ba8a47a30cca4735e6";
+  // Handle explicit sidebar requests
+  if (type === "sidebar" || type === "sidebar_300x250") {
+    return (
+      <AdsterraSidebar
+        placement={placement}
+        position={position}
+        className={className}
+        style={style}
+      />
+    );
+  }
 
-    if (type === "banner") {
-      // Responsive Leaderboard: 728x90 on desktop, 320x50 on mobile
-      return (
-        <div style={{ display: "flex", justifyContent: "center", width: "100%", overflow: "hidden" }}>
-          <div className="hidden md:block">
-            <AdsterraBanner zoneKey={key728} width={728} height={90} />
-          </div>
-          <div className="block md:hidden">
-            <AdsterraBanner zoneKey={key320} width={320} height={50} />
-          </div>
-        </div>
-      );
-    }
+  // Handle explicit size request
+  if (size) {
+    return (
+      <AdsterraBanner
+        size={size}
+        placement={placement}
+        className={className}
+        style={style}
+      />
+    );
+  }
 
-    if (type === "banner_728x90") {
-      return <AdsterraBanner zoneKey={key728} width={728} height={90} />;
-    }
+  // Handle type-based requests
+  if (type === "banner") {
+    return (
+      <AdsterraBanner
+        size="responsive"
+        placement={placement}
+        className={className}
+        style={style}
+      />
+    );
+  }
 
-    if (type === "banner_320x50") {
-      return <AdsterraBanner zoneKey={key320} width={320} height={50} />;
-    }
+  if (type === "banner_728x90") {
+    return (
+      <AdsterraBanner
+        size="728x90"
+        placement={placement}
+        className={className}
+        style={style}
+      />
+    );
+  }
 
-    if (type === "banner_300x250") {
-      return <AdsterraBanner zoneKey={key300} width={300} height={250} />;
-    }
+  if (type === "banner_300x250") {
+    return (
+      <AdsterraBanner
+        size="300x250"
+        placement={placement}
+        className={className}
+        style={style}
+      />
+    );
+  }
 
-    if (type === "native") {
-      const nativeSrc = process.env.NEXT_PUBLIC_ADSTERRA_NATIVE_SRC || "https://pl31576901.profitablecreativeformat.com/f6a1d6b7a29abf9d3dc957e3de20a8da/invoke.js";
-      const nativeContainer = process.env.NEXT_PUBLIC_ADSTERRA_NATIVE_CONTAINER || "container-f6a1d6b7a29abf9d3dc957e3de20a8da";
-      return <AdsterraNative scriptSrc={nativeSrc} containerId={nativeContainer} />;
-    }
+  if (type === "banner_320x50") {
+    return (
+      <AdsterraBanner
+        size="320x50"
+        placement={placement}
+        className={className}
+        style={style}
+      />
+    );
+  }
 
-    if (type === "socialbar") {
-      const socialSrc = process.env.NEXT_PUBLIC_ADSTERRA_SOCIALBAR_SRC || "https://pl31576900.profitableratecpmnetwork.com/fb/a6/fd/fba6fd5b304561dbcb1a5a3013ef09ea.js";
-      return <AdsterraSocialBar scriptSrc={socialSrc} />;
-    }
+  if (type === "native") {
+    return (
+      <AdsterraNative
+        placement={placement}
+        className={className}
+        style={style}
+      />
+    );
+  }
+
+  if (type === "socialbar") {
+    return <AdsterraSocialBar />;
   }
 
   return null;

@@ -106,12 +106,24 @@ export async function getTournamentById(id) {
 export async function getTournamentTeams(tournamentId) {
   try {
     const sql = `
-      SELECT tt.*, 
+      WITH unified_teams AS (
+        SELECT team_id, tournament_id, placement FROM tournament_teams WHERE tournament_id = $1
+        UNION
+        SELECT DISTINCT m.team1_id AS team_id, m.tournament_id, NULL::int AS placement 
+        FROM matches m WHERE m.tournament_id = $1 AND m.team1_id IS NOT NULL
+        UNION
+        SELECT DISTINCT m.team2_id AS team_id, m.tournament_id, NULL::int AS placement 
+        FROM matches m WHERE m.tournament_id = $1 AND m.team2_id IS NOT NULL
+      )
+      SELECT 
+        ut.team_id,
+        ut.tournament_id,
+        ut.placement,
         json_build_object('name', tm.name, 'slug', tm.slug, 'logo_url', tm.logo_url, 'region', tm.region, 'country', tm.country) AS teams
-      FROM tournament_teams tt
-      LEFT JOIN teams tm ON tt.team_id = tm.id
-      WHERE tt.tournament_id = $1
-      ORDER BY tt.placement ASC NULLS LAST
+      FROM unified_teams ut
+      JOIN teams tm ON ut.team_id = tm.id
+      ORDER BY ut.placement ASC NULLS LAST, tm.name ASC
+      LIMIT 24;
     `;
     const res = await query(sql, [tournamentId]);
     return res.rows || [];
@@ -317,7 +329,20 @@ export async function getTeamPlayers(teamId) {
 export async function getTeamTournaments(teamId) {
   try {
     const sql = `
-      SELECT tt.*,
+      WITH team_tourney_ids AS (
+        SELECT tournament_id FROM tournament_teams WHERE team_id = $1
+        UNION
+        SELECT DISTINCT tournament_id FROM matches WHERE (team1_id = $1 OR team2_id = $1) AND tournament_id IS NOT NULL
+      )
+      SELECT 
+        tr.id AS tournament_id,
+        tr.name,
+        tr.slug,
+        tr.status,
+        tr.prize_pool,
+        tr.start_date,
+        tr.end_date,
+        tt.placement,
         json_build_object(
           'name', tr.name,
           'slug', tr.slug,
@@ -327,11 +352,12 @@ export async function getTeamTournaments(teamId) {
           'end_date', tr.end_date,
           'games', json_build_object('name', g.name, 'slug', g.slug)
         ) AS tournaments
-      FROM tournament_teams tt
-      LEFT JOIN tournaments tr ON tt.tournament_id = tr.id
+      FROM team_tourney_ids tti
+      JOIN tournaments tr ON tti.tournament_id = tr.id
+      LEFT JOIN tournament_teams tt ON tt.tournament_id = tr.id AND tt.team_id = $1
       LEFT JOIN games g ON tr.game_id = g.id
-      WHERE tt.team_id = $1
-      ORDER BY tt.placement ASC NULLS LAST
+      ORDER BY tr.start_date DESC NULLS LAST
+      LIMIT 10;
     `;
     const res = await query(sql, [teamId]);
     return res.rows || [];
@@ -466,25 +492,56 @@ export async function getBlogs(filters = {}) {
 // ======================== VERIFIED STATISTICS HELPERS ========================
 
 export async function getTeamPerformanceStats(teamId) {
-  if (!teamId) return { total_matches: 0, wins: 0, losses: 0, unresolved_matches: 0, win_rate: 0 };
+  if (!teamId) return { total_matches: 0, wins: 0, losses: 0, unresolved_matches: 0, win_rate: 0, first_match: null, latest_match: null };
   try {
     const sql = `
       SELECT 
         COUNT(m.id)::int AS total_matches,
         COUNT(CASE WHEN m.winner_id = $1 THEN 1 END)::int AS wins,
         COUNT(CASE WHEN m.winner_id IS NOT NULL AND m.winner_id != $1 THEN 1 END)::int AS losses,
-        COUNT(CASE WHEN m.winner_id IS NULL THEN 1 END)::int AS unresolved_matches
+        COUNT(CASE WHEN m.winner_id IS NULL THEN 1 END)::int AS unresolved_matches,
+        MIN(m.played_at) AS first_match,
+        MAX(m.played_at) AS latest_match
       FROM matches m
       WHERE m.team1_id = $1 OR m.team2_id = $1;
     `;
     const res = await query(sql, [teamId]);
-    const row = res.rows[0] || { total_matches: 0, wins: 0, losses: 0, unresolved_matches: 0 };
+    const row = res.rows[0] || { total_matches: 0, wins: 0, losses: 0, unresolved_matches: 0, first_match: null, latest_match: null };
     const decidedMatches = row.wins + row.losses;
     const win_rate = decidedMatches > 0 ? parseFloat(((row.wins / decidedMatches) * 100).toFixed(1)) : 0;
     return { ...row, win_rate };
   } catch (error) {
     console.error("Error in getTeamPerformanceStats:", error);
-    return { total_matches: 0, wins: 0, losses: 0, unresolved_matches: 0, win_rate: 0 };
+    return { total_matches: 0, wins: 0, losses: 0, unresolved_matches: 0, win_rate: 0, first_match: null, latest_match: null };
+  }
+}
+
+export async function getTeamOpponents(teamId, limit = 5) {
+  if (!teamId) return [];
+  try {
+    const sql = `
+      SELECT 
+        opp.id,
+        opp.name,
+        opp.slug,
+        opp.logo_url,
+        opp.region,
+        COUNT(m.id)::int AS matches_played,
+        COUNT(CASE WHEN m.winner_id = $1 THEN 1 END)::int AS wins,
+        COUNT(CASE WHEN m.winner_id = opp.id THEN 1 END)::int AS losses
+      FROM matches m
+      JOIN teams opp ON (opp.id = CASE WHEN m.team1_id = $1 THEN m.team2_id ELSE m.team1_id END)
+      WHERE (m.team1_id = $1 OR m.team2_id = $1)
+        AND opp.id IS NOT NULL
+      GROUP BY opp.id, opp.name, opp.slug, opp.logo_url, opp.region
+      ORDER BY COUNT(m.id) DESC
+      LIMIT $2;
+    `;
+    const res = await query(sql, [teamId, limit]);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error in getTeamOpponents:", error);
+    return [];
   }
 }
 

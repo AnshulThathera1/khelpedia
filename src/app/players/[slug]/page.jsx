@@ -1,8 +1,10 @@
 import { query } from "@/lib/db";
+import { checkPlayerIndexable } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PlayerCareerWidget from "@/app/components/PlayerCareerWidget";
 import AdContainer from "@/app/components/ads/AdContainer";
+import DesktopSidebarLayout from "@/app/components/ads/DesktopSidebarLayout";
 
 // Dynamically set page metadata for SEO
 export async function generateMetadata({ params }) {
@@ -19,7 +21,6 @@ export async function generateMetadata({ params }) {
         
     const fullTitle = `${pageTitle} | KhelPediA`;
     const description = `View detailed esports statistics, career history, match results, and team information for ${player.ign} on KhelPediA.`;
-    const { checkPlayerIndexable } = await import("@/lib/seo");
     const isIndexable = await checkPlayerIndexable(resolvedParams.slug);
     const isThin = !isIndexable;
 
@@ -76,7 +77,10 @@ export default async function PlayerProfilePage({ params }) {
         WHERE p.slug = $1
         LIMIT 1
     `;
-    const res = await query(sql, [resolvedParams.slug]);
+    const [res, isIndexable] = await Promise.all([
+        query(sql, [resolvedParams.slug]),
+        checkPlayerIndexable(resolvedParams.slug)
+    ]);
     const player = res.rows[0];
 
     if (!player) {
@@ -108,7 +112,7 @@ export default async function PlayerProfilePage({ params }) {
         } : undefined
     };
 
-    return (
+    const pageContent = (
         <div className="page-container" style={{ maxWidth: "1000px" }}>
             {jsonLd && (
                 <script
@@ -194,8 +198,10 @@ export default async function PlayerProfilePage({ params }) {
             {/* Statistics Grid — only show if we have verified stats data */}
             <PlayerCareerWidget stats={primaryStats} />
 
-            {/* Player Ad Placement */}
-            <AdContainer type="banner" placement="player" />
+            {/* Player Ad Placement — Only rendered on verified, indexable profiles */}
+            {isIndexable && (
+                <AdContainer type="banner" placement="player_profile_break" />
+            )}
 
             {/* Biography & Playstyle — only show editorial content, never auto-generated filler */}
             {player.editorial_content && (
@@ -253,4 +259,14 @@ export default async function PlayerProfilePage({ params }) {
             `}} />
         </div>
     );
+
+    if (isIndexable) {
+        return (
+            <DesktopSidebarLayout pageType="player" variant="compact">
+                {pageContent}
+            </DesktopSidebarLayout>
+        );
+    }
+
+    return pageContent;
 }

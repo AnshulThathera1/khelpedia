@@ -85,6 +85,28 @@ export default function TeamStatsWidget({ stats, recentMatches = [], teamId }) {
             </div>
           </div>
         )}
+
+        {/* Activity Period */}
+        {(stats.first_match || stats.latest_match) && (
+          <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "1rem", marginTop: "1rem", display: "flex", gap: "2.5rem", flexWrap: "wrap", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+            {stats.first_match && (
+              <div>
+                <span style={{ fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.05em", color: "var(--text-muted)", display: "block" }}>First Tracked Match</span>
+                <span style={{ color: "var(--text-primary)", fontWeight: 700, fontFamily: '"Rajdhani", sans-serif', fontSize: "1.05rem" }}>
+                  {new Date(stats.first_match).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            )}
+            {stats.latest_match && (
+              <div>
+                <span style={{ fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.05em", color: "var(--text-muted)", display: "block" }}>Latest Competition</span>
+                <span style={{ color: "var(--text-primary)", fontWeight: 700, fontFamily: '"Rajdhani", sans-serif', fontSize: "1.05rem" }}>
+                  {new Date(stats.latest_match).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
