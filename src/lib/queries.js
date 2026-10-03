@@ -725,4 +725,23 @@ export async function getRecentMatches(limit = 5) {
   }
 }
 
+/**
+ * Fetch dynamic maintenance mode state from shared PostgreSQL database
+ */
+export async function getMaintenanceStatus() {
+  try {
+    const res = await query(
+      "SELECT value FROM system_settings WHERE key = 'maintenance' LIMIT 1"
+    );
+    if (res?.rows?.[0]?.value) {
+      return res.rows[0].value;
+    }
+    return { enabled: false, message: "", showBannerOnly: false };
+  } catch (error) {
+    // Fail-open strategy: If database table is unreachable or blips, don't take down the site
+    return { enabled: false, message: "", showBannerOnly: false };
+  }
+}
+
+
 

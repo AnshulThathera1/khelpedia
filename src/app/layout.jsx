@@ -78,10 +78,19 @@ export const metadata = {
 };
 
 import { createClient } from "@/utils/supabase/server";
+import { getMaintenanceStatus } from "@/lib/queries";
+import MaintenanceBanner from "./components/MaintenanceBanner";
+import MaintenanceScreen from "./components/MaintenanceScreen";
 
 export default async function RootLayout({ children }) {
-  const supabase = await createClient();
+  const [supabase, maintenance] = await Promise.all([
+    createClient(),
+    getMaintenanceStatus(),
+  ]);
   const { data: { user } } = await supabase.auth.getUser();
+
+  const isMaintenanceActive = Boolean(maintenance?.enabled);
+  const showBannerOnly = Boolean(maintenance?.showBannerOnly);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -179,10 +188,17 @@ export default async function RootLayout({ children }) {
         />
       </head>
       <body suppressHydrationWarning className={`${outfit.variable} ${rajdhani.variable} ${orbitron.variable}`}>
-        <LayoutWrapper user={user}>
-          {children}
-          <AdContainer type="socialbar" placement="root" />
-        </LayoutWrapper>
+        {isMaintenanceActive && !showBannerOnly ? (
+          <MaintenanceScreen message={maintenance?.message} />
+        ) : (
+          <LayoutWrapper user={user}>
+            {isMaintenanceActive && showBannerOnly && (
+              <MaintenanceBanner message={maintenance?.message} />
+            )}
+            {children}
+            <AdContainer type="socialbar" placement="root" />
+          </LayoutWrapper>
+        )}
       </body>
     </html>
   );
