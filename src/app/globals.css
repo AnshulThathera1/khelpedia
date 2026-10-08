@@ -764,6 +764,15 @@ main {
   }
 }
 
+/* Static Container inside Sidebar (non-sticky) */
+.desktop-sidebar-static {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding-top: 2rem; /* Aligns visually with py-8 in main profile content */
+}
+
 /* --- RESPONSIVE BREAKPOINTS --- */
 
 /* 1. Compact Variant (Articles max 800px, Matches max 900px, Players max 1000px):
@@ -835,6 +844,584 @@ html.light .sidebar-ad-card {
   background: rgba(0, 0, 0, 0.1);
   border-radius: 6px;
 }
+
+/* ============================================
+   INLINE & RESPONSIVE ADSTERRA BANNER SYSTEM
+   ============================================ */
+
+.adsterra-banner-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem auto;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  clear: both;
+  box-sizing: border-box;
+}
+
+.adsterra-banner-wrapper.size-responsive {
+  min-height: 114px;
+}
+
+@media (max-width: 767px) {
+  .adsterra-banner-wrapper.size-responsive {
+    min-height: 72px;
+    margin: 1rem auto;
+  }
+}
+
+.adsterra-banner-wrapper.size-728x90 {
+  min-height: 114px;
+}
+
+.adsterra-banner-wrapper.size-300x250 {
+  min-height: 274px;
+}
+
+.adsterra-banner-wrapper.size-320x50 {
+  min-height: 72px;
+}
+
+.adsterra-ad-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-muted, #71717a);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.adsterra-banner-frame-728x90 {
+  width: 728px;
+  height: 90px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+}
+
+.adsterra-banner-frame-320x50 {
+  width: 320px;
+  height: 50px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+
+.adsterra-banner-frame-300x250 {
+  width: 300px;
+  height: 250px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+}
+
+.adsterra-banner-desktop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.adsterra-banner-mobile {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .adsterra-banner-desktop {
+    display: none !important;
+  }
+  .adsterra-banner-mobile {
+    display: flex !important;
+  }
+}
+
+/* ============================================
+   VALORANT SECONDARY SUB-NAVIGATION
+   ============================================ */
+
+.valorant-subnav {
+  position: sticky;
+  top: 70px;
+  z-index: 40;
+  background: rgba(13, 17, 23, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .valorant-subnav {
+    top: 60px;
+  }
+}
+
+/* Light Mode Overrides */
+html.light .valorant-subnav {
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.05);
+}
+
+.valorant-subnav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  height: 50px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1023px) and (min-width: 768px) {
+  .valorant-subnav-container {
+    padding: 0 1rem;
+    height: 48px;
+  }
+}
+
+@media (max-width: 767px) {
+  .valorant-subnav-container {
+    flex-direction: column;
+    padding: 0;
+    height: auto;
+  }
+}
+
+/* Brand Area */
+.valorant-subnav-brand-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .valorant-subnav-brand-bar {
+    width: 100%;
+    justify-content: space-between;
+    padding: 6px 14px;
+    height: 36px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    box-sizing: border-box;
+  }
+
+  html.light .valorant-subnav-brand-bar {
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.valorant-subnav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.valorant-brand-hex {
+  background: var(--accent-red, #ff4655);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  box-shadow: 0 0 10px rgba(255, 70, 85, 0.4);
+  flex-shrink: 0;
+}
+
+.valorant-brand-text {
+  font-family: var(--font-rajdhani), 'Rajdhani', sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+}
+
+html.light .valorant-brand-text {
+  color: #0f172a !important;
+}
+
+@media (max-width: 767px) {
+  .valorant-brand-text {
+    font-size: 0.95rem;
+  }
+}
+
+/* Links Bar */
+.valorant-subnav-links-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+@media (max-width: 1023px) and (min-width: 768px) {
+  .valorant-subnav-links-bar {
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .valorant-subnav-links-bar {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 3px 8px;
+    height: 38px;
+    box-sizing: border-box;
+    gap: 2px;
+  }
+}
+
+/* Nav Link Item */
+.valorant-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-family: var(--font-rajdhani), 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary, #94a3b8);
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+  user-select: none;
+}
+
+html.light .valorant-nav-link {
+  color: #475569;
+}
+
+.valorant-nav-link:hover {
+  color: var(--text-primary, #ffffff);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.light .valorant-nav-link:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.valorant-nav-link.is-active {
+  color: var(--accent-red, #ff4655) !important;
+  background: rgba(255, 70, 85, 0.09) !important;
+  border-color: rgba(255, 70, 85, 0.28) !important;
+}
+
+html.light .valorant-nav-link.is-active {
+  color: var(--accent-red, #ff4655) !important;
+  background: rgba(255, 70, 85, 0.08) !important;
+  border-color: rgba(255, 70, 85, 0.25) !important;
+}
+
+@media (max-width: 767px) {
+  .valorant-nav-link {
+    padding: 5px 6px;
+    font-size: 0.72rem;
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 4px;
+    border-radius: 3px;
+  }
+
+  .valorant-nav-link span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Breakpoint visibility rules */
+.nav-item-desktop-only {
+  display: inline-flex;
+}
+
+@media (max-width: 1023px) {
+  .nav-item-desktop-only {
+    display: none !important;
+  }
+}
+
+.valorant-nav-more-wrapper {
+  display: none;
+  position: relative;
+}
+
+@media (max-width: 1023px) {
+  .valorant-nav-more-wrapper {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 767px) {
+  .valorant-nav-more-wrapper {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+  }
+
+  .valorant-nav-more-wrapper .valorant-more-btn {
+    width: 100%;
+  }
+}
+
+.nav-item-agents {
+  display: inline-flex;
+}
+
+@media (max-width: 380px) {
+  .valorant-nav-link.nav-item-agents,
+  .nav-item-agents {
+    display: none !important;
+  }
+}
+
+/* More Dropdown */
+.valorant-more-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 140px;
+  background: var(--bg-secondary, #12171f);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+  padding: 4px;
+  z-index: 60;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fadeInFast 0.15s ease-out;
+}
+
+html.light .valorant-more-dropdown {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12);
+}
+
+@keyframes fadeInFast {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-family: var(--font-rajdhani), 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary, #94a3b8);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+html.light .dropdown-item {
+  color: #475569;
+}
+
+.dropdown-item:hover,
+.dropdown-item.is-active {
+  background: rgba(255, 70, 85, 0.1);
+  color: var(--accent-red, #ff4655);
+}
+
+.dropdown-item-agents-small {
+  display: none;
+}
+
+@media (max-width: 380px) {
+  .dropdown-item-agents-small {
+    display: flex !important;
+  }
+}
+
+/* Status Indicators */
+.valorant-status-mobile {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .valorant-status-mobile {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.valorant-subnav-status-desktop {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .valorant-subnav-status-desktop {
+    display: none !important;
+  }
+}
+
+.valorant-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  border-radius: 10px;
+  font-family: var(--font-rajdhani), 'Rajdhani', sans-serif;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.valorant-status-pill.status-success {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #22c55e;
+}
+
+.valorant-status-pill.status-warning {
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #eab308;
+}
+
+.valorant-status-pill.status-danger {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+}
+
+.status-pulse-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  animation: pulse-dot 1.5s infinite;
+}
+
+.valorant-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid;
+  font-family: var(--font-rajdhani), 'Rajdhani', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.valorant-status-badge.status-success {
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.valorant-status-badge.status-warning {
+  border-color: rgba(234, 179, 8, 0.3);
+  color: #eab308;
+  background: rgba(234, 179, 8, 0.06);
+}
+
+.valorant-status-badge.status-danger {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+}
+
+/* Valorant Hero Section Spacing Optimizations */
+.valorant-hero-section {
+  position: relative;
+  padding-top: 2.75rem;
+  padding-bottom: 4rem;
+}
+
+@media (max-width: 768px) {
+  .valorant-hero-section {
+    padding-top: 1.75rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+}
+
+.valorant-stats-tracker-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  margin-bottom: 1rem;
+  background: rgba(255, 70, 85, 0.08);
+  border: 1px solid rgba(255, 70, 85, 0.2);
+  border-radius: 4px;
+  color: var(--accent-red, #ff4655);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-family: var(--font-rajdhani), 'Rajdhani', sans-serif;
+}
+
+@media (max-width: 768px) {
+  .valorant-stats-tracker-eyebrow {
+    padding: 3px 10px;
+    margin-bottom: 0.5rem !important;
+    font-size: 0.7rem;
+    gap: 6px;
+  }
+}
+
+
+
 
 
 

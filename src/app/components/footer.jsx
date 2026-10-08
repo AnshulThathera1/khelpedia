@@ -11,6 +11,8 @@ const footerLinks = [
             { href: "/players", label: "Pro Players" },
             { href: "/teams", label: "Teams" },
             { href: "/blogs", label: "News & Articles" },
+            { href: "/stories", label: "Community Stories" },
+            { href: "/submit-story", label: "Submit a Story" },
         ],
     },
     {

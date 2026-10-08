@@ -4,6 +4,7 @@ import AdsterraBanner from "./AdsterraBanner";
 import AdsterraNative from "./AdsterraNative";
 import AdsterraSocialBar from "./AdsterraSocialBar";
 import AdsterraSidebar from "./AdsterraSidebar";
+import AdsterraMobileBanner from "./AdsterraMobileBanner";
 import DesktopSidebarLayout from "./DesktopSidebarLayout";
 
 export {
@@ -11,6 +12,7 @@ export {
   AdsterraNative,
   AdsterraSocialBar,
   AdsterraSidebar,
+  AdsterraMobileBanner,
   DesktopSidebarLayout,
 };
 
@@ -53,6 +55,16 @@ export default function AdContainer({
   }
 
   // Handle explicit size request
+  if (size === "320x50") {
+    return (
+      <AdsterraMobileBanner
+        placement={placement}
+        className={className}
+        style={style}
+      />
+    );
+  }
+
   if (size) {
     return (
       <AdsterraBanner
@@ -98,10 +110,9 @@ export default function AdContainer({
     );
   }
 
-  if (type === "banner_320x50") {
+  if (type === "banner_320x50" || type === "mobile_banner") {
     return (
-      <AdsterraBanner
-        size="320x50"
+      <AdsterraMobileBanner
         placement={placement}
         className={className}
         style={style}
@@ -120,6 +131,9 @@ export default function AdContainer({
   }
 
   if (type === "socialbar") {
+    if (process.env.NEXT_PUBLIC_ADSTERRA_SOCIALBAR_ENABLED !== "true") {
+      return null;
+    }
     return <AdsterraSocialBar />;
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 // Standard Adsterra Banner Zone Keys
@@ -10,7 +10,7 @@ const ZONE_KEYS = {
   "320x50": process.env.NEXT_PUBLIC_ADSTERRA_BANNER_320X50_KEY || "4f4ab1bbe05068164ef41d1096876079",
 };
 
-// Paths where ads must NEVER render (Phase 11 & 13 safeguards)
+// Paths where ads must NEVER render
 const EXCLUDED_PREFIXES = [
   "/admin",
   "/khelpedia-admin",
@@ -20,10 +20,51 @@ const EXCLUDED_PREFIXES = [
   "/dashboard",
 ];
 
+function generateSrcDoc(zoneKey, width, height) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: ${width}px;
+      height: ${height}px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: transparent;
+    }
+  </style>
+</head>
+<body>
+  <script type="text/javascript">
+    atOptions = {
+      'key' : '${zoneKey}',
+      'format' : 'iframe',
+      'height' : ${height},
+      'width' : ${width},
+      'params' : {}
+    };
+  </script>
+  <script type="text/javascript" src="https://www.highrevenueformat.com/${zoneKey}/invoke.js"></script>
+</body>
+</html>`;
+}
+
 /**
  * AdsterraBanner
  * Renders an isolated, responsive, and CLS-protected Adsterra banner unit.
- * Supports: size="728x90" | "300x250" | "320x50" | "responsive"
+ * Uses isolated iframe encapsulation (srcDoc) to prevent global window.atOptions
+ * collisions and eliminate layout shifts (CLS).
+ *
+ * For size="responsive":
+ * - Displays 728x90 Leaderboard on desktop/tablet (>=768px)
+ * - Displays 320x50 Banner on mobile (<768px) via CSS media query
  */
 export default function AdsterraBanner({
   size = "responsive",
@@ -35,26 +76,12 @@ export default function AdsterraBanner({
   style = {},
 }) {
   const pathname = usePathname();
-  const containerRef = useRef(null);
   const [mounted, setMounted] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(true);
 
   const isAdsEnabled = process.env.NEXT_PUBLIC_ADS_ENABLED !== "false";
 
-  // Detect viewport size dynamically without mounting hidden duplicate scripts
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== "undefined") {
-      const media = window.matchMedia("(min-width: 768px)");
-      setIsDesktop(media.matches);
-
-      const handleMediaChange = (e) => {
-        setIsDesktop(e.matches);
-      };
-
-      media.addEventListener("change", handleMediaChange);
-      return () => media.removeEventListener("change", handleMediaChange);
-    }
   }, []);
 
   // Safeguard: Never render on admin, auth, or internal dashboard paths
@@ -62,135 +89,138 @@ export default function AdsterraBanner({
     pathname?.toLowerCase().startsWith(prefix)
   );
 
-  // Determine active dimensions and zone key
-  let width = customWidth;
-  let height = customHeight;
-  let activeKey = zoneKey;
-
-  if (size === "728x90") {
-    width = width || 728;
-    height = height || 90;
-    activeKey = activeKey || ZONE_KEYS["728x90"];
-  } else if (size === "300x250") {
-    width = width || 300;
-    height = height || 250;
-    activeKey = activeKey || ZONE_KEYS["300x250"];
-  } else if (size === "320x50") {
-    width = width || 320;
-    height = height || 50;
-    activeKey = activeKey || ZONE_KEYS["320x50"];
-  } else {
-    // "responsive" Leaderboard: 728x90 on >=768px, 320x50 on <768px
-    if (isDesktop) {
-      width = width || 728;
-      height = height || 90;
-      activeKey = activeKey || ZONE_KEYS["728x90"];
-    } else {
-      width = width || 320;
-      height = height || 50;
-      activeKey = activeKey || ZONE_KEYS["320x50"];
-    }
-  }
-
-  // Load the Adsterra script into the container cleanly
-  useEffect(() => {
-    if (!mounted || !isAdsEnabled || isExcludedPath || !activeKey || !containerRef.current) {
-      return;
-    }
-
-    const container = containerRef.current;
-
-    // Check if this container already has this specific zone script
-    if (container.getAttribute("data-loaded-zone") === activeKey) {
-      return;
-    }
-
-    // Clean container before injecting to avoid duplicate scripts on breakpoint switch
-    container.innerHTML = "";
-    container.setAttribute("data-loaded-zone", activeKey);
-
-    const confScript = document.createElement("script");
-    confScript.type = "text/javascript";
-    confScript.innerHTML = `
-      atOptions = {
-        'key' : '${activeKey}',
-        'format' : 'iframe',
-        'height' : ${height},
-        'width' : ${width},
-        'params' : {}
-      };
-    `;
-
-    const invokeScript = document.createElement("script");
-    invokeScript.type = "text/javascript";
-    invokeScript.src = `https://www.highrevenueformat.com/${activeKey}/invoke.js`;
-    invokeScript.async = true;
-
-    container.appendChild(confScript);
-    container.appendChild(invokeScript);
-
-    return () => {
-      // Cleanup on unmount or breakpoint switch
-      container.innerHTML = "";
-      container.removeAttribute("data-loaded-zone");
-    };
-  }, [mounted, isAdsEnabled, isExcludedPath, activeKey, width, height]);
-
   if (!isAdsEnabled || isExcludedPath) {
     return null;
   }
 
-  // Reserve container dimensions to eliminate Cumulative Layout Shift (CLS)
-  const reservedHeight = height ? height + 24 : 114;
-  const reservedWidth = width ? `${width}px` : "100%";
+  // Handle explicit fixed sizes
+  if (size === "300x250") {
+    const key = zoneKey || ZONE_KEYS["300x250"];
+    return (
+      <div
+        data-ad-placement={placement}
+        data-ad-size="300x250"
+        className={`adsterra-banner-wrapper size-300x250 ${className}`}
+        style={style}
+      >
+        <span className="adsterra-ad-label">Advertisement</span>
+        <div className="adsterra-banner-frame-300x250">
+          {mounted && (
+            <iframe
+              title={`Advertisement - 300x250 (${placement})`}
+              srcDoc={generateSrcDoc(key, 300, 250)}
+              width="300"
+              height="250"
+              tabIndex={-1}
+              style={{ width: "300px", height: "250px", border: "none", overflow: "hidden", display: "block" }}
+              scrolling="no"
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (size === "320x50") {
+    const key = zoneKey || ZONE_KEYS["320x50"];
+    return (
+      <div
+        data-ad-placement={placement}
+        data-ad-size="320x50"
+        className={`adsterra-banner-wrapper size-320x50 ${className}`}
+        style={style}
+      >
+        <span className="adsterra-ad-label">Advertisement</span>
+        <div className="adsterra-banner-frame-320x50">
+          {mounted && (
+            <iframe
+              title={`Advertisement - 320x50 (${placement})`}
+              srcDoc={generateSrcDoc(key, 320, 50)}
+              width="320"
+              height="50"
+              tabIndex={-1}
+              style={{ width: "320px", height: "50px", border: "none", overflow: "hidden", display: "block" }}
+              scrolling="no"
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (size === "728x90") {
+    const key = zoneKey || ZONE_KEYS["728x90"];
+    return (
+      <div
+        data-ad-placement={placement}
+        data-ad-size="728x90"
+        className={`adsterra-banner-wrapper size-728x90 ${className}`}
+        style={style}
+      >
+        <span className="adsterra-ad-label">Advertisement</span>
+        <div className="adsterra-banner-frame-728x90">
+          {mounted && (
+            <iframe
+              title={`Advertisement - 728x90 (${placement})`}
+              srcDoc={generateSrcDoc(key, 728, 90)}
+              width="728"
+              height="90"
+              tabIndex={-1}
+              style={{ width: "728px", height: "90px", border: "none", overflow: "hidden", display: "block" }}
+              scrolling="no"
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Responsive mode: CSS-swapped desktop 728x90 and mobile 320x50 with strictly reserved space
+  const desktopKey = zoneKey || ZONE_KEYS["728x90"];
+  const mobileKey = zoneKey || ZONE_KEYS["320x50"];
 
   return (
     <div
       data-ad-placement={placement}
-      data-ad-size={`${width}x${height}`}
-      className={`adsterra-banner-wrapper ${className}`}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        margin: "2.5rem 0",
-        minHeight: `${reservedHeight}px`,
-        width: "100%",
-        maxWidth: "100%",
-        overflow: "hidden",
-        position: "relative",
-        clear: "both",
-        ...style,
-      }}
+      data-ad-size="responsive"
+      className={`adsterra-banner-wrapper size-responsive ${className}`}
+      style={style}
     >
-      {/* Standard non-intrusive ad disclosure label */}
-      <span
-        style={{
-          fontSize: "0.68rem",
-          fontWeight: 600,
-          color: "var(--text-muted, #71717a)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginBottom: "0.4rem",
-          userSelect: "none",
-        }}
-      >
-        Advertisement
-      </span>
+      {/* Desktop / Tablet Container (>= 768px): 728x90 */}
+      <div className="adsterra-banner-desktop">
+        <span className="adsterra-ad-label">Advertisement</span>
+        <div className="adsterra-banner-frame-728x90">
+          {mounted && (
+            <iframe
+              title={`Advertisement - Desktop Leaderboard (${placement})`}
+              srcDoc={generateSrcDoc(desktopKey, 728, 90)}
+              width="728"
+              height="90"
+              tabIndex={-1}
+              style={{ width: "728px", height: "90px", border: "none", overflow: "hidden", display: "block" }}
+              scrolling="no"
+            />
+          )}
+        </div>
+      </div>
 
-      {/* Script injection target container with exact reserved dimensions */}
-      <div
-        ref={containerRef}
-        style={{
-          width: reservedWidth,
-          maxWidth: "100%",
-          minHeight: `${height || 90}px`,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      />
+      {/* Mobile Container (< 768px): 320x50 */}
+      <div className="adsterra-banner-mobile">
+        <span className="adsterra-ad-label">Advertisement</span>
+        <div className="adsterra-banner-frame-320x50">
+          {mounted && (
+            <iframe
+              title={`Advertisement - Mobile Banner (${placement})`}
+              srcDoc={generateSrcDoc(mobileKey, 320, 50)}
+              width="320"
+              height="50"
+              tabIndex={-1}
+              style={{ width: "320px", height: "50px", border: "none", overflow: "hidden", display: "block" }}
+              scrolling="no"
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

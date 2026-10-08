@@ -25,6 +25,8 @@ export default function AdsterraSocialBar({
 }) {
   const pathname = usePathname();
   const isAdsEnabled = process.env.NEXT_PUBLIC_ADS_ENABLED !== "false";
+  // Explicit kill-switch: Social Bar overlay is disabled by default to preserve UX & prevent navigation blocking
+  const isSocialBarEnabled = process.env.NEXT_PUBLIC_ADSTERRA_SOCIALBAR_ENABLED === "true";
 
   // Safeguard: Never render or inject Social Bar on admin, auth, or internal dashboard paths
   const isExcludedPath = EXCLUDED_PREFIXES.some((prefix) =>
@@ -32,7 +34,7 @@ export default function AdsterraSocialBar({
   );
 
   useEffect(() => {
-    if (!isAdsEnabled || isExcludedPath || !scriptSrc) {
+    if (!isAdsEnabled || !isSocialBarEnabled || isExcludedPath || !scriptSrc) {
       return;
     }
 

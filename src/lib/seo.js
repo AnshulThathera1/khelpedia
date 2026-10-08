@@ -70,6 +70,14 @@ export const BLOG_INDEXABLE_SQL = `
   b.is_published = true
 `;
 
+/**
+ * Community Story Indexability Predicate:
+ * - Only status = 'published'
+ */
+export const COMMUNITY_STORY_INDEXABLE_SQL = `
+  cs.status = 'published'
+`;
+
 // ---------------------------------------------------------
 // PAGE-LEVEL DIAGNOSTIC & ELIGIBILITY HELPERS
 // ---------------------------------------------------------
@@ -112,3 +120,17 @@ export async function checkPlayerIndexable(slug) {
     return false;
   }
 }
+
+export async function checkCommunityStoryIndexable(slug) {
+  try {
+    const res = await query(
+      `SELECT 1 FROM community_stories cs WHERE cs.slug = $1 AND (${COMMUNITY_STORY_INDEXABLE_SQL})`,
+      [slug]
+    );
+    return res.rowCount > 0;
+  } catch (error) {
+    console.error("Error checking community story indexability", error);
+    return false;
+  }
+}
+

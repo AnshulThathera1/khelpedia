@@ -1,5 +1,5 @@
 import { query } from "@/lib/db";
-import { TOURNAMENT_INDEXABLE_SQL, TEAM_INDEXABLE_SQL, PLAYER_INDEXABLE_SQL, BLOG_INDEXABLE_SQL } from "@/lib/seo";
+import { TOURNAMENT_INDEXABLE_SQL, TEAM_INDEXABLE_SQL, PLAYER_INDEXABLE_SQL, BLOG_INDEXABLE_SQL, COMMUNITY_STORY_INDEXABLE_SQL } from "@/lib/seo";
 
 export async function GET() {
   const baseUrl = "https://khelpedia.org";
@@ -10,18 +10,21 @@ export async function GET() {
   let teams = { rows: [{ count: 0 }] };
   let players = { rows: [{ count: 0 }] };
   let blogs = { rows: [{ count: 0 }] };
+  let stories = { rows: [{ count: 0 }] };
 
   try {
     const res = await Promise.all([
       query(`SELECT COUNT(*) FROM tournaments t WHERE ${TOURNAMENT_INDEXABLE_SQL}`),
       query(`SELECT COUNT(*) FROM teams t WHERE ${TEAM_INDEXABLE_SQL}`),
       query(`SELECT COUNT(*) FROM players p WHERE ${PLAYER_INDEXABLE_SQL}`),
-      query(`SELECT COUNT(*) FROM blogs b WHERE ${BLOG_INDEXABLE_SQL}`)
+      query(`SELECT COUNT(*) FROM blogs b WHERE ${BLOG_INDEXABLE_SQL}`),
+      query(`SELECT COUNT(*) FROM community_stories cs WHERE ${COMMUNITY_STORY_INDEXABLE_SQL}`)
     ]);
     tournaments = res[0];
     teams = res[1];
     players = res[2];
     blogs = res[3];
+    stories = res[4];
   } catch (error) {
     console.error("sitemap.xml query error:", error);
   }
@@ -35,6 +38,10 @@ export async function GET() {
 
   // Add chunked sitemaps
   for (let i = 0; i < getChunks(blogs); i++) sitemaps.push({ name: `blogs-${i}`, url: `${baseUrl}/sitemap/blogs/sitemap/${i}.xml` });
+  const storyCount = parseInt(stories.rows[0]?.count, 10) || 0;
+  if (storyCount > 0) {
+    for (let i = 0; i < getChunks(stories); i++) sitemaps.push({ name: `stories-${i}`, url: `${baseUrl}/sitemap/stories/sitemap/${i}.xml` });
+  }
   for (let i = 0; i < getChunks(tournaments); i++) sitemaps.push({ name: `tournaments-${i}`, url: `${baseUrl}/sitemap/tournaments/sitemap/${i}.xml` });
   for (let i = 0; i < getChunks(teams); i++) sitemaps.push({ name: `teams-${i}`, url: `${baseUrl}/sitemap/teams/sitemap/${i}.xml` });
   for (let i = 0; i < getChunks(players); i++) sitemaps.push({ name: `players-${i}`, url: `${baseUrl}/sitemap/players/sitemap/${i}.xml` });

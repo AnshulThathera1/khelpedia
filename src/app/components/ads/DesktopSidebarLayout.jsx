@@ -37,7 +37,7 @@ export default function DesktopSidebarLayout({
           aria-label="Left sidebar advertisement"
           className="desktop-sidebar-col desktop-sidebar-col-left"
         >
-          <div className={sticky ? "desktop-sidebar-sticky" : ""}>
+          <div className={sticky ? "desktop-sidebar-sticky" : "desktop-sidebar-static"}>
             <AdsterraSidebar
               placement={`${pageType}_sidebar_left`}
               position="left"
@@ -57,7 +57,7 @@ export default function DesktopSidebarLayout({
           aria-label="Right sidebar advertisement"
           className="desktop-sidebar-col desktop-sidebar-col-right"
         >
-          <div className={sticky ? "desktop-sidebar-sticky" : ""}>
+          <div className={sticky ? "desktop-sidebar-sticky" : "desktop-sidebar-static"}>
             <AdsterraSidebar
               placement={`${pageType}_sidebar_right`}
               position="right"

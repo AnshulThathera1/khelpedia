@@ -153,7 +153,7 @@ export default async function HomePage() {
 
                 {/* Featured Tournaments */}
                 {upcomingTournaments.length > 0 && (
-                    <section style={{ marginBottom: "5rem" }}>
+                    <section style={{ marginBottom: "2.5rem" }}>
                         <div className="section-header">
                             <div>
                                 <h2 className="section-title">Featured Tournaments</h2>
@@ -176,7 +176,7 @@ export default async function HomePage() {
 
                 {/* Latest News & Analysis */}
                 {blogs.length > 0 && (
-                    <section style={{ marginBottom: "5rem" }}>
+                    <section style={{ marginTop: "2.5rem", marginBottom: "5rem" }}>
                         <div className="section-header">
                             <div>
                                 <h2 className="section-title">Latest Esports News & Analysis</h2>
@@ -202,9 +202,6 @@ export default async function HomePage() {
                         <BlogCarousel blogs={blogs.slice(5, 10)} variant="featured" />
                     </section>
                 )}
-
-                {/* Sponsored Content / Native Recommendations Break */}
-                <AdContainer type="native" placement="homepage_editorial_native" />
 
                 {/* Featured Games */}
                 <section style={{ marginBottom: "5rem" }}>

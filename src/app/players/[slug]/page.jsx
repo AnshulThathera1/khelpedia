@@ -23,6 +23,7 @@ export async function generateMetadata({ params }) {
     const description = `View detailed esports statistics, career history, match results, and team information for ${player.ign} on KhelPediA.`;
     const isIndexable = await checkPlayerIndexable(resolvedParams.slug);
     const isThin = !isIndexable;
+    const images = player.image_url ? [player.image_url] : [];
 
     return {
         title: pageTitle,

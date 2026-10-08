@@ -2,6 +2,7 @@ import { getValorantProfile } from '@/app/actions/valorant';
 import Link from 'next/link';
 import { ChevronLeft, AlertCircle } from 'lucide-react';
 import TabNavigation from './TabNavigation';
+import DesktopSidebarLayout from '@/app/components/ads/DesktopSidebarLayout';
 
 export default async function ValorantProfileLayout({ children, params }) {
   const { gameName, tagLine } = await params;
@@ -92,8 +93,14 @@ export default async function ValorantProfileLayout({ children, params }) {
          </div>
       </div>
 
-      {/* Main Content Rendered Here */}
-      {children}
+      {/* Main Content Rendered Here with Desktop Sidebars */}
+      <DesktopSidebarLayout
+        pageType="valorant_profile"
+        variant="compact"
+        sticky={false}
+      >
+        {children}
+      </DesktopSidebarLayout>
       
       {/* Compliance Footer */}
       <footer className="max-w-6xl mx-auto px-4 py-12">

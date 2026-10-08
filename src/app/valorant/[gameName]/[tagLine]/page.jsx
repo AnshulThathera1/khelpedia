@@ -1,5 +1,6 @@
 import { getValorantProfile } from '@/app/actions/valorant';
 import Link from 'next/link';
+import AdContainer from '@/app/components/ads/AdContainer';
 
 export default async function ValorantOverviewTab({ params }) {
    const { gameName, tagLine } = await params;
@@ -475,8 +476,22 @@ export default async function ValorantOverviewTab({ params }) {
 
             {/* Match History feed */}
             <div className="mt-8 space-y-4">
+               {/* Mobile / Tablet Ad: Visible only when desktop sidebars are hidden (< 1536px) */}
+               <div className="block 2xl:hidden mb-4 flex justify-center">
+                  <AdContainer
+                     type="banner_320x50"
+                     placement="valorant_overview_matches"
+                  />
+               </div>
+
                <div className="flex items-center justify-between">
                   <h2 className="font-bold text-sm text-[var(--text-secondary)] uppercase tracking-widest">Match History</h2>
+                  <Link
+                     href={`/valorant/${encodeURIComponent(decodedName)}/${encodeURIComponent(decodedTag)}/matches`}
+                     className="text-xs font-bold text-red-500 hover:text-red-400 transition-colors uppercase tracking-wider"
+                  >
+                     View All Matches &rarr;
+                  </Link>
                </div>
 
                <div className="flex gap-2 flex-wrap mb-4">

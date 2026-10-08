@@ -1,4 +1,5 @@
 import { getValorantProfile } from '@/app/actions/valorant';
+import AdContainer from '@/app/components/ads/AdContainer';
 
 export const metadata = {
   title: 'Weapons - Valorant Profile Tracker',
@@ -18,6 +19,14 @@ export default async function WeaponsTab({ params }) {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">
+      {/* Mobile / Tablet Ad: Visible only when desktop sidebars are hidden (< 1536px) */}
+      <div className="block 2xl:hidden mb-6 flex justify-center">
+        <AdContainer
+          type="banner_320x50"
+          placement="valorant_weapons_top"
+        />
+      </div>
+
       <h2 className="font-bold text-xl text-[var(--text-primary)] mb-4">Weapon Performance</h2>
       
       <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded shadow-sm overflow-hidden">

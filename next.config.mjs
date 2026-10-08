@@ -41,6 +41,21 @@ const nextConfig = {
         destination: '/cookie-policy',
         permanent: true,
       },
+      {
+        source: '/stories/sitemap.xml',
+        destination: '/sitemap/stories/sitemap/0.xml',
+        permanent: false,
+      },
+      {
+        source: '/sitemap/stories.xml',
+        destination: '/sitemap/stories/sitemap/0.xml',
+        permanent: false,
+      },
+      {
+        source: '/sitemap/stories/sitemap.xml',
+        destination: '/sitemap/stories/sitemap/0.xml',
+        permanent: false,
+      },
     ];
   },
   images: {
@@ -52,6 +67,8 @@ const nextConfig = {
       { protocol: "https", hostname: "static.wikia.nocookie.net" },
       { protocol: "https", hostname: "*.supabase.co" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "images.vlr.gg" },
     ],
   },
 };

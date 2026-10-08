@@ -13,6 +13,7 @@ import {
   getValorantServerStatus, getCurrentActId, getValorantLeaderboard,
   searchValorantAccounts, getValorantGlobalStats
 } from '@/app/actions/valorant';
+import ValorantSubNav from './components/ValorantSubNav';
 
 // ─── Client-side fetchers for public valorant-api.com (no key needed) ──
 async function fetchAgents() {
@@ -261,92 +262,11 @@ export default function ValorantTrackerHub() {
   return (
     <div className="overflow-x-hidden" style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
 
-      {/* ═══════ SUB-NAVIGATION ═══════ */}
-      <nav style={{
-        borderBottom: '1px solid var(--border-color)',
-        background: 'var(--bg-secondary)',
-        backdropFilter: 'blur(12px)',
-        position: 'sticky',
-        top: 72,
-        zIndex: 40,
-      }}>
-        <div className="container flex flex-col md:flex-row items-center justify-between p-3 md:p-4 gap-3 md:gap-0">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{
-              background: 'var(--accent-red)', width: 28, height: 28,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-            }}>
-              <Target className="w-3.5 h-3.5" style={{ color: '#fff' }} />
-            </div>
-            <span style={{
-              fontFamily: '"Rajdhani", sans-serif', fontWeight: 800, fontSize: '1.1rem',
-              textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-primary)'
-            }}>VALORANT</span>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-            {[
-              { href: '#search', label: 'Search', icon: <Search className="w-3.5 h-3.5" /> },
-              { href: '/valorant/leaderboard', label: 'Leaderboard', icon: <Trophy className="w-3.5 h-3.5" /> },
-              { href: '#agents', label: 'Agents', icon: <Users className="w-3.5 h-3.5" /> },
-              { href: '#maps', label: 'Maps', icon: <Map className="w-3.5 h-3.5" /> },
-              { href: '#weapons', label: 'Weapons', icon: <Crosshair className="w-3.5 h-3.5" /> },
-            ].map(item => (
-              item.href.startsWith('#') ? (
-                <a key={item.label} href={item.href} style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '6px 14px', fontSize: '0.78rem', fontWeight: 700,
-                  textTransform: 'uppercase', letterSpacing: '0.08em',
-                  color: 'var(--text-secondary)', textDecoration: 'none',
-                  border: '1px solid transparent', transition: 'all 0.2s',
-                  fontFamily: '"Rajdhani", sans-serif',
-                }}
-                  onMouseEnter={e => { e.target.style.color = 'var(--text-primary)'; e.target.style.borderColor = 'var(--border-color)'; }}
-                  onMouseLeave={e => { e.target.style.color = 'var(--text-secondary)'; e.target.style.borderColor = 'transparent'; }}
-                >
-                  {item.icon}{item.label}
-                </a>
-              ) : (
-                <Link key={item.label} href={item.href} style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '6px 14px', fontSize: '0.78rem', fontWeight: 700,
-                  textTransform: 'uppercase', letterSpacing: '0.08em',
-                  color: 'var(--text-secondary)', textDecoration: 'none',
-                  border: '1px solid transparent', transition: 'all 0.2s',
-                  fontFamily: '"Rajdhani", sans-serif',
-                }}>
-                  {item.icon}{item.label}
-                </Link>
-              )
-            ))}
-          </div>
-
-          {/* Server Status */}
-          {serverStatus && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '4px 12px', fontSize: '0.7rem', fontWeight: 700,
-              border: '1px solid',
-              borderColor: serverStatus.type === 'success' ? 'rgba(34,197,94,0.3)' :
-                serverStatus.type === 'warning' ? 'rgba(234,179,8,0.3)' : 'rgba(239,68,68,0.3)',
-              color: serverStatus.type === 'success' ? '#22c55e' :
-                serverStatus.type === 'warning' ? '#eab308' : '#ef4444',
-              background: serverStatus.type === 'success' ? 'rgba(34,197,94,0.06)' :
-                serverStatus.type === 'warning' ? 'rgba(234,179,8,0.06)' : 'rgba(239,68,68,0.06)',
-              textTransform: 'uppercase', letterSpacing: '0.05em',
-            }}>
-              {serverStatus.type === 'success'
-                ? <Activity className="w-3 h-3" />
-                : <AlertTriangle className="w-3 h-3" />}
-              {serverStatus.message}
-            </div>
-          )}
-        </div>
-      </nav>
+      {/* ═══════ RESPONSIVE SECONDARY SUB-NAVIGATION ═══════ */}
+      <ValorantSubNav serverStatus={serverStatus} />
 
       {/* ═══════ HERO SECTION ═══════ */}
-      <section id="search" style={{ position: 'relative', paddingTop: '5rem', paddingBottom: '4rem' }}>
+      <section id="search" className="valorant-hero-section">
         {/* Background effects */}
         <div style={{
           position: 'absolute', top: '-20%', left: '50%', transform: 'translateX(-50%)',
@@ -364,17 +284,10 @@ export default function ValorantTrackerHub() {
           className="container"
           style={{ position: 'relative', zIndex: 10, textAlign: 'center', maxWidth: 800, margin: '0 auto', padding: '0 1.5rem' }}
         >
-          {/* Badge */}
-          <motion.div variants={fadeUp} style={{
-            display: 'inline-flex', alignItems: 'center', gap: '8px',
-            padding: '6px 16px', marginBottom: '1.5rem',
-            background: 'rgba(255,70,85,0.08)', border: '1px solid rgba(255,70,85,0.2)',
-            color: 'var(--accent-red)', fontSize: '0.75rem', fontWeight: 700,
-            textTransform: 'uppercase', letterSpacing: '0.15em',
-            fontFamily: '"Rajdhani", sans-serif',
-          }}>
-            <Target className="w-4 h-4" />
-            VALORANT STATS TRACKER
+          {/* Eyebrow Tool Badge */}
+          <motion.div variants={fadeUp} className="valorant-stats-tracker-eyebrow">
+            <Target className="w-3.5 h-3.5 shrink-0" />
+            <span>VALORANT STATS TRACKER</span>
           </motion.div>
 
           {/* Title */}

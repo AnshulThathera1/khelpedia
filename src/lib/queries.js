@@ -743,5 +743,153 @@ export async function getMaintenanceStatus() {
   }
 }
 
+// ======================== COMMUNITY STORIES ========================
+
+export async function getCommunityStories(filters = {}) {
+  const { page = 1, limit = 12, paginate = false, search, category, game, featured } = filters;
+  try {
+    const whereConditions = ["cs.status = 'published'"];
+    const params = [];
+    let paramIndex = 1;
+
+    if (category && category !== 'All' && category !== 'all') {
+      whereConditions.push(`cs.category ILIKE $${paramIndex++}`);
+      params.push(category);
+    }
+    if (game && game !== 'All' && game !== 'all') {
+      whereConditions.push(`(cs.game_name ILIKE $${paramIndex} OR g.slug ILIKE $${paramIndex} OR g.name ILIKE $${paramIndex})`);
+      paramIndex++;
+      params.push(game);
+    }
+    if (featured !== undefined) {
+      whereConditions.push(`cs.featured = $${paramIndex++}`);
+      params.push(Boolean(featured));
+    }
+    if (search) {
+      whereConditions.push(`(cs.title ILIKE $${paramIndex} OR cs.excerpt ILIKE $${paramIndex} OR cs.player_name ILIKE $${paramIndex} OR cs.player_ign ILIKE $${paramIndex})`);
+      paramIndex++;
+      params.push(`%${search}%`);
+    }
+
+    const whereClause = `WHERE ${whereConditions.join(' AND ')}`;
+
+    const baseSql = `
+      SELECT 
+        cs.id, cs.slug, cs.title, cs.subtitle, cs.excerpt, cs.cover_image,
+        cs.game_id, cs.game_name, cs.category, cs.player_name, cs.player_ign,
+        cs.player_uid, cs.player_mode, cs.player_profile_id, cs.stats_highlight,
+        cs.verification_notes, cs.author_name, cs.featured, cs.published_at,
+        cs.created_at, cs.updated_at, cs.views,
+        json_build_object('name', g.name, 'slug', g.slug, 'icon_url', g.icon_url) AS game,
+        CASE WHEN p.id IS NOT NULL THEN json_build_object('id', p.id, 'name', p.name, 'ign', p.ign, 'slug', p.slug, 'image_url', p.image_url) ELSE NULL END AS player_profile,
+        CASE WHEN pr.id IS NOT NULL THEN json_build_object('id', pr.id, 'display_name', pr.display_name, 'avatar_url', pr.avatar_url) ELSE NULL END AS author_profile
+      FROM community_stories cs
+      LEFT JOIN games g ON cs.game_id = g.id
+      LEFT JOIN players p ON cs.player_profile_id = p.id
+      LEFT JOIN profiles pr ON cs.author_id = pr.id
+      ${whereClause}
+      ORDER BY cs.published_at DESC NULLS LAST, cs.created_at DESC
+    `;
+
+    if (paginate) {
+      const countRes = await query(`
+        SELECT COUNT(*) 
+        FROM community_stories cs 
+        LEFT JOIN games g ON cs.game_id = g.id
+        ${whereClause}
+      `, params);
+      const totalCount = parseInt(countRes.rows[0].count, 10) || 0;
+
+      const offset = (page - 1) * limit;
+      const sql = `${baseSql} LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+      const dataRes = await query(sql, [...params, limit, offset]);
+
+      return { stories: dataRes.rows || [], count: totalCount };
+    }
+
+    const res = await query(baseSql, params);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching community stories:", error);
+    if (paginate) return { stories: [], count: 0 };
+    return [];
+  }
+}
+
+export async function getCommunityStoryBySlug(slug) {
+  if (!slug) return null;
+  try {
+    const sql = `
+      SELECT 
+        cs.*,
+        json_build_object('name', g.name, 'slug', g.slug, 'icon_url', g.icon_url) AS game,
+        CASE WHEN p.id IS NOT NULL THEN json_build_object('id', p.id, 'name', p.name, 'ign', p.ign, 'slug', p.slug, 'image_url', p.image_url) ELSE NULL END AS player_profile,
+        CASE WHEN pr.id IS NOT NULL THEN json_build_object('id', pr.id, 'display_name', pr.display_name, 'avatar_url', pr.avatar_url) ELSE NULL END AS author_profile
+      FROM community_stories cs
+      LEFT JOIN games g ON cs.game_id = g.id
+      LEFT JOIN players p ON cs.player_profile_id = p.id
+      LEFT JOIN profiles pr ON cs.author_id = pr.id
+      WHERE cs.slug = $1 AND cs.status = 'published'
+      LIMIT 1
+    `;
+    const res = await query(sql, [slug]);
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching community story by slug:", error);
+    return null;
+  }
+}
+
+export async function getRelatedCommunityStories(currentSlug, gameId = null, category = null, limit = 3) {
+  try {
+    const params = [currentSlug];
+    let sql = `
+      SELECT 
+        cs.id, cs.slug, cs.title, cs.excerpt, cs.cover_image, cs.game_name,
+        cs.category, cs.player_name, cs.player_ign, cs.published_at, cs.created_at,
+        json_build_object('name', g.name, 'slug', g.slug, 'icon_url', g.icon_url) AS game
+      FROM community_stories cs
+      LEFT JOIN games g ON cs.game_id = g.id
+      WHERE cs.status = 'published' AND cs.slug != $1
+    `;
+
+    if (gameId && category) {
+      params.push(gameId, category, limit);
+      sql += `
+        ORDER BY 
+          (CASE WHEN cs.game_id = $2 THEN 1 ELSE 0 END) DESC,
+          (CASE WHEN cs.category = $3 THEN 1 ELSE 0 END) DESC,
+          cs.published_at DESC NULLS LAST
+        LIMIT $4
+      `;
+    } else if (gameId) {
+      params.push(gameId, limit);
+      sql += `
+        ORDER BY (CASE WHEN cs.game_id = $2 THEN 1 ELSE 0 END) DESC, cs.published_at DESC NULLS LAST
+        LIMIT $3
+      `;
+    } else if (category) {
+      params.push(category, limit);
+      sql += `
+        ORDER BY (CASE WHEN cs.category = $2 THEN 1 ELSE 0 END) DESC, cs.published_at DESC NULLS LAST
+        LIMIT $3
+      `;
+    } else {
+      params.push(limit);
+      sql += `
+        ORDER BY cs.published_at DESC NULLS LAST
+        LIMIT $2
+      `;
+    }
+
+    const res = await query(sql, params);
+    return res.rows || [];
+  } catch (error) {
+    console.error("Error fetching related community stories:", error);
+    return [];
+  }
+}
+
+
 
 

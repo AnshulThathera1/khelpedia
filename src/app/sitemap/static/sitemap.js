@@ -6,6 +6,8 @@ export default function sitemap() {
     '',
     '/tournaments',
     '/blogs',
+    '/stories',
+    '/submit-story',
     '/games',
     '/players',
     '/teams',
@@ -22,7 +24,7 @@ export default function sitemap() {
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: route === '' ? 'daily' : 'monthly',
-    priority: route === '' ? 1 : route === '/blogs' ? 0.9 : 0.7,
+    priority: route === '' ? 1 : (route === '/blogs' || route === '/stories') ? 0.9 : 0.7,
   }));
 
   return routes;

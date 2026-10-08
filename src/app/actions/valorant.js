@@ -84,11 +84,7 @@ export const getValorantProfile = cache(async (gameName, tagLine) => {
   if (accountRes.error) return { error: accountRes.error };
 
   const { puuid } = accountRes.data;
-  const historyRes = await getMatchHistoryIds(puuid);
-  if (historyRes.error) return { error: historyRes.error };
-
-  const matchIds = historyRes.data || [];
-  const playerRegion = historyRes.region || 'ap';
+  const playerRegion = 'ap';
 
   const emptyPlayerStats = {
     summary: {
@@ -114,50 +110,60 @@ export const getValorantProfile = cache(async (gameName, tagLine) => {
       topAgents: []
     },
     recentMatches: [],
+    totalAvailableMatches: 0,
+    initialCursor: null,
+    hasMoreMatches: false,
     topWeapons: [],
     topMaps: []
   };
 
-  if (matchIds.length === 0) {
-    // Player hasn't played recently, but account exists. Don't throw error, return empty stats.
-    const [agentsRes, mapsRes, tiersRes, weaponsRes, playerCardsRes] = await Promise.all([
-      getValorantAgents(), getValorantMaps(), getValorantTiers(), getValorantWeapons(), getValorantPlayerCards()
-    ]);
-    return {
-      account: accountRes.data,
-      playerStats: emptyPlayerStats,
-      agentDict: agentsRes.reduce((acc, a) => ({ ...acc, [a.uuid.toLowerCase()]: a }), {}),
-      mapDict: mapsRes.reduce((acc, m) => ({ ...acc, [m.mapUrl]: m }), {}),
-      tiersRes,
-      weaponDict: weaponsRes.reduce((acc, w) => ({ ...acc, [w.uuid.toLowerCase()]: w }), {}),
-      playerCardDict: playerCardsRes.reduce((acc, c) => ({ ...acc, [c.uuid.toLowerCase()]: c }), {})
-    };
+  // Check how many matches already exist in the database for this player
+  const countRes = await query(
+    `SELECT COUNT(*)::int AS count 
+     FROM valorant_matches vm 
+     JOIN match_players mp ON vm.match_id = mp.match_id 
+     WHERE mp.puuid = $1`,
+    [puuid]
+  );
+  let dbMatchCount = countRes.rows[0]?.count || 0;
+
+  // If fewer than 20 matches exist in DB, fetch recent matchlist from Riot API to refresh/populate
+  if (dbMatchCount < 20) {
+    const historyRes = await getMatchHistoryIds(puuid);
+    if (!historyRes.error && historyRes.data && historyRes.data.length > 0) {
+      const matchIds = historyRes.data || [];
+      const effectiveRegion = historyRes.region || playerRegion;
+
+      const existingRes = await query(
+        `SELECT match_id FROM valorant_matches WHERE match_id = ANY($1::text[])`,
+        [matchIds]
+      );
+      const existingSet = new Set(existingRes.rows.map(r => r.match_id));
+      const missingIds = matchIds.filter(id => !existingSet.has(id));
+
+      let rateLimited = false;
+      for (const id of missingIds.slice(0, 20 - dbMatchCount)) {
+        const matchRes = await getMatchDetails(id, puuid, effectiveRegion);
+        if (matchRes.error) {
+          if (matchRes.error === 'Rate limit exceeded') rateLimited = true;
+          if (rateLimited) break;
+        }
+      }
+    }
   }
 
-  const matchesData = [];
-  const errors = [];
-  let rateLimited = false;
+  // Load initial page of 20 matches from database with keyset pagination
+  const initialPage = await getPlayerMatchesPaginated(puuid, { limit: 20 });
+  const cleanMatches = initialPage.matches;
 
-  for (const id of matchIds.slice(0, 10)) { // Limit to 10 for dev key
-    const matchRes = await getMatchDetails(id, puuid, playerRegion);
-    if (matchRes.error) {
-      if (matchRes.error === 'Rate limit exceeded') rateLimited = true;
-      errors.push(`${id}: ${matchRes.error}`);
-      if (rateLimited) break;
-    }
-    if (!matchRes.error && matchRes.data) {
-      matchesData.push(matchRes.data);
-    }
-  }
-
-  const cleanMatches = matchesData.filter(Boolean);
   let playerStats = emptyPlayerStats;
-  
   if (cleanMatches.length > 0) {
-    playerStats = await aggregatePlayerStats(cleanMatches, puuid) || emptyPlayerStats;
-  } else if (rateLimited) {
-    return { error: "Riot API Rate Limit Exceeded. Please try again in 2 minutes." };
+    playerStats = await aggregatePlayerStats(cleanMatches.map(m => m.rawMatch), puuid) || emptyPlayerStats;
+    playerStats.recentMatches = cleanMatches;
   }
+  playerStats.totalAvailableMatches = initialPage.totalAvailable;
+  playerStats.initialCursor = initialPage.nextCursor;
+  playerStats.hasMoreMatches = initialPage.hasMore;
 
   const [agentsRes, mapsRes, tiersRes, weaponsRes, playerCardsRes] = await Promise.all([
     getValorantAgents(),
@@ -269,7 +275,7 @@ export async function getMatchHistoryIds(puuid) {
 
     const matchBaseUrl = `https://${region}.api.riotgames.com`;
 
-    // 2. Get top 10 matches from matchlist
+    // 2. Get recent matches from matchlist
     const res = await fetch(`${matchBaseUrl}/val/match/v1/matchlists/by-puuid/${puuid}`, {
       headers: getHeaders(),
       cache: 'no-store'
@@ -284,17 +290,76 @@ export async function getMatchHistoryIds(puuid) {
 
     const matchlistData = await res.json();
     
-    // The Valorant matchlist API returns an object with a 'history' array
-    // Each item in history has { matchId, gameStartTimeMillis, queueId }
     if (!matchlistData || !matchlistData.history) {
        return { error: 'Invalid match history data format' };
     }
     
-    const matchIds = matchlistData.history.slice(0, 10).map(match => match.matchId);
+    const matchIds = matchlistData.history.slice(0, 20).map(match => match.matchId);
     return { data: matchIds, region: region };
   } catch (error) {
     console.error('Error fetching match IDs:', error);
     return { error: 'Internal server error' };
+  }
+}
+
+/**
+ * Resolve player identities against valorant_accounts and players tables
+ */
+export async function resolvePlayersIdentity(players) {
+  if (!players || players.length === 0) return players;
+
+  const puuids = players.map(p => p.puuid).filter(Boolean);
+  if (puuids.length === 0) return players;
+
+  try {
+    const res = await query(`
+      SELECT 
+        va.puuid,
+        va.game_name,
+        va.tag_line,
+        p.id AS player_id,
+        p.slug AS canonical_player_slug,
+        p.ign AS player_ign
+      FROM valorant_accounts va
+      LEFT JOIN players p ON (
+        LOWER(p.ign) = LOWER(va.game_name)
+        OR p.name = (va.game_name || '#' || va.tag_line)
+        OR p.slug = LOWER(va.game_name || '-' || va.tag_line)
+      )
+      WHERE va.puuid = ANY($1::text[])
+    `, [puuids]);
+
+    const map = new Map();
+    for (const row of res.rows) {
+      map.set(row.puuid, row);
+    }
+
+    return players.map(p => {
+      const dbInfo = map.get(p.puuid);
+      const rawGameName = p.gameName || p.game_name || dbInfo?.game_name || null;
+      const rawTagLine = p.tagLine || p.tag_line || dbInfo?.tag_line || null;
+      const canonicalPlayerSlug = p.canonicalPlayerSlug || p.canonical_player_slug || dbInfo?.canonical_player_slug || null;
+      const playerId = p.playerId || p.player_id || dbInfo?.player_id || null;
+
+      let profileUrl = null;
+      if (canonicalPlayerSlug) {
+        profileUrl = `/players/${canonicalPlayerSlug}`;
+      } else if (rawGameName && rawTagLine) {
+        profileUrl = `/valorant/${encodeURIComponent(rawGameName)}/${encodeURIComponent(rawTagLine)}`;
+      }
+
+      return {
+        ...p,
+        gameName: rawGameName,
+        tagLine: rawTagLine,
+        playerId,
+        canonicalPlayerSlug,
+        profileUrl
+      };
+    });
+  } catch (err) {
+    console.error('Error resolving player identities:', err);
+    return players;
   }
 }
 
@@ -306,8 +371,8 @@ function reconstructMatchJson(dbMatch) {
     region: dbMatch.region,
     queueId: dbMatch.queue_id,
     seasonId: dbMatch.season_id,
-    gameStartMillis: dbMatch.game_start_millis,
-    gameLengthMillis: dbMatch.game_length_millis
+    gameStartMillis: Number(dbMatch.game_start_millis),
+    gameLengthMillis: Number(dbMatch.game_length_millis)
   };
 
   const teams = (dbMatch.match_teams || []).map(t => ({
@@ -318,21 +383,40 @@ function reconstructMatchJson(dbMatch) {
     numPoints: t.num_points
   }));
 
-  const players = (dbMatch.match_players || []).map(p => ({
-    puuid: p.puuid,
-    teamId: p.team_id,
-    characterId: p.character_id,
-    competitiveTier: p.competitive_tier,
-    playerCard: p.player_card,
-    partyId: p.party_id,
-    stats: {
-      kills: p.kills,
-      deaths: p.deaths,
-      assists: p.assists,
-      score: p.score,
-      roundsPlayed: p.rounds_played
+  const players = (dbMatch.match_players || []).map(p => {
+    const rawGameName = p.game_name || p.gameName || null;
+    const rawTagLine = p.tag_line || p.tagLine || null;
+    const canonicalSlug = p.canonical_player_slug || p.canonicalPlayerSlug || null;
+    const playerId = p.player_id || p.playerId || null;
+
+    let profileUrl = null;
+    if (canonicalSlug) {
+      profileUrl = `/players/${canonicalSlug}`;
+    } else if (rawGameName && rawTagLine) {
+      profileUrl = `/valorant/${encodeURIComponent(rawGameName)}/${encodeURIComponent(rawTagLine)}`;
     }
-  }));
+
+    return {
+      puuid: p.puuid,
+      teamId: p.team_id,
+      characterId: p.character_id,
+      competitiveTier: p.competitive_tier,
+      playerCard: p.player_card,
+      partyId: p.party_id,
+      gameName: rawGameName,
+      tagLine: rawTagLine,
+      playerId,
+      canonicalPlayerSlug: canonicalSlug,
+      profileUrl,
+      stats: {
+        kills: p.kills,
+        deaths: p.deaths,
+        assists: p.assists,
+        score: p.score,
+        roundsPlayed: p.rounds_played
+      }
+    };
+  });
 
   const roundResults = (dbMatch.match_rounds || []).map(r => {
     const roundStats = (dbMatch.match_round_player_stats || []).filter(s => s.round_num === r.round_num);
@@ -442,6 +526,23 @@ async function insertMatchRelational(data) {
             p.stats.roundsPlayed
           ]
         );
+
+        // Store participant identity in valorant_accounts to preserve real IGN and TagLine
+        if (p.puuid && p.gameName && p.tagLine) {
+          try {
+            await query(
+              `INSERT INTO valorant_accounts (puuid, game_name, tag_line, last_updated)
+               VALUES ($1, $2, $3, NOW())
+               ON CONFLICT (puuid) DO UPDATE SET
+                 game_name = EXCLUDED.game_name,
+                 tag_line = EXCLUDED.tag_line,
+                 last_updated = EXCLUDED.last_updated`,
+              [p.puuid, p.gameName, p.tagLine]
+            );
+          } catch (accErr) {
+            // Non-critical if conflict on (game_name, tag_line) belongs to another record
+          }
+        }
       }
     }
 
@@ -497,7 +598,35 @@ export async function getMatchDetails(matchId, puuid, region = REGION) {
     const cacheSql = `
       SELECT vm.*,
         (SELECT COALESCE(json_agg(mt.*), '[]'::json) FROM match_teams mt WHERE mt.match_id = vm.match_id) AS match_teams,
-        (SELECT COALESCE(json_agg(mp.*), '[]'::json) FROM match_players mp WHERE mp.match_id = vm.match_id) AS match_players,
+        (
+          SELECT COALESCE(json_agg(
+            json_build_object(
+              'puuid', mp.puuid,
+              'team_id', mp.team_id,
+              'character_id', mp.character_id,
+              'competitive_tier', mp.competitive_tier,
+              'player_card', mp.player_card,
+              'party_id', mp.party_id,
+              'kills', mp.kills,
+              'deaths', mp.deaths,
+              'assists', mp.assists,
+              'score', mp.score,
+              'rounds_played', mp.rounds_played,
+              'player_id', p.id,
+              'game_name', COALESCE(va.game_name, p.ign),
+              'tag_line', va.tag_line,
+              'canonical_player_slug', p.slug
+            )
+          ), '[]'::json)
+          FROM match_players mp
+          LEFT JOIN valorant_accounts va ON mp.puuid = va.puuid
+          LEFT JOIN players p ON (
+            LOWER(p.ign) = LOWER(va.game_name)
+            OR p.name = (va.game_name || '#' || va.tag_line)
+            OR p.slug = LOWER(va.game_name || '-' || va.tag_line)
+          )
+          WHERE mp.match_id = vm.match_id
+        ) AS match_players,
         (SELECT COALESCE(json_agg(mr.*), '[]'::json) FROM match_rounds mr WHERE mr.match_id = vm.match_id) AS match_rounds,
         (SELECT COALESCE(json_agg(mrps.*), '[]'::json) FROM match_round_player_stats mrps WHERE mrps.match_id = vm.match_id) AS match_round_player_stats,
         (SELECT COALESCE(json_agg(mrk.*), '[]'::json) FROM match_round_kills mrk WHERE mrk.match_id = vm.match_id) AS match_round_kills,
@@ -533,6 +662,11 @@ export async function getMatchDetails(matchId, puuid, region = REGION) {
 
     const matchData = await res.json();
     
+    // Resolve player identities and canonical profile links
+    if (matchData.players && matchData.players.length > 0) {
+      matchData.players = await resolvePlayersIdentity(matchData.players);
+    }
+
     // 3. Save to Relational DB Cache
     await insertMatchRelational(matchData);
 
@@ -540,6 +674,250 @@ export async function getMatchDetails(matchId, puuid, region = REGION) {
   } catch (error) {
     console.error('Error fetching match details:', error);
     return { error: 'Internal server error' };
+  }
+}
+
+/**
+ * Process a single match for a specific player
+ */
+function processMatchForPlayer(match, puuid) {
+  const player = match.players.find(p => p.puuid === puuid);
+  if (!player) return null;
+
+  const team = match.teams.find(t => t.teamId === player.teamId);
+  const enemyTeam = match.teams.find(t => t.teamId !== player.teamId);
+  const hasWon = team ? team.won : false;
+
+  const teamRounds = team ? team.roundsWon : 0;
+  const enemyRounds = enemyTeam ? enemyTeam.roundsWon : 0;
+  const scoreString = `${teamRounds} - ${enemyRounds}`;
+
+  let matchDamage = 0, matchDamageReceived = 0, matchHS = 0, matchBS = 0, matchLS = 0;
+  let matchFirstBloods = 0, matchAces = 0, matchFlawless = 0, matchKastRounds = 0;
+
+  if (match.roundResults) {
+    match.roundResults.forEach(round => {
+      let pKillsInRound = 0;
+      let pDiedInRound = false;
+      let pAssistedInRound = false;
+      let teamDeathsInRound = 0;
+
+      let allKills = [];
+      (round.playerStats || []).forEach(ps => {
+        if (ps.kills) allKills.push(...ps.kills);
+        if (ps.damage) {
+          ps.damage.forEach(dmg => {
+            if (dmg.receiver === puuid) {
+              matchDamageReceived += (dmg.damage || 0);
+            }
+          });
+        }
+      });
+
+      allKills.sort((a, b) => a.timeSinceRoundStartMillis - b.timeSinceRoundStartMillis);
+      if (allKills.length > 0 && allKills[0].killer === puuid) {
+        matchFirstBloods++;
+      }
+
+      const pStats = (round.playerStats || []).find(ps => ps.puuid === puuid);
+      if (pStats) {
+        if (pStats.damage) {
+          pStats.damage.forEach(dmg => {
+            matchDamage += (dmg.damage || 0);
+            matchHS += (dmg.headshots || 0);
+            matchBS += (dmg.bodyshots || 0);
+            matchLS += (dmg.legshots || 0);
+          });
+        }
+        if (pStats.kills) {
+          pKillsInRound = pStats.kills.length;
+        }
+      }
+
+      allKills.forEach(k => {
+        if (k.victim === puuid) pDiedInRound = true;
+        if (k.assistants && k.assistants.includes(puuid)) pAssistedInRound = true;
+        const victimTeam = match.players.find(p => p.puuid === k.victim)?.teamId;
+        if (victimTeam === player.teamId) teamDeathsInRound++;
+      });
+
+      if (pKillsInRound >= 5) matchAces++;
+      if (round.winningTeam === player.teamId && teamDeathsInRound === 0) {
+        matchFlawless++;
+      }
+      if (pKillsInRound > 0 || pAssistedInRound || !pDiedInRound) {
+        matchKastRounds++;
+      }
+    });
+  }
+
+  const matchHits = matchHS + matchBS + matchLS;
+  const matchHsPercent = matchHits > 0 ? ((matchHS / matchHits) * 100).toFixed(1) : 0;
+  const matchAdr = player.stats.roundsPlayed > 0 ? Math.round(matchDamage / player.stats.roundsPlayed) : 0;
+  const combatScore = player.stats.score / (player.stats.roundsPlayed || 1);
+
+  return {
+    matchId: match.matchInfo.matchId,
+    mapId: match.matchInfo.mapId,
+    queueId: match.matchInfo.queueId,
+    gameStartMillis: match.matchInfo.gameStartMillis,
+    stats: player.stats,
+    characterId: player.characterId,
+    combatScore,
+    hasWon,
+    scoreString,
+    matchHsPercent,
+    matchAdr,
+    teamId: player.teamId,
+    rawMatch: match,
+    _metrics: {
+      matchDamage,
+      matchDamageReceived,
+      matchHS,
+      matchBS,
+      matchLS,
+      matchFirstBloods,
+      matchAces,
+      matchFlawless,
+      matchKastRounds
+    }
+  };
+}
+
+/**
+ * Fetch matches for a player from the database using keyset pagination
+ */
+export async function getPlayerMatchesPaginated(puuid, {
+  cursor = null,
+  limit = 20,
+  queueId = null,
+  mapId = null
+} = {}) {
+  const conditions = ['mp_inner.puuid = $1'];
+  const params = [puuid];
+  let paramIdx = 2;
+
+  if (queueId && queueId !== 'all') {
+    conditions.push(`vm_inner.queue_id = $${paramIdx++}`);
+    params.push(queueId);
+  }
+
+  if (mapId && mapId !== 'all') {
+    conditions.push(`vm_inner.map_id = $${paramIdx++}`);
+    params.push(mapId);
+  }
+
+  // Count total matching for this filter (excluding pagination cursor)
+  const countSql = `
+    SELECT COUNT(*)::int AS total
+    FROM valorant_matches vm_inner
+    JOIN match_players mp_inner ON vm_inner.match_id = mp_inner.match_id
+    WHERE ${conditions.join(' AND ')}
+  `;
+  const countRes = await query(countSql, params);
+  const totalAvailable = countRes.rows[0]?.total || 0;
+
+  // Keyset cursor condition
+  if (cursor && cursor.gameStartMillis && cursor.matchId) {
+    conditions.push(`(
+      vm_inner.game_start_millis < $${paramIdx++}
+      OR (vm_inner.game_start_millis = $${paramIdx - 1} AND vm_inner.match_id < $${paramIdx++})
+    )`);
+    params.push(cursor.gameStartMillis, cursor.matchId);
+  }
+
+  const batchSql = `
+    SELECT vm.*,
+      (SELECT COALESCE(json_agg(mt.*), '[]'::json) FROM match_teams mt WHERE mt.match_id = vm.match_id) AS match_teams,
+      (
+        SELECT COALESCE(json_agg(
+          json_build_object(
+            'puuid', mp.puuid,
+            'team_id', mp.team_id,
+            'character_id', mp.character_id,
+            'competitive_tier', mp.competitive_tier,
+            'player_card', mp.player_card,
+            'party_id', mp.party_id,
+            'kills', mp.kills,
+            'deaths', mp.deaths,
+            'assists', mp.assists,
+            'score', mp.score,
+            'rounds_played', mp.rounds_played,
+            'player_id', p.id,
+            'game_name', COALESCE(va.game_name, p.ign),
+            'tag_line', va.tag_line,
+            'canonical_player_slug', p.slug
+          )
+        ), '[]'::json)
+        FROM match_players mp
+        LEFT JOIN valorant_accounts va ON mp.puuid = va.puuid
+        LEFT JOIN players p ON (
+          LOWER(p.ign) = LOWER(va.game_name)
+          OR p.name = (va.game_name || '#' || va.tag_line)
+          OR p.slug = LOWER(va.game_name || '-' || va.tag_line)
+        )
+        WHERE mp.match_id = vm.match_id
+      ) AS match_players,
+      (SELECT COALESCE(json_agg(mr.*), '[]'::json) FROM match_rounds mr WHERE mr.match_id = vm.match_id) AS match_rounds,
+      (SELECT COALESCE(json_agg(mrps.*), '[]'::json) FROM match_round_player_stats mrps WHERE mrps.match_id = vm.match_id) AS match_round_player_stats,
+      (SELECT COALESCE(json_agg(mrk.*), '[]'::json) FROM match_round_kills mrk WHERE mrk.match_id = vm.match_id) AS match_round_kills,
+      (SELECT COALESCE(json_agg(mrd.*), '[]'::json) FROM match_round_damage mrd WHERE mrd.match_id = vm.match_id) AS match_round_damage
+    FROM (
+      SELECT vm_inner.match_id
+      FROM valorant_matches vm_inner
+      JOIN match_players mp_inner ON vm_inner.match_id = mp_inner.match_id
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY vm_inner.game_start_millis DESC, vm_inner.match_id DESC
+      LIMIT $${paramIdx++}
+    ) sub
+    JOIN valorant_matches vm ON sub.match_id = vm.match_id
+    ORDER BY vm.game_start_millis DESC, vm.match_id DESC
+  `;
+  const fetchLimit = limit + 1;
+  params.push(fetchLimit);
+
+  const batchRes = await query(batchSql, params);
+  const allRawMatches = batchRes.rows.map(reconstructMatchJson).filter(Boolean);
+  const hasMore = allRawMatches.length > limit;
+  const rawMatches = hasMore ? allRawMatches.slice(0, limit) : allRawMatches;
+  const processedMatches = rawMatches.map(m => processMatchForPlayer(m, puuid)).filter(Boolean);
+
+  const lastMatch = rawMatches[rawMatches.length - 1];
+  const nextCursor = (hasMore && lastMatch) ? {
+    gameStartMillis: lastMatch.matchInfo.gameStartMillis,
+    matchId: lastMatch.matchInfo.matchId
+  } : null;
+
+  return {
+    matches: processedMatches,
+    nextCursor,
+    hasMore,
+    totalAvailable
+  };
+}
+
+/**
+ * Server Action for loading more matches with keyset pagination
+ */
+export async function loadMoreValorantMatchesAction({
+  puuid,
+  cursor = null,
+  queueId = null,
+  mapId = null,
+  limit = 20
+}) {
+  if (!puuid) return { error: 'Player puuid is required' };
+  try {
+    const result = await getPlayerMatchesPaginated(puuid, {
+      cursor,
+      limit,
+      queueId,
+      mapId
+    });
+    return { data: result };
+  } catch (err) {
+    console.error('loadMoreValorantMatchesAction error:', err);
+    return { error: 'Unable to load more matches. Please try again.' };
   }
 }
 
@@ -568,23 +946,21 @@ export async function aggregatePlayerStats(matchesData, puuid) {
   let currentPlayerCard = null;
 
   const processedMatches = matchesData.map((match, index) => {
+    const processed = processMatchForPlayer(match, puuid);
+    if (!processed) return null;
+
     const player = match.players.find(p => p.puuid === puuid);
-    if (!player) return null;
 
     if (!currentRankTier && player.competitiveTier) {
-       currentRankTier = player.competitiveTier;
+      currentRankTier = player.competitiveTier;
     }
     
     // Extract player card from the most recent match
     if (index === 0 && player.playerCard) {
-       currentPlayerCard = player.playerCard;
+      currentPlayerCard = player.playerCard;
     }
 
-    const team = match.teams.find(t => t.teamId === player.teamId);
-    const enemyTeam = match.teams.find(t => t.teamId !== player.teamId);
-    const hasWon = team ? team.won : false;
-    
-    if (hasWon) wins++;
+    if (processed.hasWon) wins++;
     else losses++;
 
     // Track map stats
@@ -593,150 +969,65 @@ export async function aggregatePlayerStats(matchesData, puuid) {
       mapStats[mapId] = { matches: 0, wins: 0, losses: 0 };
     }
     mapStats[mapId].matches++;
-    if (hasWon) mapStats[mapId].wins++;
+    if (processed.hasWon) mapStats[mapId].wins++;
     else mapStats[mapId].losses++;
-
-    const teamRounds = team ? team.roundsWon : 0;
-    const enemyRounds = enemyTeam ? enemyTeam.roundsWon : 0;
-    const scoreString = `${teamRounds} - ${enemyRounds}`;
 
     totalKills += player.stats.kills;
     totalDeaths += player.stats.deaths;
     totalAssists += player.stats.assists;
     totalRoundsPlayed += player.stats.roundsPlayed || 1;
+    totalCombatScore += processed.combatScore;
 
-    let matchDamage = 0, matchDamageReceived = 0, matchHS = 0, matchBS = 0, matchLS = 0;
-    let matchFirstBloods = 0, matchAces = 0, matchFlawless = 0, matchKastRounds = 0;
+    if (processed._metrics) {
+      totalDamage += processed._metrics.matchDamage;
+      totalDamageReceived += processed._metrics.matchDamageReceived;
+      totalHeadshots += processed._metrics.matchHS;
+      totalBodyshots += processed._metrics.matchBS;
+      totalLegshots += processed._metrics.matchLS;
+      totalFirstBloods += processed._metrics.matchFirstBloods;
+      totalAces += processed._metrics.matchAces;
+      totalFlawlessRounds += processed._metrics.matchFlawless;
+      totalKastRounds += processed._metrics.matchKastRounds;
+    }
 
-    // Calculate Damage and Headshots from Round Results
+    // Weapon stats from rounds
     if (match.roundResults) {
       match.roundResults.forEach(round => {
-        let pKillsInRound = 0;
-        let pDiedInRound = false;
-        let pAssistedInRound = false;
-        let teamDeathsInRound = 0;
-        
-        // Find all kills in the round
-        let allKills = [];
-        round.playerStats.forEach(ps => {
-          if (ps.kills) allKills.push(...ps.kills);
-          
-          // Calculate damage received
-          if (ps.damage) {
-            ps.damage.forEach(dmg => {
-              if (dmg.receiver === puuid) {
-                matchDamageReceived += dmg.damage;
-              }
-            });
-          }
-        });
-
-        // Sort all kills by time to find First Blood
-        allKills.sort((a, b) => a.timeSinceRoundStartMillis - b.timeSinceRoundStartMillis);
-        if (allKills.length > 0 && allKills[0].killer === puuid) {
-          matchFirstBloods++;
-        }
-
-        const pStats = round.playerStats.find(ps => ps.puuid === puuid);
+        const pStats = (round.playerStats || []).find(ps => ps.puuid === puuid);
         if (pStats) {
           const weaponId = pStats.economy?.weapon?.toLowerCase();
           if (weaponId && !weaponStats[weaponId]) {
             weaponStats[weaponId] = { kills: 0, headshots: 0, bodyshots: 0, legshots: 0, damage: 0 };
           }
-
-          if (pStats.damage) {
+          if (pStats.damage && weaponId) {
             pStats.damage.forEach(dmg => {
-              matchDamage += dmg.damage;
-              matchHS += dmg.headshots;
-              matchBS += dmg.bodyshots;
-              matchLS += dmg.legshots;
-
-              if (weaponId) {
-                weaponStats[weaponId].headshots += dmg.headshots;
-                weaponStats[weaponId].bodyshots += dmg.bodyshots;
-                weaponStats[weaponId].legshots += dmg.legshots;
-                weaponStats[weaponId].damage += dmg.damage;
-              }
+              weaponStats[weaponId].headshots += dmg.headshots || 0;
+              weaponStats[weaponId].bodyshots += dmg.bodyshots || 0;
+              weaponStats[weaponId].legshots += dmg.legshots || 0;
+              weaponStats[weaponId].damage += dmg.damage || 0;
             });
           }
-
-          if (pStats.kills) {
-            pKillsInRound = pStats.kills.length;
-            if (weaponId) {
-              pStats.kills.forEach(k => {
-                if (k.killer === puuid) weaponStats[weaponId].kills++;
-              });
-            }
+          if (pStats.kills && weaponId) {
+            pStats.kills.forEach(k => {
+              if (k.killer === puuid) weaponStats[weaponId].kills++;
+            });
           }
-        }
-        
-        // Determine KAST components and Flawless
-        allKills.forEach(k => {
-           if (k.victim === puuid) pDiedInRound = true;
-           if (k.assistants && k.assistants.includes(puuid)) pAssistedInRound = true;
-           
-           // Check if victim is on our team
-           const victimTeam = match.players.find(p => p.puuid === k.victim)?.teamId;
-           if (victimTeam === player.teamId) teamDeathsInRound++;
-        });
-
-        // Aces
-        if (pKillsInRound >= 5) matchAces++;
-        
-        // Flawless Round
-        if (round.winningTeam === player.teamId && teamDeathsInRound === 0) {
-           matchFlawless++;
-        }
-        
-        // KAST: Kill, Assist, Survived, or Traded (Simplified trade as KAS for now)
-        if (pKillsInRound > 0 || pAssistedInRound || !pDiedInRound) {
-           matchKastRounds++;
         }
       });
     }
 
-    totalDamage += matchDamage;
-    totalDamageReceived += matchDamageReceived;
-    totalHeadshots += matchHS;
-    totalBodyshots += matchBS;
-    totalLegshots += matchLS;
-    totalFirstBloods += matchFirstBloods;
-    totalAces += matchAces;
-    totalFlawlessRounds += matchFlawless;
-    totalKastRounds += matchKastRounds;
-
-    const matchHits = matchHS + matchBS + matchLS;
-    const matchHsPercent = matchHits > 0 ? ((matchHS / matchHits) * 100).toFixed(1) : 0;
-    const matchAdr = player.stats.roundsPlayed > 0 ? Math.round(matchDamage / player.stats.roundsPlayed) : 0;
-    const combatScore = player.stats.score / (player.stats.roundsPlayed || 1);
-    totalCombatScore += combatScore;
-
     // Agent Stats Aggregation
     const agent = player.characterId;
     if (!agentStats[agent]) {
-       agentStats[agent] = { matches: 0, wins: 0, kills: 0, deaths: 0, score: 0 };
+      agentStats[agent] = { matches: 0, wins: 0, kills: 0, deaths: 0, score: 0 };
     }
     agentStats[agent].matches++;
-    if (hasWon) agentStats[agent].wins++;
+    if (processed.hasWon) agentStats[agent].wins++;
     agentStats[agent].kills += player.stats.kills;
     agentStats[agent].deaths += player.stats.deaths;
-    agentStats[agent].score += combatScore;
+    agentStats[agent].score += processed.combatScore;
 
-    return {
-      matchId: match.matchInfo.matchId,
-      mapId: match.matchInfo.mapId,
-      queueId: match.matchInfo.queueId,
-      gameStartMillis: match.matchInfo.gameStartMillis,
-      stats: player.stats,
-      characterId: player.characterId,
-      combatScore,
-      hasWon,
-      scoreString,
-      matchHsPercent,
-      matchAdr,
-      teamId: player.teamId,
-      rawMatch: match // Add full lobby payload for scoreboards
-    };
+    return processed;
   }).filter(Boolean);
 
   const totalHits = totalHeadshots + totalBodyshots + totalLegshots;
