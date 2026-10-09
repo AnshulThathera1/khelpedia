@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.7.0",
+    "@next/third-parties": "^15.5.9",
     "@nextui-org/react": "^2.6.11",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.98.0",

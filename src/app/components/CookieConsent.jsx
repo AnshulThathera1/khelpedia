@@ -17,6 +17,12 @@ export default function CookieConsent() {
 
   const acceptCookies = () => {
     localStorage.setItem("khelpedia-cookie-consent", "true");
+    if (typeof window !== "undefined") {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "cookie_consent_accepted",
+      });
+    }
     setShow(false);
   };
 

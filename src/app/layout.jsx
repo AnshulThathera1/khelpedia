@@ -1,7 +1,10 @@
 import "./globals.css";
 import LayoutWrapper from "./components/LayoutWrapper";
 import Script from "next/script";
+import { Suspense } from "react";
 import { Outfit, Rajdhani, Orbitron } from 'next/font/google';
+import { GoogleTagManager } from '@next/third-parties/google';
+import GTMPageViewTracker from "./components/analytics/GTMPageViewTracker";
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -93,6 +96,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <GoogleTagManager gtmId="GTM-5WJFXGWZ" />
       <head>
         {/* Anti-FOUC: set theme class before paint */}
         <script
@@ -121,23 +125,7 @@ export default async function RootLayout({ children }) {
           crossOrigin="anonymous"
           strategy="lazyOnload"
         />
-        {/* Google Analytics */}
-        <Script
-          strategy="afterInteractive"
-          src={`https://www.googletagmanager.com/gtag/js?id=G-H4XKWJEZEY`}
-        />
-        <Script
-          id="google-analytics"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-H4XKWJEZEY');
-            `,
-          }}
-        />
+        {/* Google Analytics 4 (G-H4XKWJEZEY) is now managed via Google Tag Manager (GTM-5WJFXGWZ) to prevent duplicate tracking */}
         {/* Microsoft Clarity */}
         <Script
           id="microsoft-clarity"
@@ -187,6 +175,18 @@ export default async function RootLayout({ children }) {
         />
       </head>
       <body suppressHydrationWarning className={`${outfit.variable} ${rajdhani.variable} ${orbitron.variable}`}>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-5WJFXGWZ"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
+        <Suspense fallback={null}>
+          <GTMPageViewTracker />
+        </Suspense>
         {isMaintenanceActive && !showBannerOnly ? (
           <MaintenanceScreen message={maintenance?.message} />
         ) : (
