@@ -100,6 +100,7 @@ export default function AIChatBot() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(true)}
+                aria-label="Open AI Esports Assistant Chat"
                 className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#0a0e17] border border-[var(--accent-red)] text-white p-4 rounded-full shadow-[0_0_20px_rgba(255,70,85,0.3)] hover:shadow-[0_0_30px_rgba(255,70,85,0.6)] transition-all overflow-hidden group"
                 style={{
                     display: isOpen ? "none" : "flex",

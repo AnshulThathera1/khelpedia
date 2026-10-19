@@ -5,8 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import LoginModal from "./LoginModal";
-import ThemeToggle from "./ThemeToggle";
-import { useTheme } from "./ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 
 export default function AppNavbar({ user }) {
@@ -22,7 +20,6 @@ export default function AppNavbar({ user }) {
   const router = useRouter();
   const searchRef = useRef(null);
   const supabase = createClient();
-  const { theme } = useTheme();
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -96,7 +93,7 @@ export default function AppNavbar({ user }) {
           zIndex: 1000,
           transition: "all 0.3s ease",
           padding: isScrolled ? "0.75rem 0" : "1.25rem 0",
-          background: isScrolled ? (theme === 'dark' ? "rgba(10, 15, 20, 0.98)" : "rgba(245, 245, 247, 0.95)") : "transparent",
+          background: isScrolled ? "rgba(10, 15, 20, 0.98)" : "transparent",
           backdropFilter: isScrolled ? "blur(20px)" : "none",
           borderBottom: isScrolled ? "1px solid var(--border-color)" : "1px solid transparent"
         }}
@@ -153,9 +150,7 @@ export default function AppNavbar({ user }) {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  background: isScrolled
-                    ? (theme === 'dark' ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)")
-                    : (theme === 'dark' ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.05)"),
+                  background: isScrolled ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.2)",
                   border: "1px solid var(--border-color)",
                   borderRadius: "0px",
                   padding: "0.4rem 0.8rem",
@@ -197,7 +192,7 @@ export default function AppNavbar({ user }) {
                       top: "100%",
                       right: 0,
                       width: "360px",
-                      background: theme === 'dark' ? "rgba(15, 25, 35, 0.98)" : "rgba(255, 255, 255, 0.98)",
+                      background: "rgba(15, 25, 35, 0.98)",
                       backdropFilter: "blur(20px)",
                       border: "1px solid var(--border-color)",
                       marginTop: "0.75rem",
@@ -270,9 +265,6 @@ export default function AppNavbar({ user }) {
               </AnimatePresence>
             </div>
 
-            {/* Theme Toggle */}
-            <ThemeToggle size={38} />
-
             {/* Auth Button */}
             {user ? (
               <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
@@ -339,7 +331,6 @@ export default function AppNavbar({ user }) {
 
           {/* Mobile Actions */}
           <div className="mobile-toggle" style={{ display: "none", alignItems: "center", gap: "1rem", zIndex: 1100 }}>
-            <ThemeToggle size={32} />
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               style={{
@@ -371,7 +362,7 @@ export default function AppNavbar({ user }) {
                 right: 0,
                 width: "100%",
                 height: "100vh",
-                background: theme === 'dark' ? "var(--bg-primary)" : "var(--bg-secondary)",
+                background: "var(--bg-primary)",
                 zIndex: 1050,
                 padding: "8rem 2rem 2rem",
                 display: "flex",

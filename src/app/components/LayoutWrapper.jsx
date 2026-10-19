@@ -2,13 +2,15 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import AppNavbar from "./navbar";
 import AdminNavbar from "./AdminNavbar";
 import Footer from "./footer";
 import ThemeProvider from "./ThemeProvider";
-import FeedbackWidget from "./FeedbackWidget";
-import AIChatBot from "./AIChatBot";
-import CookieConsent from "./CookieConsent";
+
+const FeedbackWidget = dynamic(() => import("./FeedbackWidget"), { ssr: false });
+const AIChatBot = dynamic(() => import("./AIChatBot"), { ssr: false });
+const CookieConsent = dynamic(() => import("./CookieConsent"), { ssr: false });
 
 export default function LayoutWrapper({ user, children }) {
   const pathname = usePathname();

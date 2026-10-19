@@ -1,305 +1,432 @@
 import { getLiveTournaments, getUpcomingTournaments, getTopPlayers, getGames, getSiteStats } from "@/lib/queries";
 import { query } from "@/lib/db";
+import Link from "next/link";
+import { ArrowRight, Trophy, Calendar, Radio, Gamepad2, BookOpen } from "lucide-react";
 import TournamentCard from "./components/TournamentCard";
 import PlayerCard from "./components/PlayerCard";
 import GameCard from "./components/GameCard";
-import Link from "next/link";
 import HomeHero from "./components/HomeHero";
-import BlogCarousel from "./components/BlogCarousel";
+import GameQuickStrip from "./components/home/GameQuickStrip";
+import EditorialNewsGrid from "./components/home/EditorialNewsGrid";
+import StatsTelemetryBar from "./components/home/StatsTelemetryBar";
 import AdContainer from "./components/ads/AdContainer";
 import DesktopSidebarLayout from "./components/ads/DesktopSidebarLayout";
 
 export default async function HomePage() {
-    let liveTournaments = [];
-    let upcomingTournaments = [];
-    let topPlayers = [];
-    let games = [];
-    let stats = { matches: 0, games: 0, tournaments: 0, teams: 0 };
-    let blogs = [];
+  let liveTournaments = [];
+  let upcomingTournaments = [];
+  let topPlayers = [];
+  let games = [];
+  let stats = { matches: 0, games: 0, tournaments: 0, teams: 0 };
+  let blogs = [];
 
-    try {
-        const [live, upcoming, players, gms, siteStats, blogsRes] = await Promise.all([
-            getLiveTournaments().catch(() => []),
-            getUpcomingTournaments().catch(() => []),
-            getTopPlayers(5).catch(() => []),
-            getGames().catch(() => []),
-            getSiteStats().catch(() => ({ matches: 0, games: 0, tournaments: 0, teams: 0 })),
-            query(`
-                SELECT b.id, b.title, b.slug, b.excerpt, b.cover_image_url, b.created_at, b.author_id,
-                  CASE WHEN p.id IS NOT NULL THEN json_build_object('id', p.id, 'display_name', p.display_name) ELSE NULL END AS profiles
-                FROM blogs b
-                LEFT JOIN profiles p ON b.author_id = p.id
-                WHERE b.is_published = true
-                ORDER BY b.created_at DESC
-                LIMIT 10
-            `).catch(() => ({ rows: [] }))
-        ]);
+  try {
+    const [live, upcoming, players, gms, siteStats, blogsRes] = await Promise.all([
+      getLiveTournaments().catch(() => []),
+      getUpcomingTournaments().catch(() => []),
+      getTopPlayers(5).catch(() => []),
+      getGames().catch(() => []),
+      getSiteStats().catch(() => ({ matches: 0, games: 0, tournaments: 0, teams: 0 })),
+      query(`
+        SELECT b.id, b.title, b.slug, b.excerpt, b.cover_image_url, b.created_at, b.author_id,
+          CASE WHEN p.id IS NOT NULL THEN json_build_object('id', p.id, 'display_name', p.display_name) ELSE NULL END AS profiles
+        FROM blogs b
+        LEFT JOIN profiles p ON b.author_id = p.id
+        WHERE b.is_published = true
+        ORDER BY b.created_at DESC
+        LIMIT 10
+      `).catch(() => ({ rows: [] }))
+    ]);
 
-        liveTournaments = live || [];
-        upcomingTournaments = upcoming || [];
-        topPlayers = players || [];
-        games = gms || [];
-        stats = siteStats || { matches: 0, games: 0, tournaments: 0, teams: 0 };
-        blogs = blogsRes.rows || [];
-    } catch (err) {
-        console.error("Error loading homepage data:", err);
-    }
+    liveTournaments = live || [];
+    upcomingTournaments = upcoming || [];
+    topPlayers = players || [];
+    games = gms || [];
+    stats = siteStats || { matches: 0, games: 0, tournaments: 0, teams: 0 };
+    blogs = blogsRes.rows || [];
+  } catch (err) {
+    console.error("Error loading homepage data:", err);
+  }
 
-    const matchCountFormatted = stats.matches > 0
-        ? `${(Math.floor(stats.matches / 1000) * 1000).toLocaleString()}+`
-        : "0";
+  return (
+    <div style={{ background: "var(--bg-primary)" }}>
+      {/* 01: Cinematic Editorial Hero + Live Arena Radar */}
+      <HomeHero
+        liveTournaments={liveTournaments}
+        upcomingTournaments={upcomingTournaments}
+      />
 
-    return (
-        <div>
-            {/* Animated Hero (client component) */}
-            <HomeHero />
+      {/* Platform Telemetry HUD Metrics */}
+      <StatsTelemetryBar stats={stats} />
 
-            <DesktopSidebarLayout pageType="homepage" variant="standard">
-                <div className="page-container">
-                {/* What is KhelPediA - SEO-rich original content */}
-                <section style={{ marginBottom: "5rem" }}>
-                    <div
-                        className="glass-card"
-                        style={{
-                            padding: "3rem 2.5rem",
-                            borderTop: "4px solid var(--accent-red)",
-                        }}
-                    >
-                        <h2
-                            className="section-title"
-                            style={{ marginBottom: "1.25rem" }}
-                        >
-                            What is KhelPediA?
-                        </h2>
-                        <p
-                            style={{
-                                color: "var(--text-secondary)",
-                                fontSize: "1.05rem",
-                                lineHeight: 1.8,
-                                marginBottom: "1.25rem",
-                            }}
-                        >
-                            KhelPediA is the definitive esports encyclopedia — a comprehensive
-                            platform for tracking live tournaments, analyzing player
-                            performance, and following professional teams across the world&apos;s
-                            biggest competitive gaming titles. Whether you&apos;re a casual viewer
-                            tuning into a Valorant Masters or a dedicated analyst studying CS2
-                            team compositions, KhelPediA gives you the data and context you need.
-                        </p>
-                        <p
-                            style={{
-                                color: "var(--text-secondary)",
-                                fontSize: "1.05rem",
-                                lineHeight: 1.8,
-                                marginBottom: "1.25rem",
-                            }}
-                        >
-                            The name combines &quot;Khel&quot; (खेल — the Hindi word for sport or game)
-                            with &quot;Pedia&quot; (from encyclopedia), reflecting our mission to build a
-                            globally inclusive knowledge base for competitive gaming. From BGMI
-                            tournaments in South Asia to international Dota 2 Majors, we cover
-                            esports at every level.
-                        </p>
-                        <p
-                            style={{
-                                color: "var(--text-secondary)",
-                                fontSize: "1.05rem",
-                                lineHeight: 1.8,
-                            }}
-                        >
-                            Beyond raw data, our editorial team publishes original{" "}
-                            <Link href="/blogs" style={{ color: "var(--accent-cyan)", textDecoration: "none", fontWeight: 600 }}>
-                                tournament previews, match analyses, and meta guides
-                            </Link>{" "}
-                            to help you understand the stories behind the stats.{" "}
-                            <Link href="/about" style={{ color: "var(--accent-cyan)", textDecoration: "none", fontWeight: 600 }}>
-                                Learn more about us →
-                            </Link>
-                        </p>
-                    </div>
-                </section>
+      {/* 02: Quick Game Switcher Bar (Blitz-style) */}
+      <GameQuickStrip games={games} />
 
-                {/* Live Tournaments */}
-                <section style={{ marginBottom: "5rem" }}>
-                    <div className="section-header">
-                        <div>
-                            <h2 className="section-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                <span style={{ color: "var(--accent-red)", animation: "pulse-dot 1.5s infinite", display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "var(--accent-red)" }}></span>
-                                Live Action
-                            </h2>
-                            <p className="section-subtitle">Happening right now in the arena</p>
-                        </div>
-                        <Link href="/tournaments?status=live" style={{ color: "var(--accent-red)", textDecoration: "none", fontWeight: 700, fontSize: "0.9rem" }}>
-                            View All Live Matches
-                        </Link>
-                    </div>
+      {/* 03: Main Content Area (Protected by Desktop Sidebar Ad Rails) */}
+      <DesktopSidebarLayout pageType="homepage" variant="standard">
+        <div className="page-container" style={{ paddingTop: "3rem" }}>
 
-                    {liveTournaments.length > 0 ? (
-                        <div className="grid-auto">
-                            {liveTournaments.slice(0, 4).map(t => (
-                                <TournamentCard key={t.id} tournament={t} />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="glass-card" style={{ padding: "4rem", textAlign: "center", color: "var(--text-muted)", borderStyle: "dashed" }}>
-                            <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🏟️</div>
-                            No top-tier tournaments are currently live.
-                            <div style={{ marginTop: "1rem" }}>
-                                <Link href="/tournaments" style={{ color: "var(--accent-red)", textDecoration: "none" }}>Check the schedule →</Link>
-                            </div>
-                        </div>
-                    )}
-                </section>
+          {/* Editorial Dispatch: Featured Cover Story + Breaking Stack + Deep Dives */}
+          {blogs.length > 0 && (
+            <EditorialNewsGrid blogs={blogs} />
+          )}
 
-                {/* Featured Tournaments */}
-                {upcomingTournaments.length > 0 && (
-                    <section style={{ marginBottom: "2.5rem" }}>
-                        <div className="section-header">
-                            <div>
-                                <h2 className="section-title">Featured Tournaments</h2>
-                                <p className="section-subtitle">Upcoming major events to watch</p>
-                            </div>
-                            <Link href="/tournaments?status=upcoming" style={{ color: "var(--accent-red)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>
-                                All Upcoming
-                            </Link>
-                        </div>
-                        <div className="grid-auto">
-                            {upcomingTournaments.slice(0, 4).map(t => (
-                                <TournamentCard key={t.id} tournament={t} />
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* Homepage Leaderboard Ad Break */}
-                <AdContainer type="banner" placement="homepage_tournaments_break" />
-
-                {/* Latest News & Analysis */}
-                {blogs.length > 0 && (
-                    <section style={{ marginTop: "2.5rem", marginBottom: "5rem" }}>
-                        <div className="section-header">
-                            <div>
-                                <h2 className="section-title">Latest Esports News & Analysis</h2>
-                                <p className="section-subtitle">Original editorial coverage from our experts</p>
-                            </div>
-                            <Link href="/blogs" style={{ color: "var(--accent-red)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>
-                                All Articles
-                            </Link>
-                        </div>
-                        <BlogCarousel blogs={blogs.slice(0, 5)} variant="news" />
-                    </section>
-                )}
-
-                {/* Editor's Picks */}
-                {blogs.length > 3 && (
-                    <section style={{ marginBottom: "5rem" }}>
-                        <div className="section-header">
-                            <div>
-                                <h2 className="section-title">Editor's Picks</h2>
-                                <p className="section-subtitle">Deep dives and curated content</p>
-                            </div>
-                        </div>
-                        <BlogCarousel blogs={blogs.slice(5, 10)} variant="featured" />
-                    </section>
-                )}
-
-                {/* Featured Games */}
-                <section style={{ marginBottom: "5rem" }}>
-                    <div className="section-header">
-                        <div>
-                            <h2 className="section-title">Top Titles</h2>
-                            <p className="section-subtitle">Games we currently monitor</p>
-                        </div>
-                    </div>
-                    <div className="grid-auto">
-                        {games.slice(0, 4).map(game => (
-                            <GameCard key={game.id} game={game} />
-                        ))}
-                    </div>
-                </section>
-
-                {/* Site Stats */}
-                <section style={{ marginBottom: "5rem" }}>
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                            gap: "1.5rem",
-                        }}
-                    >
-                        {[
-                            { label: "Recorded Match Results", value: matchCountFormatted, icon: "📊" },
-                            { label: "Major Esports Titles", value: stats.games, icon: "🎮" },
-                            { label: "Active Tournaments", value: stats.tournaments, icon: "🏆" },
-                            { label: "Active Teams", value: stats.teams, icon: "⚔️" },
-                        ].map(stat => (
-                            <div
-                                key={stat.label}
-                                className="glass-card"
-                                style={{ padding: "2rem 1.5rem", textAlign: "center" }}
-                            >
-                                <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>{stat.icon}</div>
-                                <div
-                                    style={{
-                                        fontSize: "2.5rem",
-                                        fontWeight: 900,
-                                        fontFamily: '"Rajdhani", sans-serif',
-                                        color: "var(--accent-red)",
-                                        lineHeight: 1,
-                                        marginBottom: "0.25rem",
-                                    }}
-                                >
-                                    {stat.value.toLocaleString()}
-                                </div>
-                                <div
-                                    style={{
-                                        color: "var(--text-muted)",
-                                        fontSize: "0.8rem",
-                                        fontWeight: 600,
-                                        textTransform: "uppercase",
-                                        letterSpacing: "0.1em",
-                                    }}
-                                >
-                                    {stat.label}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "4rem" }}>
-                    {/* Top Players */}
-                    <section>
-                        <div className="section-header">
-                            <h2 className="section-title">World Rankings</h2>
-                            <Link href="/players" style={{ color: "var(--accent-red)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>
-                                Full Leaderboard
-                            </Link>
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                            {topPlayers.map((player, index) => (
-                                <PlayerCard key={player.id} player={player} rank={index + 1} />
-                            ))}
-                        </div>
-                    </section>
-
-                    {/* Upcoming Tournaments */}
-                    <section>
-                        <div className="section-header">
-                            <h2 className="section-title">Schedule</h2>
-                            <Link href="/tournaments?status=upcoming" style={{ color: "var(--accent-red)", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem" }}>
-                                Full Calendar
-                            </Link>
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                            {upcomingTournaments.slice(0, 4).map(t => (
-                                <TournamentCard key={t.id} tournament={t} />
-                            ))}
-                        </div>
-                    </section>
+          {/* Live Action Section */}
+          <section aria-label="Live Esports Matches" style={{ marginBottom: "5rem" }}>
+            <div className="section-header">
+              <div>
+                <div className="tactical-kicker">
+                  <Radio size={14} color="var(--accent-red)" />
+                  <span>// 03. LIVE CIRCUIT</span>
                 </div>
+                <h2 className="section-title">Live Action Arena</h2>
+                <p className="section-subtitle">Real-time tournaments and live championship broadcasts</p>
+              </div>
+              <Link
+                href="/tournaments?status=live"
+                style={{
+                  color: "var(--accent-red)",
+                  textDecoration: "none",
+                  fontWeight: 800,
+                  fontSize: "0.85rem",
+                  fontFamily: "var(--font-rajdhani), sans-serif",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px"
+                }}
+              >
+                All Live Matches <ArrowRight size={14} />
+              </Link>
             </div>
-            </DesktopSidebarLayout>
+
+            {liveTournaments.length > 0 ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gap: "1.5rem"
+                }}
+              >
+                {liveTournaments.slice(0, 4).map((t) => (
+                  <TournamentCard key={t.id} tournament={t} />
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  padding: "3.5rem 2rem",
+                  textAlign: "center",
+                  background: "var(--bg-secondary)",
+                  border: "1px dashed var(--border-color)",
+                  borderRadius: "8px",
+                  color: "var(--text-secondary)"
+                }}
+              >
+                <div style={{ fontSize: "2.2rem", marginBottom: "0.75rem" }}>🏟️</div>
+                <h3
+                  style={{
+                    fontFamily: "var(--font-rajdhani), sans-serif",
+                    fontSize: "1.25rem",
+                    fontWeight: 700,
+                    color: "var(--text-primary)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    marginBottom: "0.5rem"
+                  }}
+                >
+                  No Live Matches Currently in Progress
+                </h3>
+                <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", maxWidth: "440px", margin: "0 auto 1.25rem auto" }}>
+                  All scheduled series for today have concluded. Check the upcoming tournament circuit to track next matches.
+                </p>
+                <Link
+                  href="/tournaments?status=upcoming"
+                  className="btn-primary"
+                  style={{ padding: "8px 20px", fontSize: "0.8rem" }}
+                >
+                  Browse Tournament Schedule
+                </Link>
+              </div>
+            )}
+          </section>
+
+          {/* Featured Upcoming Tournaments */}
+          {upcomingTournaments.length > 0 && (
+            <section aria-label="Upcoming Featured Tournaments" style={{ marginBottom: "3.5rem" }}>
+              <div className="section-header">
+                <div>
+                  <div className="tactical-kicker tactical-kicker-amber">
+                    <Calendar size={14} color="var(--accent-amber)" />
+                    <span>// 04. GLOBAL CIRCUIT</span>
+                  </div>
+                  <h2 className="section-title">Featured Upcoming Tournaments</h2>
+                  <p className="section-subtitle">Tier-one championships and regional qualifiers on the official calendar</p>
+                </div>
+                <Link
+                  href="/tournaments?status=upcoming"
+                  style={{
+                    color: "var(--accent-amber)",
+                    textDecoration: "none",
+                    fontWeight: 800,
+                    fontSize: "0.85rem",
+                    fontFamily: "var(--font-rajdhani), sans-serif",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  All Upcoming <ArrowRight size={14} />
+                </Link>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gap: "1.5rem"
+                }}
+              >
+                {upcomingTournaments.slice(0, 4).map((t) => (
+                  <TournamentCard key={t.id} tournament={t} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Homepage Leaderboard Ad Break */}
+          <AdContainer type="banner" placement="homepage_tournaments_break" />
+
+          {/* Split Broadcast Scoreboard: World Rankings & Tournament Calendar */}
+          <div
+            style={{
+              marginTop: "4rem",
+              marginBottom: "5rem",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+              gap: "3rem"
+            }}
+          >
+            {/* Left: Top Pro Players Leaderboard */}
+            <section aria-label="World Rankings Leaderboard">
+              <div className="section-header" style={{ marginBottom: "1.25rem" }}>
+                <div>
+                  <div className="tactical-kicker tactical-kicker-amber" style={{ marginBottom: "2px" }}>
+                    <Trophy size={13} color="var(--accent-amber)" />
+                    <span>LEADERBOARD</span>
+                  </div>
+                  <h2 className="section-title" style={{ fontSize: "1.4rem" }}>World Rankings</h2>
+                </div>
+                <Link
+                  href="/players"
+                  style={{
+                    color: "var(--accent-amber)",
+                    textDecoration: "none",
+                    fontWeight: 800,
+                    fontSize: "0.8rem",
+                    fontFamily: "var(--font-rajdhani), sans-serif",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  Full Leaderboard <ArrowRight size={12} />
+                </Link>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {topPlayers.map((player, index) => (
+                  <PlayerCard key={player.id} player={player} rank={index + 1} />
+                ))}
+              </div>
+            </section>
+
+            {/* Right: Tournament Schedule */}
+            <section aria-label="Tournament Schedule">
+              <div className="section-header" style={{ marginBottom: "1.25rem" }}>
+                <div>
+                  <div className="tactical-kicker tactical-kicker-cyan" style={{ marginBottom: "2px" }}>
+                    <Calendar size={13} color="var(--accent-cyan)" />
+                    <span>TIMELINE</span>
+                  </div>
+                  <h2 className="section-title" style={{ fontSize: "1.4rem" }}>Event Calendar</h2>
+                </div>
+                <Link
+                  href="/tournaments?status=upcoming"
+                  style={{
+                    color: "var(--accent-cyan)",
+                    textDecoration: "none",
+                    fontWeight: 800,
+                    fontSize: "0.8rem",
+                    fontFamily: "var(--font-rajdhani), sans-serif",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  Full Calendar <ArrowRight size={12} />
+                </Link>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                {upcomingTournaments.slice(0, 4).map((t) => (
+                  <TournamentCard key={t.id} tournament={t} />
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* Top Titles (Game Universe) */}
+          <section aria-label="Top Esports Titles" style={{ marginBottom: "5rem" }}>
+            <div className="section-header">
+              <div>
+                <div className="tactical-kicker tactical-kicker-cyan">
+                  <Gamepad2 size={14} color="var(--accent-cyan)" />
+                  <span>// 06. TITLE DIRECTORY</span>
+                </div>
+                <h2 className="section-title">Major Esports Universes</h2>
+                <p className="section-subtitle">Real-time match data, roster changes, and analytics across primary disciplines</p>
+              </div>
+              <Link
+                href="/games"
+                style={{
+                  color: "var(--accent-cyan)",
+                  textDecoration: "none",
+                  fontWeight: 800,
+                  fontSize: "0.85rem",
+                  fontFamily: "var(--font-rajdhani), sans-serif",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px"
+                }}
+              >
+                All Titles <ArrowRight size={14} />
+              </Link>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                gap: "1.5rem"
+              }}
+            >
+              {games.slice(0, 6).map((game) => (
+                <GameCard key={game.id} game={game} />
+              ))}
+            </div>
+          </section>
+
+          {/* Encyclopedic Manifesto & Trust Signals (What is KhelPediA) */}
+          <section
+            aria-label="About KhelPediA Esports Encyclopedia"
+            style={{ marginBottom: "5rem" }}
+          >
+            <div
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border-color)",
+                borderLeft: "4px solid var(--accent-red)",
+                borderRadius: "8px",
+                padding: "2.5rem",
+                boxShadow: "0 12px 36px rgba(0, 0, 0, 0.4)"
+              }}
+            >
+              <div className="tactical-kicker">
+                <BookOpen size={14} color="var(--accent-red)" />
+                <span>// ENCYCLOPEDIA MANIFESTO</span>
+              </div>
+              <h2
+                style={{
+                  fontFamily: "var(--font-rajdhani), sans-serif",
+                  fontSize: "1.75rem",
+                  fontWeight: 800,
+                  color: "var(--text-primary)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.02em",
+                  margin: "0 0 1.25rem 0"
+                }}
+              >
+                What is KhelPediA?
+              </h2>
+
+              <p
+                style={{
+                  color: "var(--text-secondary)",
+                  fontSize: "1rem",
+                  lineHeight: 1.8,
+                  marginBottom: "1.25rem"
+                }}
+              >
+                KhelPediA is the definitive esports encyclopedia — a comprehensive
+                platform for tracking live tournaments, analyzing player
+                performance, and following professional teams across the world&apos;s
+                biggest competitive gaming titles. Whether you&apos;re a casual viewer
+                tuning into a Valorant Masters or a dedicated analyst studying CS2
+                team compositions, KhelPediA gives you the data and context you need.
+              </p>
+
+              <p
+                style={{
+                  color: "var(--text-secondary)",
+                  fontSize: "1rem",
+                  lineHeight: 1.8,
+                  marginBottom: "1.25rem"
+                }}
+              >
+                The name combines &quot;Khel&quot; (खेल — the Hindi word for sport or game)
+                with &quot;Pedia&quot; (from encyclopedia), reflecting our mission to build a
+                globally inclusive knowledge base for competitive gaming. From BGMI
+                tournaments in South Asia to international Dota 2 Majors, we cover
+                esports at every level.
+              </p>
+
+              <p
+                style={{
+                  color: "var(--text-secondary)",
+                  fontSize: "1rem",
+                  lineHeight: 1.8,
+                  margin: 0
+                }}
+              >
+                Beyond raw telemetry, our editorial desk publishes original{" "}
+                <Link
+                  href="/blogs"
+                  style={{
+                    color: "var(--accent-cyan)",
+                    textDecoration: "none",
+                    fontWeight: 700
+                  }}
+                >
+                  tournament previews, match analyses, and meta guides
+                </Link>{" "}
+                to help you understand the stories behind the stats.{" "}
+                <Link
+                  href="/about"
+                  style={{
+                    color: "var(--accent-red)",
+                    textDecoration: "none",
+                    fontWeight: 700,
+                    marginLeft: "4px"
+                  }}
+                >
+                  Learn more about our mission →
+                </Link>
+              </p>
+            </div>
+          </section>
+
         </div>
-    );
+      </DesktopSidebarLayout>
+    </div>
+  );
 }

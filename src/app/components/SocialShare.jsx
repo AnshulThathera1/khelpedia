@@ -52,6 +52,7 @@ export default function SocialShare({ url, title }) {
           className="social-btn"
           style={{ ...buttonStyle, background: "#1DA1F2" }}
           title="Share on Twitter"
+          aria-label="Share this story on Twitter"
         >
           <Twitter className="w-5 h-5" />
         </a>
@@ -64,6 +65,7 @@ export default function SocialShare({ url, title }) {
           className="social-btn"
           style={{ ...buttonStyle, background: "#1877F2" }}
           title="Share on Facebook"
+          aria-label="Share this story on Facebook"
         >
           <Facebook className="w-5 h-5" />
         </a>
@@ -76,6 +78,7 @@ export default function SocialShare({ url, title }) {
           className="social-btn"
           style={{ ...buttonStyle, background: "#25D366" }}
           title="Share on WhatsApp"
+          aria-label="Share this story on WhatsApp"
         >
           <MessageCircle className="w-5 h-5" />
         </a>
@@ -86,6 +89,7 @@ export default function SocialShare({ url, title }) {
           className="social-btn"
           style={{ ...buttonStyle, background: copied ? "#10B981" : "var(--bg-secondary)", border: "1px solid var(--border-color)", color: copied ? "#fff" : "var(--text-primary)" }}
           title="Copy Link"
+          aria-label="Copy story link to clipboard"
         >
           <LinkIcon className="w-5 h-5" />
         </button>

@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect } from "react";
+import { NextUIProvider } from "@nextui-org/react";
 
 const ThemeContext = createContext({
   theme: "dark",
@@ -12,39 +13,19 @@ export function useTheme() {
 }
 
 export default function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState("dark");
-  const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
-    // Read saved theme from localStorage
-    const saved = localStorage.getItem("khelpedia-theme");
-    let initial;
-    if (saved) {
-      initial = saved === "light" ? "light" : "dark";
-    } else {
-      const h = new Date().getHours();
-      initial = (h >= 6 && h < 18) ? "light" : "dark";
-    }
-    setTheme(initial);
-    document.documentElement.className = initial;
-    setMounted(true);
+    document.documentElement.className = "dark";
+    try {
+      localStorage.setItem("khelpedia-theme", "dark");
+    } catch {}
   }, []);
 
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    document.documentElement.className = next;
-    localStorage.setItem("khelpedia-theme", next);
-  };
-
-  // Prevent flash — don't render until we know the theme
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
+    <ThemeContext.Provider value={{ theme: "dark", toggleTheme: () => {} }}>
+      <NextUIProvider>
+        {children}
+      </NextUIProvider>
     </ThemeContext.Provider>
   );
 }
+

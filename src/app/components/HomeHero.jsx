@@ -1,192 +1,425 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import ValorantPromoPopup from "./ValorantPromoPopup";
-import { Target, Trophy, ChevronRight, Swords, Shield, Zap, Terminal } from "lucide-react";
+import { Button, Tabs, Tab, Chip } from "@nextui-org/react";
+import { Radio, Trophy, ArrowRight, Calendar, ExternalLink } from "lucide-react";
 
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: { staggerChildren: 0.1 },
-    },
-};
+export default function HomeHero({ liveTournaments = [], upcomingTournaments = [] }) {
+  const [activeTab, setActiveTab] = useState(liveTournaments.length > 0 ? "live" : "upcoming");
 
-const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
+  const displayTournaments = (
+    activeTab === "live"
+      ? (liveTournaments.length > 0 ? liveTournaments : upcomingTournaments)
+      : upcomingTournaments
+  ).slice(0, 3);
 
-const FEATURES = [
-    {
-        id: "lol",
-        title: "League of Legends Hub",
-        badge: "NEW FEATURE",
-        description: "Track summoner profiles, match history, champion mastery, and live games across all regions.",
-        icon: <Trophy className="w-8 h-8 text-[#C89B3C]" />,
-        link: "/lol",
-        color: "#C89B3C",
-        bg: "rgba(200, 155, 60, 0.1)"
-    },
-    {
-        id: "valorant",
-        title: "VALORANT Tracker",
-        badge: "NEW FEATURE",
-        description: "Analyze agent performance, match history, headshot percentages, and competitive leaderboards.",
-        icon: <Target className="w-8 h-8 text-red-500" />,
-        link: "/valorant",
-        color: "#ff4655",
-        bg: "rgba(255, 70, 85, 0.1)"
-    },
-    {
-        id: "passport",
-        title: "Esports Passport",
-        badge: "EXCLUSIVE",
-        description: "Your ultimate gamer card. Link your game accounts and showcase your unified stats across multiple titles.",
-        icon: <Shield className="w-8 h-8 text-[#a855f7]" />,
-        link: "/dashboard",
-        color: "#a855f7",
-        bg: "rgba(168, 85, 247, 0.1)"
-    },
-    {
-        id: "fantasy",
-        title: "Pick'Ems Draft",
-        badge: "HOT",
-        description: "Scout real players and build your ultimate cross-game organization. Compete on global leaderboards.",
-        icon: <Zap className="w-8 h-8 text-[#06b6d4]" />,
-        link: "/fantasy",
-        color: "#06b6d4",
-        bg: "rgba(6, 182, 212, 0.1)"
-    },
-    {
-        id: "ai-assistant",
-        title: "KhelPediA AI",
-        badge: "NEW",
-        description: "Your personal esports expert. Ask anything about tournaments, metas, or player stats instantly.",
-        icon: <Terminal className="w-8 h-8 text-[#ff4655]" />,
-        link: "#",
-        color: "#ff4655",
-        bg: "rgba(255, 70, 85, 0.1)"
-    }
-];
+  const formatPrize = (amount) => {
+    const num = Number(amount);
+    if (!amount || isNaN(num) || num <= 0) return "TBA";
+    return num >= 1000000
+      ? `$${(num / 1000000).toFixed(1)}M`
+      : num >= 1000
+        ? `$${(num / 1000).toFixed(0)}K`
+        : `$${num.toLocaleString()}`;
+  };
 
-export default function HomeHero() {
-    const [currentFeature, setCurrentFeature] = useState(0);
+  return (
+    <section
+      aria-label="Esports Command Center Hero"
+      style={{
+        position: "relative",
+        minHeight: "560px",
+        overflow: "hidden",
+        borderBottom: "1px solid var(--border-color)",
+        background: "var(--bg-primary)"
+      }}
+    >
+      {/* Cinematic Background Layer (Atmospheric CSS WebP with Obsidian Vignettes) */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: "radial-gradient(ellipse at 70% 30%, rgba(255, 70, 85, 0.12) 100%, transparent 100%), linear-gradient(180deg, rgba(8, 11, 16, 0.75) 100%, rgba(8, 11, 16, 0.96) 100%, #080B10 100%), url('/images/esports-hero-bg.webp')",
+          backgroundSize: "cover",
+          backgroundPosition: "center 25%",
+          pointerEvents: "none"
+        }}
+      />
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentFeature((prev) => (prev + 1) % FEATURES.length);
-        }, 5000);
-        return () => clearInterval(timer);
-    }, []);
+      {/* Tactical Grid Accent Line */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "2px",
+          background: "linear-gradient(90deg, transparent, var(--accent-red) 30%, var(--accent-cyan) 70%, transparent)",
+          opacity: 0.85
+        }}
+      />
 
-    return (
-        <motion.div initial="hidden" animate="visible" variants={containerVariants}>
-            <ValorantPromoPopup />
+      <div
+        className="page-container"
+        style={{
+          position: "relative",
+          zIndex: 10,
+          paddingTop: "3.5rem",
+          paddingBottom: "4rem"
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gap: "3rem",
+            alignItems: "center"
+          }}
+        >
+          {/* ================= LEFT COLUMN: EDITORIAL SPOTLIGHT ================= */}
+          <div>
+            {/* Tactical Kicker */}
+            <div className="tactical-kicker">
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "var(--accent-red)",
+                  boxShadow: "0 0 10px var(--accent-red)",
+                  display: "inline-block",
+                  animation: "pulse-dot 1.5s infinite"
+                }}
+              />
+              <span>// 01. GLOBAL ESPORTS INTELLIGENCE</span>
+            </div>
 
-            <section className="hero" style={{ padding: "4rem 0", overflow: "hidden" }}>
-                <div className="hero-grid"></div>
-                <div className="page-container" style={{ position: "relative", zIndex: 10 }}>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        
-                        {/* LEFT COLUMN: TEXT */}
-                        <div style={{ textAlign: "center", paddingTop: "2rem", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                            <motion.h1
-                                variants={itemVariants}
-                                style={{
-                                    fontFamily: '"Rajdhani", sans-serif',
-                                    fontSize: "clamp(3rem, 6vw, 5.5rem)",
-                                    fontWeight: 900,
-                                    lineHeight: 1,
-                                    marginBottom: "1.5rem",
-                                    letterSpacing: "0.02em",
-                                    textTransform: "uppercase",
-                                }}
-                            >
-                                THE <span style={{ color: "var(--accent-red)" }}>EPICENTER</span> OF <br />
-                                GLOBAL ESPORTS
-                            </motion.h1>
-                            <motion.p
-                                variants={itemVariants}
-                                style={{
-                                    color: "var(--text-secondary)",
-                                    fontSize: "clamp(1rem, 2vw, 1.25rem)",
-                                    maxWidth: "600px",
-                                    marginBottom: "3rem",
-                                    lineHeight: 1.6,
-                                    fontWeight: 400,
-                                }}
-                            >
-                                Real-time tournament tracking, player performance analytics, and professional team insights across all major titles.
-                            </motion.p>
-                            <motion.div variants={itemVariants} style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", justifyContent: "center" }}>
-                                <Link href="/tournaments" className="btn-primary" style={{ padding: "12px 32px" }}>
-                                    <span>Live Tournaments</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-                                </Link>
-                                <Link href="/players" className="btn-secondary" style={{ padding: "12px 32px" }}>
-                                    Explore Players
-                                </Link>
-                            </motion.div>
+            {/* High-Impact Main Title */}
+            <h1
+              style={{
+                fontFamily: "var(--font-rajdhani), sans-serif",
+                fontSize: "clamp(2.5rem, 5.2vw, 4.25rem)",
+                fontWeight: 900,
+                lineHeight: 1.02,
+                textTransform: "uppercase",
+                letterSpacing: "0.02em",
+                color: "var(--text-primary)",
+                marginBottom: "1.25rem"
+              }}
+            >
+              The Command Center <br />
+              Of <span style={{ color: "var(--accent-red)" }}>Global Esports</span>
+            </h1>
+
+            {/* Editorial Lead Copy */}
+            <p
+              style={{
+                color: "var(--text-secondary)",
+                fontSize: "clamp(1rem, 1.4vw, 1.15rem)",
+                lineHeight: 1.7,
+                maxWidth: "560px",
+                marginBottom: "2.25rem"
+              }}
+            >
+              Real-time tournament tracking, player analytics, and breaking editorial coverage across
+              the world&apos;s tier-one competitive gaming titles.
+            </p>
+
+            {/* Accessible HeroUI CTA Buttons */}
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+              <Button
+                as={Link}
+                href="/tournaments?status=live"
+                size="lg"
+                endContent={<ArrowRight size={16} />}
+                style={{
+                  background: "var(--accent-red)",
+                  color: "#fff",
+                  fontFamily: "var(--font-rajdhani), sans-serif",
+                  fontWeight: 800,
+                  fontSize: "0.9rem",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  borderRadius: "4px",
+                  padding: "0 28px",
+                  height: "46px"
+                }}
+              >
+                Live Arena
+              </Button>
+
+              <Button
+                as={Link}
+                href="/players"
+                size="lg"
+                variant="bordered"
+                startContent={<Trophy size={16} color="var(--accent-amber)" />}
+                style={{
+                  borderColor: "rgba(255, 255, 255, 0.15)",
+                  color: "var(--text-primary)",
+                  background: "rgba(14, 19, 28, 0.6)",
+                  fontFamily: "var(--font-rajdhani), sans-serif",
+                  fontWeight: 700,
+                  fontSize: "0.9rem",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  borderRadius: "4px",
+                  padding: "0 24px",
+                  height: "46px"
+                }}
+              >
+                World Rankings
+              </Button>
+            </div>
+
+            {/* System Status Ticker with HeroUI Chip */}
+            <div style={{ marginTop: "2.5rem" }}>
+              <Chip
+                variant="flat"
+                avatar={
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "var(--accent-cyan)",
+                      display: "inline-block",
+                      marginLeft: "6px"
+                    }}
+                  />
+                }
+                style={{
+                  background: "rgba(14, 19, 28, 0.8)",
+                  border: "1px solid var(--border-color)",
+                  color: "var(--text-secondary)",
+                  fontFamily: "var(--font-rajdhani), sans-serif",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  padding: "4px 8px"
+                }}
+              >
+                Live Telemetry Active | {liveTournaments.length} Active Events
+              </Chip>
+            </div>
+          </div>
+
+          {/* ================= RIGHT COLUMN: LIVE ARENA RADAR ================= */}
+          <div style={{ width: "100%", maxWidth: "520px", justifySelf: "end" }}>
+            <div
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border-color)",
+                borderRadius: "8px",
+                boxShadow: "0 16px 48px rgba(0, 0, 0, 0.6)",
+                overflow: "hidden"
+              }}
+            >
+              {/* Radar Card Header */}
+              <div
+                style={{
+                  padding: "0.85rem 1.25rem",
+                  borderBottom: "1px solid var(--border-color)",
+                  background: "var(--bg-card)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "1rem",
+                  flexWrap: "wrap"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Radio size={16} color="var(--accent-red)" />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-rajdhani), sans-serif",
+                      fontWeight: 800,
+                      fontSize: "0.85rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.12em",
+                      color: "var(--text-primary)"
+                    }}
+                  >
+                    Live Arena Radar
+                  </span>
+                </div>
+
+                {/* HeroUI Accessible Tabs */}
+                <Tabs
+                  selectedKey={activeTab}
+                  onSelectionChange={(key) => setActiveTab(String(key))}
+                  size="sm"
+                  aria-label="Live Arena Radar Filter"
+                  classNames={{
+                    tabList: "bg-black/40 border border-white/10 p-0.5 rounded-md",
+                    cursor: activeTab === "live" ? "bg-[#FF4655]" : "bg-[#00F5D4]",
+                    tab: "h-7 px-3 text-xs font-bold uppercase font-['Rajdhani']",
+                    tabContent: activeTab === "live" ? "group-data-[selected=true]:text-white" : "group-data-[selected=true]:text-black"
+                  }}
+                >
+                  <Tab key="live" title={`Live (${liveTournaments.length})`} />
+                  <Tab key="upcoming" title="Upcoming" />
+                </Tabs>
+              </div>
+
+              {/* Tournament Rows */}
+              <div style={{ padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                {displayTournaments.length > 0 ? (
+                  displayTournaments.map((t, idx) => (
+                    <Link
+                      key={t.id || idx}
+                      href={`/tournaments/${t.id}`}
+                      style={{
+                        display: "block",
+                        textDecoration: "none",
+                        color: "inherit",
+                        padding: "0.85rem 1rem",
+                        borderRadius: "6px",
+                        background: "rgba(255, 255, 255, 0.02)",
+                        border: "1px solid var(--border-subtle)",
+                        transition: "all 0.2s ease"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "var(--bg-card-hover)";
+                        e.currentTarget.style.borderColor = "rgba(255, 70, 85, 0.4)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.02)";
+                        e.currentTarget.style.borderColor = "var(--border-subtle)";
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span
+                            style={{
+                              fontSize: "0.68rem",
+                              fontWeight: 800,
+                              fontFamily: "var(--font-rajdhani), sans-serif",
+                              color: "var(--accent-red)",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.08em"
+                            }}
+                          >
+                            {t.games?.name || "Esports Title"}
+                          </span>
+                          <span className={t.tier === "S" ? "tier-badge tier-badge-s" : "tier-badge tier-badge-a"}>
+                            {t.tier || "A"} TIER
+                          </span>
                         </div>
 
-                        {/* RIGHT COLUMN: SLIDER */}
-                        <motion.div variants={itemVariants} className="relative h-full min-h-[350px] flex items-center justify-center lg:justify-end">
-                             <div className="w-full max-w-md relative">
-                                <AnimatePresence mode="wait">
-                                    <motion.div
-                                        key={currentFeature}
-                                        initial={{ opacity: 0, x: 20, scale: 0.95 }}
-                                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                                        exit={{ opacity: 0, x: -20, scale: 0.95 }}
-                                        transition={{ duration: 0.4, ease: "easeOut" }}
-                                        className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-8 shadow-2xl relative overflow-hidden group cursor-pointer"
-                                        onClick={() => window.location.href = FEATURES[currentFeature].link}
-                                    >
-                                        <div className="absolute top-0 right-0 w-32 h-32 opacity-20 pointer-events-none rounded-bl-full transition-transform group-hover:scale-110" style={{ background: `radial-gradient(circle at top right, ${FEATURES[currentFeature].color}, transparent)` }} />
-                                        
-                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold tracking-wider mb-6 border" style={{ color: FEATURES[currentFeature].color, borderColor: `${FEATURES[currentFeature].color}40`, background: FEATURES[currentFeature].bg }}>
-                                            <Zap className="w-3 h-3" /> {FEATURES[currentFeature].badge}
-                                        </div>
-                                        
-                                        <div className="mb-4">
-                                            {FEATURES[currentFeature].icon}
-                                        </div>
+                        {t.status === "live" ? (
+                          <Chip
+                            size="sm"
+                            variant="dot"
+                            color="danger"
+                            style={{
+                              height: "22px",
+                              fontFamily: "var(--font-rajdhani), sans-serif",
+                              fontWeight: 900,
+                              fontSize: "0.65rem",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.08em"
+                            }}
+                          >
+                            LIVE
+                          </Chip>
+                        ) : (
+                          <span
+                            style={{
+                              fontSize: "0.65rem",
+                              fontWeight: 700,
+                              color: "var(--text-muted)",
+                              textTransform: "uppercase"
+                            }}
+                          >
+                            {t.start_date ? new Date(t.start_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "Scheduled"}
+                          </span>
+                        )}
+                      </div>
 
-                                        <h3 className="text-2xl font-black uppercase tracking-tight mb-3 font-['Rajdhani']">
-                                            {FEATURES[currentFeature].title}
-                                        </h3>
-                                        
-                                        <p className="text-gray-400 mb-8 leading-relaxed">
-                                            {FEATURES[currentFeature].description}
-                                        </p>
+                      <h2
+                        style={{
+                          fontSize: "1rem",
+                          fontWeight: 800,
+                          fontFamily: "var(--font-rajdhani), sans-serif",
+                          color: "var(--text-primary)",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.02em",
+                          margin: "0 0 6px 0",
+                          lineHeight: 1.25,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis"
+                        }}
+                      >
+                        {t.name}
+                      </h2>
 
-                                        <div className="flex items-center font-bold text-sm tracking-widest uppercase transition-colors" style={{ color: FEATURES[currentFeature].color }}>
-                                            Explore feature <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
-                                        </div>
-                                    </motion.div>
-                                </AnimatePresence>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          fontSize: "0.75rem",
+                          color: "var(--text-muted)"
+                        }}
+                      >
+                        <span>
+                          Pool:{" "}
+                          <strong style={{ color: "var(--accent-amber)", fontFamily: "var(--font-rajdhani), sans-serif", fontWeight: 800 }}>
+                            {formatPrize(t.prize_pool)}
+                          </strong>
+                        </span>
+                        <span>{t.region || "Global"}</span>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                    No events currently monitored in this category.
+                  </div>
+                )}
+              </div>
 
-                                {/* Slider Dots */}
-                                <div className="absolute -bottom-10 left-0 right-0 flex justify-center gap-2">
-                                    {FEATURES.map((f, idx) => (
-                                        <button
-                                            key={f.id}
-                                            onClick={() => setCurrentFeature(idx)}
-                                            className={`w-2 h-2 rounded-full transition-all duration-300 ${currentFeature === idx ? "w-6" : "opacity-40"}`}
-                                            style={{ background: currentFeature === idx ? f.color : "var(--text-secondary)" }}
-                                            aria-label={`Go to slide ${idx + 1}`}
-                                        />
-                                    ))}
-                                </div>
-                             </div>
-                        </motion.div>
+              {/* Radar Footer Action */}
+              <div
+                style={{
+                  padding: "0.75rem 1.25rem",
+                  borderTop: "1px solid var(--border-color)",
+                  background: "rgba(0, 0, 0, 0.2)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}
+              >
+                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                  Verified tournament records
+                </span>
+                <Link
+                  href="/tournaments"
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 800,
+                    fontFamily: "var(--font-rajdhani), sans-serif",
+                    color: "var(--accent-red)",
+                    textDecoration: "none",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  Full Schedule <ExternalLink size={12} />
+                </Link>
+              </div>
+            </div>
+          </div>
 
-                    </div>
-                </div>
-            </section>
-        </motion.div>
-    );
+        </div>
+      </div>
+    </section>
+  );
 }

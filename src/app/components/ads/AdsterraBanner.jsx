@@ -77,11 +77,26 @@ export default function AdsterraBanner({
 }) {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   const isAdsEnabled = process.env.NEXT_PUBLIC_ADS_ENABLED !== "false";
 
   useEffect(() => {
-    setMounted(true);
+    const updateSize = () => {
+      setIsDesktop(typeof window !== "undefined" && window.innerWidth >= 768);
+    };
+    updateSize();
+
+    // Defer ad frame mounting until after initial paint and hydration
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 1200);
+
+    window.addEventListener("resize", updateSize);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", updateSize);
+    };
   }, []);
 
   // Safeguard: Never render on admin, auth, or internal dashboard paths
@@ -190,7 +205,7 @@ export default function AdsterraBanner({
       <div className="adsterra-banner-desktop">
         <span className="adsterra-ad-label">Advertisement</span>
         <div className="adsterra-banner-frame-728x90">
-          {mounted && (
+          {mounted && isDesktop && (
             <iframe
               title={`Advertisement - Desktop Leaderboard (${placement})`}
               srcDoc={generateSrcDoc(desktopKey, 728, 90)}
@@ -208,7 +223,7 @@ export default function AdsterraBanner({
       <div className="adsterra-banner-mobile">
         <span className="adsterra-ad-label">Advertisement</span>
         <div className="adsterra-banner-frame-320x50">
-          {mounted && (
+          {mounted && !isDesktop && (
             <iframe
               title={`Advertisement - Mobile Banner (${placement})`}
               srcDoc={generateSrcDoc(mobileKey, 320, 50)}

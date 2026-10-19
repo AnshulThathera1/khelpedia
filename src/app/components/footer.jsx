@@ -92,6 +92,7 @@ export default function Footer() {
                     padding: "4rem 1.5rem 2rem",
                 }}
             >
+                <h2 className="sr-only">Site Directory & Links</h2>
                 <div
                     style={{
                         display: "grid",
@@ -176,7 +177,7 @@ export default function Footer() {
                     {/* Link columns */}
                     {footerLinks.map((column) => (
                         <div key={column.title}>
-                            <h4
+                            <h3
                                 style={{
                                     color: "var(--text-primary)",
                                     fontSize: "0.75rem",
@@ -188,7 +189,7 @@ export default function Footer() {
                                 }}
                             >
                                 {column.title}
-                            </h4>
+                            </h3>
                             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                                 {column.links.map((link) => (
                                     <li key={link.href} style={{ marginBottom: "0.75rem" }}>

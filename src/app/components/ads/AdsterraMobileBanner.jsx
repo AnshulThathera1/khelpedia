@@ -38,7 +38,10 @@ export default function AdsterraMobileBanner({
   );
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 1200);
+    return () => clearTimeout(timer);
   }, []);
 
   if (!isAdsEnabled || isExcludedPath) {

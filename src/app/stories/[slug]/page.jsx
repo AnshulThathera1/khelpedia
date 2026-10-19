@@ -480,7 +480,8 @@ export default async function CommunityStoryDetailPage({ params }) {
               }}
             >
               <time dateTime={publishDate.toISOString()}>
-                {publishDate.toLocaleDateString(undefined, {
+                {publishDate.toLocaleDateString("en-US", {
+                  timeZone: "UTC",
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -513,7 +514,8 @@ export default async function CommunityStoryDetailPage({ params }) {
               }}
             >
               Updated:{" "}
-              {updateDate.toLocaleDateString(undefined, {
+              {updateDate.toLocaleDateString("en-US", {
+                timeZone: "UTC",
                 year: "numeric",
                 month: "long",
                 day: "numeric",
@@ -689,10 +691,11 @@ export default async function CommunityStoryDetailPage({ params }) {
             }
             .story-body-content a {
               color: var(--accent-cyan);
-              text-decoration: none;
+              text-decoration: underline;
+              text-underline-offset: 3px;
             }
             .story-body-content a:hover {
-              text-decoration: underline;
+              color: var(--text-primary);
             }
             .story-body-content ul, .story-body-content ol {
               margin-bottom: 1.6rem;

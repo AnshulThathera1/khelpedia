@@ -30,6 +30,7 @@ export default function AdsterraSidebar({
 }) {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   const isAdsEnabled = process.env.NEXT_PUBLIC_ADS_ENABLED !== "false";
   const isExcludedPath = EXCLUDED_PREFIXES.some((prefix) =>
@@ -38,9 +39,15 @@ export default function AdsterraSidebar({
 
   useEffect(() => {
     setMounted(true);
+    const checkWidth = () => {
+      setIsDesktop(typeof window !== "undefined" && window.innerWidth >= 1680);
+    };
+    checkWidth();
+    window.addEventListener("resize", checkWidth);
+    return () => window.removeEventListener("resize", checkWidth);
   }, []);
 
-  if (!isAdsEnabled || isExcludedPath) {
+  if (!isAdsEnabled || isExcludedPath || !isDesktop) {
     return null;
   }
 

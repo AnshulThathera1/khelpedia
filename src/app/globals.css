@@ -4,94 +4,49 @@
    ============================================ */
 
 :root {
-  --bg-primary: #0f1923; /* Riot Deep Dark */
-  --bg-secondary: #17232d; /* Surface Dark */
-  --bg-card: #1f2326; /* Secondary Dark */
-  --bg-card-hover: #232a32;
-  --bg-glass: rgba(15, 25, 35, 0.85);
+  --bg-primary: #080b10;
+  /* Deep Tactical Obsidian */
+  --bg-secondary: #0e131c;
+  /* Surface Dark Layer 1 */
+  --bg-card: #141a26;
+  /* Surface Dark Layer 2 */
+  --bg-card-hover: #1b2232;
+  /* Hover Surface */
+  --bg-glass: rgba(14, 19, 28, 0.92);
 
-  --text-primary: #ece8e1; /* Riot Off-White */
-  --text-secondary: #aab0b3; /* Slate Gray */
-  --text-muted: #7e7e7e;
+  --text-primary: #f0f2f5;
+  /* High-Contrast Crisp Off-White */
+  --text-secondary: #cbd5e1;
+  /* Slate 300 (Flawless WCAG AA Contrast) */
+  --text-muted: #94a3b8;
+  /* Slate 400 (7.5:1 Contrast Ratio against Dark Obsidian) */
 
-  --accent-red: #ff4655; /* Riot Red */
-  --accent-cyan: #00bda5; /* Accent Teal */
+  --accent-red: #ff4655;
+  /* Riot / KhelPediA Crimson */
+  --accent-cyan: #00f5d4;
+  /* Electric Data Cyan */
+  --accent-amber: #e5a93c;
+  /* Tournament Gold / Tier Amber */
   --accent-purple: #7b46ff;
-  --accent-orange: #ffb400;
+  --accent-orange: #ff7849;
 
-  --gradient-primary: linear-gradient(135deg, #ff4655, #c8323c);
-  --gradient-hero: linear-gradient(180deg, #0f1923 0%, #17232d 100%);
-  --gradient-card: linear-gradient(180deg, rgba(31, 35, 38, 0.8), rgba(23, 35, 45, 0.9));
+  --gradient-primary: linear-gradient(135deg, #ff4655 0%, #c8323c 100%);
+  --gradient-hero: linear-gradient(180deg, #080b10 0%, #0e131c 100%);
+  --gradient-card: linear-gradient(180deg, rgba(20, 26, 38, 0.95), rgba(14, 19, 28, 0.98));
 
-  --border-color: rgba(236, 232, 225, 0.1);
-  --border-glow: rgba(255, 70, 85, 0.4);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-glow: rgba(255, 70, 85, 0.35);
 
   --shadow-glow-red: 0 4px 20px rgba(255, 70, 85, 0.15);
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.55);
 
-  --radius-sm: 2px; /* Sharp corners */
-  --radius-md: 4px;
-  --radius-lg: 0px; /* Zero radius for big panels */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
 }
 
-/* ============================================
-   LIGHT THEME OVERRIDES
-   ============================================ */
 
-html.light {
-  --bg-primary: #f5f5f7;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f0f0f5;
-  --bg-glass: rgba(255, 255, 255, 0.85);
-
-  --text-primary: #1a1a2e;
-  --text-secondary: #5a5a7a;
-  --text-muted: #9a9ab0;
-
-  --accent-red: #e63946;
-  --accent-cyan: #0891b2;
-  --accent-purple: #6d28d9;
-  --accent-orange: #ea8c00;
-
-  --gradient-primary: linear-gradient(135deg, #e63946, #c8323c);
-  --gradient-hero: linear-gradient(180deg, #f5f5f7 0%, #eeeef2 100%);
-  --gradient-card: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(240, 240, 245, 0.95));
-
-  --border-color: rgba(26, 26, 46, 0.1);
-  --border-glow: rgba(230, 57, 70, 0.3);
-
-  --shadow-glow-red: 0 4px 20px rgba(230, 57, 70, 0.1);
-  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.06);
-
-  color-scheme: light;
-}
-
-html.light ::-webkit-scrollbar-track {
-  background: #f5f5f7;
-}
-
-html.light ::-webkit-scrollbar-thumb {
-  background: #d0d0d8;
-}
-
-html.light .skeleton {
-  background: linear-gradient(90deg,
-      rgba(0, 0, 0, 0.04) 25%,
-      rgba(0, 0, 0, 0.08) 50%,
-      rgba(0, 0, 0, 0.04) 75%);
-  background-size: 200% 100%;
-}
-
-html.light .hero-grid {
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-}
-
-html.light .hero::before {
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 60%);
-}
 
 /* ============================================
    SMOOTH THEME TRANSITION
@@ -357,23 +312,146 @@ main {
 
 .section-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   margin-bottom: 2rem;
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .section-title {
-  font-family: "Rajdhani", sans-serif;
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-family: var(--font-rajdhani), "Rajdhani", sans-serif;
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 800;
   color: var(--text-primary);
   letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.15;
 }
 
 .section-subtitle {
   color: var(--text-secondary);
-  font-size: 0.95rem;
-  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  margin-top: 0.35rem;
+}
+
+/* ============================================
+   TACTICAL ESPORTS DESIGN SYSTEM ADDITIONS
+   ============================================ */
+
+.tactical-kicker {
+  font-family: var(--font-rajdhani), 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent-red);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.4rem;
+}
+
+.tactical-kicker-cyan {
+  color: var(--accent-cyan);
+}
+
+.tactical-kicker-amber {
+  color: var(--accent-amber);
+}
+
+.tier-badge {
+  font-family: var(--font-rajdhani), 'Rajdhani', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tier-badge-s {
+  background: rgba(229, 169, 60, 0.12);
+  color: #e5a93c;
+  border: 1px solid rgba(229, 169, 60, 0.35);
+}
+
+.tier-badge-a {
+  background: rgba(0, 245, 212, 0.1);
+  color: #00f5d4;
+  border: 1px solid rgba(0, 245, 212, 0.3);
+}
+
+.tier-badge-b {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.rank-badge {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-rajdhani), 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 900;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.rank-badge-1 {
+  background: linear-gradient(135deg, #e5a93c, #b45309);
+  color: #000;
+  box-shadow: 0 0 12px rgba(229, 169, 60, 0.35);
+}
+
+.rank-badge-2 {
+  background: linear-gradient(135deg, #cbd5e1, #64748b);
+  color: #000;
+}
+
+.rank-badge-3 {
+  background: linear-gradient(135deg, #d97706, #78350f);
+  color: #fff;
+}
+
+.rank-badge-other {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+/* ============================================
+   HEROUI / NEXTUI THEME OVERRIDES (TACTICAL OBSIDIAN)
+   ============================================ */
+
+[data-slot="tabList"] {
+  background: rgba(8, 11, 16, 0.75) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+[data-slot="tab"] {
+  font-family: var(--font-rajdhani), sans-serif !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  font-weight: 800 !important;
+}
+
+[data-slot="tooltip"] {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-rajdhani), sans-serif !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+button[data-focus-visible="true"] {
+  outline: 2px solid var(--accent-red) !important;
+  outline-offset: 2px !important;
 }
 
 /* ============================================
@@ -554,7 +632,8 @@ main {
    PAGE CONTAINER
    ============================================ */
 
-.container, .page-container {
+.container,
+.page-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 1.5rem;
@@ -569,7 +648,8 @@ main {
 
 .page-title {
   font-family: "Rajdhani", sans-serif;
-  font-size: clamp(2rem, 5vw, 3.5rem); /* Fluid typography */
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  /* Fluid typography */
   font-weight: 900;
   margin-bottom: 1rem;
   letter-spacing: 0.05em;
@@ -588,11 +668,11 @@ main {
   main {
     padding-top: 80px;
   }
-  
+
   .hero {
     padding: 3rem 0 2rem;
   }
-  
+
   .page-header {
     margin-bottom: 2.5rem;
     padding-top: 0;
@@ -603,7 +683,8 @@ main {
     gap: 1rem;
   }
 
-  .container, .page-container {
+  .container,
+  .page-container {
     padding: 0 1rem;
   }
 }
@@ -616,6 +697,7 @@ main {
   .desktop-only {
     display: none !important;
   }
+
   .mobile-toggle {
     display: flex !important;
   }
@@ -633,7 +715,8 @@ main {
   font-family: var(--font-rajdhani), "Rajdhani", sans-serif;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
   color: var(--text-primary);
 }
 
@@ -653,12 +736,16 @@ main {
 }
 
 @media (max-width: 1024px) {
-  .admin-links-desktop, .exit-admin-desktop {
+
+  .admin-links-desktop,
+  .exit-admin-desktop {
     display: none !important;
   }
+
   .admin-mobile-toggle {
     display: block !important;
   }
+
   .admin-title {
     display: none;
   }
@@ -669,7 +756,9 @@ main {
    ============================================ */
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .agent-card-hover:hover {
@@ -730,7 +819,8 @@ main {
 
 /* Sidebar Columns (Left & Right) */
 .desktop-sidebar-col {
-  display: none; /* Strictly hidden on mobile, tablet, and small laptop */
+  display: none;
+  /* Strictly hidden on mobile, tablet, and small laptop */
   width: 320px;
   flex: 0 0 320px;
   padding: 0 10px;
@@ -749,7 +839,8 @@ main {
 /* Sticky Container inside Sidebar */
 .desktop-sidebar-sticky {
   position: sticky;
-  top: 120px; /* 50px below the 70px sticky navbar */
+  top: 120px;
+  /* 50px below the 70px sticky navbar */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -770,7 +861,8 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
-  padding-top: 2rem; /* Aligns visually with py-8 in main profile content */
+  padding-top: 2rem;
+  /* Aligns visually with py-8 in main profile content */
 }
 
 /* --- RESPONSIVE BREAKPOINTS --- */
@@ -958,6 +1050,7 @@ html.light .sidebar-ad-card {
   .adsterra-banner-desktop {
     display: none !important;
   }
+
   .adsterra-banner-mobile {
     display: flex !important;
   }
@@ -1210,6 +1303,7 @@ html.light .valorant-nav-link.is-active {
 }
 
 @media (max-width: 380px) {
+
   .valorant-nav-link.nav-item-agents,
   .nav-item-agents {
     display: none !important;
@@ -1243,8 +1337,15 @@ html.light .valorant-more-dropdown {
 }
 
 @keyframes fadeInFast {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dropdown-item {
@@ -1424,4 +1525,24 @@ html.light .dropdown-item {
 
 
 
-
+
+/* Accessibility & Focus-Visible Enhancements */
+.k-spatial-card:focus-visible,
+a.k-spatial-card:focus-visible,
+button:focus-visible {
+  outline: 2px solid #00FFA3 !important;
+  outline-offset: 3px !important;
+}
+
+/* Respect User Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+
+  .k-spatial-card,
+  .k-spatial-card:hover,
+  .k-pulse-dot,
+  .k-swipe-scroll {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}

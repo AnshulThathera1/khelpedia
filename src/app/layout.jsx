@@ -95,26 +95,18 @@ export default async function RootLayout({ children }) {
   const showBannerOnly = Boolean(maintenance?.showBannerOnly);
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <GoogleTagManager gtmId="GTM-5WJFXGWZ" />
       <head>
-        {/* Anti-FOUC: set theme class before paint */}
+        {/* Anti-FOUC: enforce night (dark) as the default and only theme */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  var t = localStorage.getItem('khelpedia-theme');
-                  if (t) {
-                    document.documentElement.className = (t === 'light') ? 'light' : 'dark';
-                  } else {
-                    var h = new Date().getHours();
-                    var isDay = h >= 6 && h < 18;
-                    document.documentElement.className = isDay ? 'light' : 'dark';
-                  }
-                } catch(e) {
-                  document.documentElement.className = 'dark';
-                }
+                  localStorage.setItem('khelpedia-theme', 'dark');
+                } catch(e) {}
+                document.documentElement.className = 'dark';
               })();
             `,
           }}
@@ -129,7 +121,7 @@ export default async function RootLayout({ children }) {
         {/* Microsoft Clarity */}
         <Script
           id="microsoft-clarity"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               (function(c,l,a,r,i,t,y){

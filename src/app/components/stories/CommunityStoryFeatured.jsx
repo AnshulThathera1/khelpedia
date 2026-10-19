@@ -30,6 +30,12 @@ export default function CommunityStoryFeatured({ story }) {
       <style
         dangerouslySetInnerHTML={{
           __html: `
+          .community-featured-image-box img {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          }
+          .community-featured-image-box:hover img {
+            transform: scale(1.04);
+          }
           @media (max-width: 960px) {
             .community-featured-card {
               grid-template-columns: 1fr !important;
@@ -98,13 +104,18 @@ export default function CommunityStoryFeatured({ story }) {
         }}
       >
         {/* Cover Image */}
-        <div
+        <Link
+          href={`/stories/${story.slug}`}
           className="community-featured-image-box"
+          aria-label={`Read story: ${story.title}`}
           style={{
             position: "relative",
             minHeight: "380px",
             background: "var(--bg-secondary)",
             overflow: "hidden",
+            display: "block",
+            textDecoration: "none",
+            cursor: "pointer",
           }}
         >
           {story.cover_image ? (
@@ -173,7 +184,7 @@ export default function CommunityStoryFeatured({ story }) {
               {gameName}
             </span>
           </div>
-        </div>
+        </Link>
 
         {/* Content Details */}
         <div

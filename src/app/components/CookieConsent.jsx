@@ -55,14 +55,14 @@ export default function CookieConsent() {
         >
           We use cookies to improve your experience, serve personalized ads, and analyze our traffic. By clicking &quot;Accept&quot;, you consent to our use of cookies as described in our{" "}
           <Link
-            href="/privacy"
+            href="/privacy-policy"
             style={{ color: "var(--accent-cyan)", textDecoration: "none" }}
           >
             Privacy Policy
           </Link>{" "}
           and{" "}
           <Link
-            href="/cookies"
+            href="/cookie-policy"
             style={{ color: "var(--accent-cyan)", textDecoration: "none" }}
           >
             Cookie Policy
@@ -73,7 +73,7 @@ export default function CookieConsent() {
         <button
           onClick={acceptCookies}
           style={{
-            background: "var(--accent-red)",
+            background: "#e02838",
             color: "#fff",
             border: "none",
             padding: "0.5rem 1.5rem",

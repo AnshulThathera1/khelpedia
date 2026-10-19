@@ -47,30 +47,37 @@ export default function AdsterraNative({
       return;
     }
 
-    const wrapper = wrapperRef.current;
+    let timer;
+    const scheduleLoad = () => {
+      const wrapper = wrapperRef.current;
+      if (!wrapper) return;
 
-    // Prevent duplicate script insertion
-    if (wrapper.querySelector("script") || document.getElementById(containerId)) {
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.async = true;
-    script.setAttribute("data-cfasync", "false");
-    script.src = scriptSrc;
-
-    const targetDiv = document.createElement("div");
-    targetDiv.id = containerId;
-
-    wrapper.appendChild(script);
-    wrapper.appendChild(targetDiv);
-
-    return () => {
-      // Clean up target div on unmount
-      if (targetDiv.parentNode) {
-        targetDiv.parentNode.removeChild(targetDiv);
+      // Prevent duplicate script insertion
+      if (wrapper.querySelector("script") || document.getElementById(containerId)) {
+        return;
       }
+
+      const script = document.createElement("script");
+      script.async = true;
+      script.setAttribute("data-cfasync", "false");
+      script.src = scriptSrc;
+
+      const targetDiv = document.createElement("div");
+      targetDiv.id = containerId;
+
+      wrapper.appendChild(script);
+      wrapper.appendChild(targetDiv);
     };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const handle = window.requestIdleCallback(scheduleLoad, { timeout: 2000 });
+      return () => {
+        if ("cancelIdleCallback" in window) window.cancelIdleCallback(handle);
+      };
+    } else {
+      timer = setTimeout(scheduleLoad, 1500);
+      return () => clearTimeout(timer);
+    }
   }, [isAdsEnabled, isExcludedPath, scriptSrc, containerId]);
 
   if (!isAdsEnabled || isExcludedPath) {
