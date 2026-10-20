@@ -39,11 +39,11 @@ export default async function BGMIPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div className="flex items-center gap-6">
               {/* Game Icon */}
-              <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-[var(--bg-secondary)] border overflow-hidden shadow-[0_0_30px_rgba(241,177,29,0.2)] relative group border-[#F1B11D]/50 p-2">
+              <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-[var(--bg-secondary)] border rounded-2xl overflow-hidden shadow-[0_0_35px_rgba(241,177,29,0.25)] relative group border-[#F1B11D]/50 p-3 flex items-center justify-center">
                 <img
-                  src="/bgmi-logo.png"
-                  alt="BGMI"
-                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 opacity-90"
+                  src="/images/games/bgmi.png"
+                  alt="BGMI Logo"
+                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 filter drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
                 />
               </div>
 

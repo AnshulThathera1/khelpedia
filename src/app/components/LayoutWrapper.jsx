@@ -15,26 +15,28 @@ const CookieConsent = dynamic(() => import("./CookieConsent"), { ssr: false });
 export default function LayoutWrapper({ user, children }) {
   const pathname = usePathname();
   const isAdminPage = pathname.startsWith("/admin");
-  const notifiedRef = useRef(false);
+  const lastPathRef = useRef(null);
 
   useEffect(() => {
-    // Only notify once per session/mount to avoid spam
-    if (!notifiedRef.current) {
-      notifiedRef.current = true;
-      
-      // Filter out bots, crawlers, and headless browsers
-      const ua = navigator.userAgent.toLowerCase();
-      const isBot = /bot|crawler|spider|crawling|headless|lighthouse|discord|preview|google|bing|yandex|yahoo|slurp/i.test(ua);
-      
-      if (!isBot) {
-        fetch('/api/notify-discord', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: window.location.pathname })
-        }).catch(err => console.error("Failed to notify discord", err));
-      }
+    // Don't notify for admin dashboard pages
+    if (pathname.startsWith("/admin")) return;
+
+    // Only notify if path changed (avoids duplicate alerts on re-render)
+    if (lastPathRef.current === pathname) return;
+    lastPathRef.current = pathname;
+
+    // Filter out bots, crawlers, and headless browsers
+    const ua = navigator.userAgent.toLowerCase();
+    const isBot = /bot|crawler|spider|crawling|headless|lighthouse|discord|preview|google|bing|yandex|yahoo|slurp/i.test(ua);
+
+    if (!isBot) {
+      fetch('/api/notify-discord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: pathname })
+      }).catch(err => console.error("Failed to notify discord", err));
     }
-  }, []);
+  }, [pathname]);
 
   return (
     <ThemeProvider>

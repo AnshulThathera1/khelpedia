@@ -53,7 +53,7 @@ export default async function PlayersPage({ searchParams }) {
 
             {totalPages > 1 && (
                 <div style={{ marginTop: "2rem" }}>
-                    <Pagination currentPage={page} totalPages={totalPages} searchParams={resolvedParams} />
+                    <Pagination currentPage={page} totalPages={totalPages} searchParams={resolvedParams} basePath="/players" />
                 </div>
             )}
         </div>

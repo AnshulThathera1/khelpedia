@@ -11,6 +11,7 @@ import EditorialNewsGrid from "./components/home/EditorialNewsGrid";
 import StatsTelemetryBar from "./components/home/StatsTelemetryBar";
 import AdContainer from "./components/ads/AdContainer";
 import DesktopSidebarLayout from "./components/ads/DesktopSidebarLayout";
+import ValorantPromoPopup from "./components/ValorantPromoPopup";
 
 export default async function HomePage() {
   let liveTournaments = [];
@@ -50,6 +51,9 @@ export default async function HomePage() {
 
   return (
     <div style={{ background: "var(--bg-primary)" }}>
+      {/* Valorant Feature / Profile Tracker Promo Modal */}
+      <ValorantPromoPopup />
+
       {/* 01: Cinematic Editorial Hero + Live Arena Radar */}
       <HomeHero
         liveTournaments={liveTournaments}

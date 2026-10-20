@@ -10,7 +10,7 @@ const FEATURED_GAMES = [
     name: "VALORANT",
     shortName: "VAL",
     color: "#FF4655",
-    icon: "https://cdn.pandascore.co/images/game/icon_url/26/valorant.png",
+    icon: "/images/games/valorant.svg",
     activeCircuit: "VCT Masters"
   },
   {
@@ -18,7 +18,7 @@ const FEATURED_GAMES = [
     name: "Counter-Strike 2",
     shortName: "CS2",
     color: "#E5A93C",
-    icon: "https://cdn.pandascore.co/images/game/icon_url/33602/counter_strike_2.png",
+    icon: "/images/games/cs2.svg",
     activeCircuit: "BLAST Premier"
   },
   {
@@ -26,7 +26,7 @@ const FEATURED_GAMES = [
     name: "BGMI",
     shortName: "BGMI",
     color: "#00F5D4",
-    icon: "https://cdn.pandascore.co/images/game/icon_url/23344/bgmi.png",
+    icon: "/images/games/bgmi.png",
     activeCircuit: "BMS Series"
   },
   {
@@ -34,7 +34,7 @@ const FEATURED_GAMES = [
     name: "Dota 2",
     shortName: "DOTA",
     color: "#E63946",
-    icon: "https://cdn.pandascore.co/images/game/icon_url/4/dota2.png",
+    icon: "/images/games/dota2.svg",
     activeCircuit: "DreamLeague"
   },
   {
@@ -42,7 +42,7 @@ const FEATURED_GAMES = [
     name: "Free Fire",
     shortName: "FF",
     color: "#FF7849",
-    icon: "https://cdn.pandascore.co/images/game/icon_url/22889/free_fire.png",
+    icon: "/images/games/free_fire.svg",
     activeCircuit: "World Series"
   },
   {
@@ -50,7 +50,7 @@ const FEATURED_GAMES = [
     name: "PUBG Mobile",
     shortName: "PUBG-M",
     color: "#F59E0B",
-    icon: "https://cdn.pandascore.co/images/game/icon_url/20853/pubg_mobile.png",
+    icon: "/images/games/pubg_mobile.svg",
     activeCircuit: "Global Open"
   }
 ];

@@ -23,14 +23,20 @@ export async function POST(request) {
     // 2. Fetch geolocation data based on IP
     let location = "Unknown Location 🌍";
     if (ip) {
-      try {
-        const geoResponse = await fetch(`http://ip-api.com/json/${ip}`);
-        const geoData = await geoResponse.json();
-        if (geoData.status === "success") {
-          location = `${geoData.city}, ${geoData.country} (${geoData.countryCode}) ${geoData.countryCode === 'IN' ? '🇮🇳' : '🌍'}`;
+      if (ip === "127.0.0.1" || ip === "::1" || ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.")) {
+        location = "Localhost / Internal Network 💻";
+      } else {
+        try {
+          const geoResponse = await fetch(`http://ip-api.com/json/${ip}`, {
+            signal: AbortSignal.timeout(3000)
+          });
+          const geoData = await geoResponse.json();
+          if (geoData.status === "success") {
+            location = `${geoData.city}, ${geoData.country} (${geoData.countryCode}) ${geoData.countryCode === 'IN' ? '🇮🇳' : '🌍'}`;
+          }
+        } catch (e) {
+          console.error("Geo fetch failed", e);
         }
-      } catch (e) {
-        console.error("Geo fetch failed", e);
       }
     }
 
@@ -45,7 +51,7 @@ export async function POST(request) {
         }
       ],
       username: "KhelPediA Tracker",
-      avatar_url: "https://khelpedia.com/favicon.ico"
+      avatar_url: "https://khelpedia.org/favicon.ico"
     };
 
     const response = await fetch(webhookUrl, {
@@ -57,7 +63,8 @@ export async function POST(request) {
     });
 
     if (!response.ok) {
-      throw new Error(`Discord API error: ${response.status}`);
+      const errorText = await response.text().catch(() => '');
+      throw new Error(`Discord API error: ${response.status} - ${errorText}`);
     }
 
     return NextResponse.json({ success: true });

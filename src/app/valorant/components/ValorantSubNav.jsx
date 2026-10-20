@@ -9,7 +9,6 @@ import {
   Users,
   Map,
   Crosshair,
-  Target,
   ChevronDown,
   Activity,
   AlertTriangle,
@@ -117,8 +116,12 @@ export default function ValorantSubNav({ serverStatus = null }) {
             className="valorant-subnav-brand"
             aria-label="KhelPediA Valorant Hub"
           >
-            <div className="valorant-brand-hex">
-              <Target className="w-3.5 h-3.5 text-white" />
+            <div className="valorant-brand-logo-wrap">
+              <img
+                src="/images/games/valorant.svg"
+                alt="Valorant"
+                className="valorant-brand-logo"
+              />
             </div>
             <span className="valorant-brand-text">VALORANT</span>
           </Link>

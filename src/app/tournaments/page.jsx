@@ -100,7 +100,7 @@ export default async function TournamentsPage({ searchParams: searchParamsPromis
                 )}
             </div>
 
-            <Pagination currentPage={page} totalPages={totalPages} searchParams={searchParams} />
+            <Pagination currentPage={page} totalPages={totalPages} searchParams={searchParams} basePath="/tournaments" />
         </div>
     );
 }

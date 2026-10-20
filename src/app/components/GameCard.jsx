@@ -9,12 +9,12 @@ export default function GameCard({ game, tournamentCount }) {
 
   // Official high-res logo mapping
   const officialLogos = {
-    valorant: "https://cdn.pandascore.co/images/game/icon_url/26/valorant.png",
-    cs2: "https://cdn.pandascore.co/images/game/icon_url/33602/counter_strike_2.png",
-    bgmi: "https://cdn.pandascore.co/images/game/icon_url/23344/bgmi.png",
-    "dota-2": "https://cdn.pandascore.co/images/game/icon_url/4/dota2.png",
-    "free-fire": "https://cdn.pandascore.co/images/game/icon_url/22889/free_fire.png",
-    "pubg-mobile": "https://cdn.pandascore.co/images/game/icon_url/20853/pubg_mobile.png"
+    valorant: "/images/games/valorant.svg",
+    cs2: "/images/games/cs2.svg",
+    bgmi: "/images/games/bgmi.png",
+    "dota-2": "/images/games/dota2.svg",
+    "free-fire": "/images/games/free_fire.svg",
+    "pubg-mobile": "/images/games/pubg_mobile.svg"
   };
 
   const gameColors = {

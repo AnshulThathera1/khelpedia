@@ -203,7 +203,7 @@ export default async function BlogsIndexPage({ searchParams }) {
 
             {totalPages > 1 && (
                 <div style={{ marginTop: "3rem" }}>
-                    <Pagination currentPage={page} totalPages={totalPages} searchParams={resolvedParams} />
+                    <Pagination currentPage={page} totalPages={totalPages} searchParams={resolvedParams} basePath="/blogs" />
                 </div>
             )}
 

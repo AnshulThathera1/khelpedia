@@ -1,12 +1,25 @@
-import Link from "next/link";
+"use client";
 
-export default function Pagination({ currentPage, totalPages, searchParams }) {
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+export default function Pagination({ currentPage, totalPages, searchParams, basePath }) {
+    const currentPath = usePathname();
+    const targetPath = basePath || currentPath || "/tournaments";
+
     if (totalPages <= 1) return null;
 
     const getPageUrl = (page) => {
-        const params = new URLSearchParams(searchParams);
-        params.set("page", page);
-        return `/tournaments?${params.toString()}`;
+        const params = new URLSearchParams();
+        if (searchParams) {
+            Object.entries(searchParams).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && key !== "page") {
+                    params.set(key, String(value));
+                }
+            });
+        }
+        params.set("page", String(page));
+        return `${targetPath}?${params.toString()}`;
     };
 
     const pages = [];

@@ -52,7 +52,7 @@ export default async function TeamsPage({ searchParams }) {
             </div>
 
             {totalPages > 1 && (
-                <Pagination currentPage={page} totalPages={totalPages} searchParams={resolvedParams} />
+                <Pagination currentPage={page} totalPages={totalPages} searchParams={resolvedParams} basePath="/teams" />
             )}
         </div>
     );
