@@ -47,8 +47,8 @@ ALTER TABLE public.match_teams ADD COLUMN IF NOT EXISTS wwcd BOOLEAN DEFAULT FAL
 -- Drop legacy hard foreign key constraint referencing valorant_matches exclusively
 ALTER TABLE public.match_teams DROP CONSTRAINT IF EXISTS match_teams_match_id_fkey;
 
--- Ensure unique index on source_result_id for idempotent upserts
-CREATE UNIQUE INDEX IF NOT EXISTS uq_match_teams_source_result 
+-- Ensure performance index on source_result_id for provenance lookups
+CREATE INDEX IF NOT EXISTS idx_match_teams_source_result 
 ON public.match_teams(source_result_id) 
 WHERE source_result_id IS NOT NULL;
 

@@ -60,6 +60,7 @@ DROP FUNCTION IF EXISTS public.cascade_delete_valorant_matches_to_match_teams();
 
 -- 10. Revert columns added to match_teams (if reverting match_teams extension)
 DROP INDEX IF EXISTS public.uq_match_teams_source_result;
+DROP INDEX IF EXISTS public.idx_match_teams_source_result;
 ALTER TABLE public.match_teams DROP COLUMN IF EXISTS source_result_id;
 ALTER TABLE public.match_teams DROP COLUMN IF EXISTS placement;
 ALTER TABLE public.match_teams DROP COLUMN IF EXISTS kills;
