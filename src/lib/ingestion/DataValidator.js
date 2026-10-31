@@ -109,25 +109,144 @@ export class DataValidator {
 
   /**
    * Validate BGMI Stage Standings DTO
+   * Enforces non-negative values, strict NULL bonus point handling, and mathematical consistency
    */
   static validateBGMIStandings(standings) {
     if (!standings || typeof standings !== 'object') {
       return { valid: false, reason: "Standings object is null or not an object" };
     }
 
-    if (!standings.tournament_id && !standings.tournamentId) {
+    const tournamentId = standings.tournament_id || standings.tournamentId;
+    if (!tournamentId) {
       return { valid: false, reason: "Standings missing tournament_id" };
     }
 
-    if (!standings.team_id && !standings.teamId) {
+    const teamId = standings.team_id || standings.teamId;
+    if (!teamId) {
       return { valid: false, reason: "Standings missing team_id" };
     }
 
-    if (typeof standings.rank_position === 'number' && standings.rank_position < 1) {
-      return { valid: false, reason: `Invalid rank_position: ${standings.rank_position}` };
+    const rankPosition = standings.rank_position || standings.rankPosition;
+    if (typeof rankPosition === 'number' && rankPosition < 1) {
+      return { valid: false, reason: `Invalid rank_position: ${rankPosition}` };
+    }
+
+    const placementPts = standings.placement_pts ?? standings.placementPts;
+    const eliminationPts = standings.elimination_pts ?? standings.eliminationPts;
+    const bonusPts = standings.bonus_pts ?? standings.bonusPts;
+    const totalPts = standings.total_pts ?? standings.totalPts;
+
+    if (typeof placementPts === 'number' && placementPts < 0) {
+      return { valid: false, reason: `Negative placement_pts: ${placementPts}` };
+    }
+    if (typeof eliminationPts === 'number' && eliminationPts < 0) {
+      return { valid: false, reason: `Negative elimination_pts: ${eliminationPts}` };
+    }
+    if (bonusPts !== undefined && bonusPts !== null && (typeof bonusPts !== 'number' || bonusPts < 0)) {
+      return { valid: false, reason: `Invalid bonus_pts: ${bonusPts}` };
+    }
+
+    // Mathematical consistency check when all components are provided
+    if (typeof placementPts === 'number' && typeof eliminationPts === 'number' && typeof totalPts === 'number') {
+      const effectiveBonus = typeof bonusPts === 'number' ? bonusPts : 0;
+      const expectedTotal = placementPts + eliminationPts + effectiveBonus;
+      if (expectedTotal !== totalPts) {
+        return { 
+          valid: false, 
+          reason: `Mathematical point corruption: placement (${placementPts}) + eliminations (${eliminationPts}) + bonus (${effectiveBonus}) = ${expectedTotal}, but total was reported as ${totalPts}` 
+        };
+      }
     }
 
     return { valid: true, data: standings };
+  }
+
+  /**
+   * Validate Match Player Telemetry (Scorecards)
+   */
+  static validateMatchPlayerStats(stats) {
+    if (!stats || typeof stats !== 'object') {
+      return { valid: false, reason: "Match player stats is null or not an object" };
+    }
+
+    const matchId = stats.match_id || stats.matchId;
+    if (!matchId) {
+      return { valid: false, reason: "Match player stats missing match_id" };
+    }
+
+    const playerId = stats.player_id || stats.playerId;
+    if (!playerId) {
+      return { valid: false, reason: "Match player stats missing player_id" };
+    }
+
+    if (stats.kills !== null && stats.kills !== undefined) {
+      if (typeof stats.kills !== 'number' || stats.kills < 0 || stats.kills > 30) {
+        return { valid: false, reason: `Kills out of bounds (0-30): ${stats.kills}` };
+      }
+    }
+
+    if (stats.damage !== null && stats.damage !== undefined) {
+      const dmg = Number(stats.damage);
+      if (isNaN(dmg) || dmg < 0 || dmg > 10000.0) {
+        return { valid: false, reason: `Damage out of bounds (0-10000.0): ${stats.damage}` };
+      }
+    }
+
+    if (stats.assists !== null && stats.assists !== undefined) {
+      if (typeof stats.assists !== 'number' || stats.assists < 0 || stats.assists > 30) {
+        return { valid: false, reason: `Assists out of bounds (0-30): ${stats.assists}` };
+      }
+    }
+
+    if (stats.survival_time_sec !== null && stats.survival_time_sec !== undefined) {
+      if (typeof stats.survival_time_sec !== 'number' || stats.survival_time_sec < 0 || stats.survival_time_sec > 2400) {
+        return { valid: false, reason: `Survival time out of bounds (0-2400s): ${stats.survival_time_sec}` };
+      }
+    }
+
+    return { valid: true, data: stats };
+  }
+
+  /**
+   * Validate Identity Resolution against existing entities
+   * Detects ambiguous rebrands or cross-game collisions
+   */
+  static validateIdentityResolution({ entityType, sourceName, sourceEntityId, candidate, existingMatches = [] }) {
+    if (!candidate || !candidate.name) {
+      return { valid: false, quarantine: false, reason: "Candidate missing name" };
+    }
+
+    // Check for collision with existing entities across different games
+    const crossGameMatch = existingMatches.find(m => 
+      m.slug === candidate.slug && m.game_id && candidate.game_id && m.game_id !== candidate.game_id
+    );
+
+    if (crossGameMatch) {
+      return {
+        valid: false,
+        quarantine: true,
+        conflictCode: 'CROSS_GAME_COLLISION',
+        reason: `Cross-game slug collision: "${candidate.slug}" belongs to another game (${crossGameMatch.game_id})`,
+        candidateInternalId: crossGameMatch.id
+      };
+    }
+
+    // Check for rebrand or name discrepancy
+    const nameDiscrepancy = existingMatches.find(m => 
+      m.id === candidate.id && m.name.toLowerCase() !== candidate.name.toLowerCase()
+    );
+
+    if (nameDiscrepancy) {
+      return {
+        valid: false,
+        quarantine: true,
+        conflictCode: 'REBRAND_REVIEW',
+        reason: `Potential rebrand discrepancy: existing "${nameDiscrepancy.name}" vs incoming "${candidate.name}"`,
+        candidateInternalId: nameDiscrepancy.id
+      };
+    }
+
+    return { valid: true, quarantine: false, candidate };
   }
 }
 

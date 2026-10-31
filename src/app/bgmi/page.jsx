@@ -1,210 +1,124 @@
-import { getBGMITournaments, getBGMITeams, getBGMIPlayers } from "@/lib/esportsamaze";
-import Link from "next/link";
-import { ChevronRight, Trophy, Users, Crosshair } from "lucide-react";
+import { getBGMIPageData } from "@/lib/bgmiQueries.js";
+import DesktopSidebarLayout from "@/app/components/ads/DesktopSidebarLayout";
+import BGMIHero from "./components/BGMIHero";
+import BGMITelemetryBar from "./components/BGMITelemetryBar";
+import BGMITournamentRadar from "./components/BGMITournamentRadar";
+import BGMIFeaturedTournament from "./components/BGMIFeaturedTournament";
+import BGMITeamLeaderboard from "./components/BGMITeamLeaderboard";
+import BGMIPlayerSpotlight from "./components/BGMIPlayerSpotlight";
+import BGMIMatchFeed from "./components/BGMIMatchFeed";
+import BGMIEditorialNews from "./components/BGMIEditorialNews";
+import BGMIQuickHub from "./components/BGMIQuickHub";
+
+export const revalidate = 1800; // Cache for 30 minutes with ISR
 
 export const metadata = {
-  title: "BGMI Esports — Tournaments, Teams & Players",
-  description: "Track live BGMI tournaments, recent match results, upcoming schedules, roster transfers, and player stats.",
+  title: "BGMI Esports — Tournaments, Teams & Match Telemetry | KhelPediA",
+  description: "Your premier BGMI intelligence command center. Track live tournaments, team rosters, match telemetry across Erangel and Miramar, player stats, and competitive editorial analysis.",
   alternates: {
-      canonical: "/bgmi",
+    canonical: "https://khelpedia.org/bgmi",
+  },
+  openGraph: {
+    title: "BGMI Esports — Tournaments, Teams & Match Telemetry | KhelPediA",
+    description: "Real-time BGMI tournament brackets, team rosters, player records, and competitive match telemetry.",
+    url: "https://khelpedia.org/bgmi",
+    siteName: "KhelPediA",
+    type: "website",
+    images: [
+      {
+        url: "https://khelpedia.org/images/bgmi-hero-banner.jpg",
+        width: 1920,
+        height: 1080,
+        alt: "BGMI Esports Arena",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BGMI Esports — Tournaments, Teams & Match Telemetry | KhelPediA",
+    description: "Real-time BGMI tournament brackets, team rosters, player records, and competitive match telemetry.",
+    images: ["https://khelpedia.org/images/bgmi-hero-banner.jpg"],
   },
 };
 
 export default async function BGMIPage() {
-  const [tournaments, teams, players] = await Promise.all([
-    getBGMITournaments(10),
-    getBGMITeams(8),
-    getBGMIPlayers(8)
-  ]);
+  const data = await getBGMIPageData();
 
-  const totalTournaments = tournaments.length;
-  const sTierCount = tournaments.filter(t => t.tier === "S-Tier").length;
-  // Handle parsing prize_pool which might be a string like "20000000"
-  const totalPrizePool = tournaments.reduce((acc, curr) => {
-    const val = parseInt(curr.prize_pool?.replace(/,/g, '') || "0", 10);
-    return acc + (isNaN(val) ? 0 : val);
-  }, 0);
+  // Factual JSON-LD Structured Data for Esports Hub
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "BGMI Competitive Arena — KhelPediA",
+    description: "Battlegrounds Mobile India esports command center. Track tournaments, team rosters, match results, player performance, and competitive news.",
+    url: "https://khelpedia.org/bgmi",
+    publisher: {
+      "@type": "Organization",
+      name: "KhelPediA",
+      url: "https://khelpedia.org",
+      logo: "https://khelpedia.org/icon.png",
+    },
+    about: {
+      "@type": "VideoGame",
+      name: "Battlegrounds Mobile India",
+      alternateName: "BGMI",
+      genre: "Battle Royale",
+      publisher: {
+        "@type": "Organization",
+        name: "Krafton",
+      },
+    },
+  };
 
   return (
     <>
-      {/* Hero Banner Section */}
-      <div 
-        className="relative border-b border-[#F1B11D]/20 overflow-hidden pt-20 pb-16"
-        style={{ background: "linear-gradient(180deg, rgba(241, 177, 29, 0.08) 0%, var(--bg-primary) 100%)" }}
-      >
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(241,177,29,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(241,177,29,0.02)_1px,transparent_1px)] bg-[size:30px_30px] pointer-events-none opacity-50" />
-        <div className="absolute top-0 right-0 w-[500px] h-[300px] bg-[#F1B11D]/10 blur-[120px] rounded-full pointer-events-none" />
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="flex items-center gap-6">
-              {/* Game Icon */}
-              <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-[var(--bg-secondary)] border rounded-2xl overflow-hidden shadow-[0_0_35px_rgba(241,177,29,0.25)] relative group border-[#F1B11D]/50 p-3 flex items-center justify-center">
-                <img
-                  src="/images/games/bgmi.png"
-                  alt="BGMI Logo"
-                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 filter drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
-                />
-              </div>
+      {/* 01: Tactical Command Center Hero with Artwork Backdrop */}
+      <BGMIHero 
+        stats={data.stats} 
+        featuredTournament={data.featuredTournament} 
+      />
 
-              {/* Title & Description */}
-              <div>
-                <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-[var(--text-primary)] uppercase leading-none drop-shadow-lg">
-                  BGMI <span className="text-[#F1B11D]">Esports</span>
-                </h1>
-                <div className="flex items-center gap-3 mt-4">
-                  <span className="px-3 py-1 bg-[#F1B11D]/10 border border-[#F1B11D]/30 text-[#F1B11D] font-bold text-xs uppercase tracking-widest backdrop-blur-sm">
-                    Battle Royale
-                  </span>
-                  <span className="text-[var(--text-secondary)] text-sm font-medium">
-                    Competitive Coverage
-                  </span>
-                </div>
-              </div>
-            </div>
+      {/* 02: Platform Telemetry HUD Metrics Bar */}
+      <BGMITelemetryBar stats={data.stats} />
 
-            {/* Quick Hero statistics bar */}
-            <div className="grid grid-cols-3 gap-6 bg-[var(--bg-card)] border border-[#F1B11D]/20 px-6 py-5 min-w-[280px] md:min-w-[420px] self-start md:self-center shadow-2xl backdrop-blur-md rounded-xl">
-              <div className="text-left border-r border-[#F1B11D]/10 pr-4">
-                <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest block">
-                  Tournaments
-                </span>
-                <span className="text-xl md:text-3xl font-black text-[var(--text-primary)] mt-1 block">
-                  {totalTournaments}+
-                </span>
-              </div>
-              <div className="text-left border-r border-[#F1B11D]/10 px-2">
-                <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest block">
-                  S-Tier Events
-                </span>
-                <span className="text-xl md:text-3xl font-black text-[#F1B11D] mt-1 block">
-                  {sTierCount}
-                </span>
-              </div>
-              <div className="text-left pl-2">
-                <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest block">
-                  Total Prize
-                </span>
-                <span className="text-xl md:text-3xl font-black text-green-400 mt-1 block truncate">
-                  ₹{(totalPrizePool / 10000000).toFixed(1)}Cr
-                </span>
-              </div>
-            </div>
+      {/* 03: Main Content Area Protected by Desktop Sidebar Layout */}
+      <DesktopSidebarLayout pageType="bgmi" variant="standard">
+        <div className="page-container" style={{ paddingTop: "1rem" }}>
+          
+          {/* Section: Tournament Radar with 4-State Interactive Filters */}
+          <BGMITournamentRadar tournaments={data.tournaments} />
+
+          {/* Section: Featured Championship Spotlight */}
+          {data.featuredTournament && (
+            <BGMIFeaturedTournament tournament={data.featuredTournament} />
+          )}
+
+          {/* Section: Dual Pro Column (Featured Teams & Player Spotlight) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12" style={{ marginBottom: "5rem" }}>
+            <BGMITeamLeaderboard teams={data.teams} />
+            <BGMIPlayerSpotlight players={data.players} />
           </div>
+
+          {/* Section: Verified Match Outcomes Telemetry */}
+          {data.matches && data.matches.length > 0 && (
+            <BGMIMatchFeed matches={data.matches} />
+          )}
+
+          {/* Section: Editorial News & Meta Breakdowns */}
+          {data.blogs && data.blogs.length > 0 && (
+            <BGMIEditorialNews blogs={data.blogs} />
+          )}
+
+          {/* Section: Fast Access Intelligence Hubs */}
+          <BGMIQuickHub />
+
         </div>
-      </div>
-
-      <main className="max-w-7xl mx-auto px-6 pt-12 grid grid-cols-1 lg:grid-cols-3 gap-10">
-        
-        {/* Left Column: Tournaments */}
-        <div className="lg:col-span-2 space-y-12">
-          <section>
-            <div className="flex items-center justify-between mb-6 border-b border-[var(--border-color)] pb-2">
-              <h2 className="text-2xl font-bold uppercase tracking-wide flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-[#F1B11D]" /> Recent & Upcoming Tournaments
-              </h2>
-              <Link href="/bgmi/tournaments" className="text-sm text-[#F1B11D] hover:underline flex items-center">
-                View All <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-            
-            <div className="grid gap-4">
-              {tournaments.length > 0 ? tournaments.slice(0, 5).map((t, idx) => (
-                <div key={idx} className="flex items-center gap-4 p-4 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#F1B11D]/50 transition-colors rounded-lg group">
-                  <div className="w-16 h-16 bg-[var(--bg-secondary)] flex-shrink-0 flex items-center justify-center p-2 rounded-md border border-[var(--border-color)]">
-                    {t.image ? (
-                      <img src={`https://esportsamaze.in/Special:FilePath/${t.image.replace(' ', '_')}`} alt={t.name} className="max-w-full max-h-full object-contain" />
-                    ) : (
-                      <Trophy className="w-6 h-6 text-zinc-700" />
-                    )}
-                  </div>
-                  <div className="flex-grow">
-                    <h3 className="font-bold text-lg group-hover:text-[#F1B11D] transition-colors">{t.name}</h3>
-                    <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)] mt-1">
-                      <span className="px-2 py-0.5 bg-[var(--border-color)] rounded text-xs font-semibold">{t.tier || "Unknown Tier"}</span>
-                      <span>{t.start_date} - {t.end_date}</span>
-                    </div>
-                  </div>
-                  <div className="text-right hidden sm:block">
-                    <div className="text-green-400 font-bold">₹{parseInt(t.prize_pool || "0", 10).toLocaleString('en-IN')}</div>
-                    <div className="text-xs text-[var(--text-muted)] mt-1 uppercase tracking-wider">{t.winner ? `🏆 ${t.winner}` : 'Upcoming/Live'}</div>
-                  </div>
-                </div>
-              )) : (
-                <div className="text-[var(--text-muted)] py-10 text-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg">No tournaments found</div>
-              )}
-            </div>
-          </section>
-        </div>
-
-        {/* Right Column: Teams and Players sidebar */}
-        <div className="space-y-12">
-          {/* Top Teams */}
-          <section>
-            <div className="flex items-center justify-between mb-6 border-b border-[var(--border-color)] pb-2">
-              <h2 className="text-xl font-bold uppercase tracking-wide flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#F1B11D]" /> Top Teams
-              </h2>
-              <Link href="/bgmi/teams" className="text-sm text-[#F1B11D] hover:underline flex items-center">
-                All <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {teams.length > 0 ? teams.map((team, idx) => (
-                <div key={idx} className="bg-[var(--bg-card)] border border-[var(--border-color)] p-3 rounded-lg flex flex-col items-center justify-center text-center hover:border-[#F1B11D]/50 transition-colors group">
-                  <div className="w-12 h-12 mb-3">
-                    {team.image ? (
-                       <img src={`https://esportsamaze.in/Special:FilePath/${team.image.replace(' ', '_')}`} alt={team.name} className="w-full h-full object-contain" />
-                    ) : (
-                       <Users className="w-full h-full p-2 text-zinc-700" />
-                    )}
-                  </div>
-                  <span className="text-sm font-bold group-hover:text-[#F1B11D] transition-colors">{team.name}</span>
-                </div>
-              )) : (
-                <div className="col-span-2 text-[var(--text-muted)] py-6 text-center text-sm border border-[var(--border-color)] rounded-lg">No teams found</div>
-              )}
-            </div>
-          </section>
-
-          {/* Featured Players */}
-          <section>
-            <div className="flex items-center justify-between mb-6 border-b border-[var(--border-color)] pb-2">
-              <h2 className="text-xl font-bold uppercase tracking-wide flex items-center gap-2">
-                <Crosshair className="w-5 h-5 text-[#F1B11D]" /> Featured Players
-              </h2>
-              <Link href="/bgmi/players" className="text-sm text-[#F1B11D] hover:underline flex items-center">
-                All <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {players.length > 0 ? players.map((player, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-[var(--bg-card)] border border-[var(--border-color)] p-2 rounded-lg hover:border-[#F1B11D]/50 transition-colors group">
-                   <div className="w-10 h-10 bg-[var(--bg-secondary)] rounded overflow-hidden flex-shrink-0">
-                      {player.image ? (
-                        <img src={`https://esportsamaze.in/Special:FilePath/${player.image.replace(' ', '_')}`} alt={player.id} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-[var(--border-color)]" />
-                      )}
-                   </div>
-                   <div className="flex-grow">
-                      <div className="font-bold text-sm group-hover:text-[#F1B11D] transition-colors">{player.id}</div>
-                      <div className="text-xs text-[var(--text-muted)]">{player.current_team || "Free Agent"}</div>
-                   </div>
-                   {player.role && (
-                     <div className="text-xs px-2 py-1 bg-[var(--border-color)] rounded text-[var(--text-secondary)] font-medium">
-                       {player.role}
-                     </div>
-                   )}
-                </div>
-              )) : (
-                <div className="text-[var(--text-muted)] py-6 text-center text-sm border border-[var(--border-color)] rounded-lg">No players found</div>
-              )}
-            </div>
-          </section>
-        </div>
-
-      </main>
+      </DesktopSidebarLayout>
     </>
   );
 }
